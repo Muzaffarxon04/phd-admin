@@ -1,32 +1,31 @@
 "use client";
 
-import { Layout, Dropdown, Avatar, Space, Badge, Button } from "antd";
+import { Layout, Badge, Avatar, Dropdown, Space, Button } from "antd";
 import {
   BellOutlined,
-  UserOutlined,
-  LogoutOutlined,
-  SettingOutlined,
+  GlobalOutlined,
   MoonOutlined,
   SunOutlined,
-  GlobalOutlined,
+  UserOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useThemeStore } from "@/lib/stores/themeStore";
 import { useState, useEffect } from "react";
 
 const { Header: AntHeader } = Layout;
 
-export default function Header() {
+export default function ApplicantHeader() {
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
-  const [userName, setUserName] = useState<string>("Admin");
+  const [userName, setUserName] = useState<string>("User");
 
   useEffect(() => {
     const user = tokenStorage.getUser() as { full_name?: string } | null;
     if (user?.full_name) {
-      setUserName(user.full_name.split(" ").pop() || "Admin");
+      setUserName(user.full_name.split(" ").pop() || "User");
     }
   }, []);
 
@@ -40,10 +39,7 @@ export default function Header() {
       key: "profile",
       icon: <UserOutlined />,
       label: "Profil",
-      onClick: () => router.push("/admin-panel"),
-    },
-    {
-      type: "divider",
+      onClick: () => router.push("/dashboard"),
     },
     {
       key: "logout",
@@ -68,15 +64,7 @@ export default function Header() {
         zIndex: 100,
       }}
     >
-      <div
-        style={{
-          fontSize: "18px",
-          fontWeight: 600,
-          color: theme === "dark" ? "#ffffff" : "#333",
-        }}
-      >
-        PhD Imtihonlar Tizimi
-      </div>
+      <div style={{ flex: 1 }} />
 
       <Space size="large" style={{ alignItems: "center" }}>
         <Button
@@ -89,7 +77,7 @@ export default function Header() {
           }}
         />
 
-        {/* <Badge count={5} size="small">
+        {/* <Badge count={3} size="small">
           <Button
             type="text"
             icon={<BellOutlined />}

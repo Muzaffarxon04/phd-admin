@@ -1,5 +1,5 @@
 // User Roles
-export type UserRole = "applicant" | "admin" | "super-admin";
+export type UserRole = "applicant" | "admin" | "SUPER_ADMIN";
 
 // Applicant Types
 export interface Applicant {
@@ -113,7 +113,7 @@ export interface Admin {
   id: string;
   email: string;
   fullName: string;
-  role: "admin" | "super-admin";
+  role: "admin" | "SUPER_ADMIN";
   isActive: boolean;
   createdAt: string;
 }

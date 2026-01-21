@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Applicant } from "@/types";
-import { authApi } from "@/lib/api/client";
 import { delay } from "@/lib/data";
 
 interface AuthState {

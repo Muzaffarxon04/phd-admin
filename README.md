@@ -17,7 +17,7 @@ phd-client/
 ├── app/                        # Next.js App Router
 │   ├── (applicant)/           # Talabgor route guruhlari
 │   ├── (admin)/               # Admin route guruhlari
-│   ├── (super-admin)/         # Super Admin route guruhlari
+│   ├── (SUPER_ADMIN)/         # Super Admin route guruhlari
 │   ├── layout.tsx             # Root layout
 │   └── page.tsx               # Home page
 ├── components/                # React komponentlar

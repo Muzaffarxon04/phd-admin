@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { Application, ApplicationStatus, DocumentType } from "@/types";
-import { applicationApi } from "@/lib/api/client";
 import { delay } from "@/lib/data";
 
 interface ApplicationState {

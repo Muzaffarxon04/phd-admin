@@ -2,10 +2,9 @@
 
 import { Layout, Menu } from "antd";
 import {
-  DashboardOutlined,
-  FileTextOutlined,
   HomeOutlined,
-  ApiOutlined,
+  FileTextOutlined,
+  FolderOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -14,45 +13,29 @@ const { Sider } = Layout;
 
 const menuItems = [
   {
-    key: "/admin-panel",
-    icon: <DashboardOutlined />,
-    label: "Dashboard",
+    key: "/dashboard",
+    icon: <HomeOutlined />,
+    label: "Mening Profilim",
   },
   {
-    key: "/admin-panel/applications",
+    key: "/applications",
     icon: <FileTextOutlined />,
     label: "Arizalar",
   },
   {
-    key: "/admin-panel/submissions",
-    icon: <FileTextOutlined />,
-    label: "Topshirilgan Arizalar",
-  },
-  {
-    key: "swagger",
-    icon: <ApiOutlined />,
-    label: "API Dokumentatsiya",
-    onClick: () => {
-      window.open("https://api-doktarant.tashmeduni.uz/swagger/", "_blank");
-    },
-  },
-  {
-    key: "/",
-    icon: <HomeOutlined />,
-    label: "Bosh Sahifa",
+    key: "/my-submissions",
+    icon: <FolderOutlined />,
+    label: "Mening Arizalarim",
   },
 ];
 
-export default function Sidebar() {
+export default function ApplicantSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useThemeStore();
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    // Swagger docs opens in new tab, so don't navigate
-    if (key !== "swagger") {
-      router.push(key);
-    }
+    router.push(key);
   };
 
   return (
@@ -89,7 +72,7 @@ export default function Sidebar() {
               fontSize: "24px",
             }}
           >
-            ⚙️
+            💡
           </div>
           <div>
             <div
@@ -99,7 +82,7 @@ export default function Sidebar() {
                 fontSize: "16px",
               }}
             >
-              Admin Panel
+              Ariza beruvchi
             </div>
           </div>
         </div>
@@ -134,6 +117,13 @@ export default function Sidebar() {
         }
         .custom-menu .ant-menu-item:hover {
           background: ${theme === "dark" ? "#252836" : "#f5f5f5"} !important;
+        }
+        .custom-menu .ant-menu-submenu-title {
+          margin: 4px 8px !important;
+          border-radius: 8px !important;
+          height: 48px !important;
+          line-height: 48px !important;
+          color: ${theme === "dark" ? "#ffffff" : "#333"} !important;
         }
         .custom-menu .ant-menu-item .anticon {
           color: ${theme === "dark" ? "#a0a0a0" : "#666"} !important;
