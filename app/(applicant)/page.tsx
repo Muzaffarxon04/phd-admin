@@ -8,7 +8,7 @@ export default function ApplicantHome() {
         <p className="text-xl text-gray-600 mb-8">
           Oliy ta&apos;lim tizimida malakaviy imtihonlar uchun hujjatlarni onlayn topshirish
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           <div className="p-6 bg-white rounded-lg shadow-md border">
             <h2 className="text-xl font-semibold mb-3">Ariza Topshirish</h2>
             <p className="text-gray-600 mb-4">
