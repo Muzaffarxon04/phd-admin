@@ -27,7 +27,7 @@ export default function AdminPanelLayout({
     if (!accessToken) {
       router.push("/login");
     } else {
-      setIsChecking(false);
+      setTimeout(() => setIsChecking(false), 0);
     }
   }, [router]);
 

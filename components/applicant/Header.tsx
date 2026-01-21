@@ -24,8 +24,11 @@ export default function ApplicantHeader() {
 
   useEffect(() => {
     const user = tokenStorage.getUser() as { full_name?: string } | null;
-    if (user?.full_name) {
-      setUserName(user.full_name.split(" ").pop() || "User");
+    const fullName = user?.full_name;
+    if (fullName) {
+      setTimeout(() => {
+        setUserName(fullName.split(" ").pop() || "User");
+      }, 0);
     }
   }, []);
 

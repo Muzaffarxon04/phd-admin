@@ -64,9 +64,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
-            error: error.message || "Login failed",
+            error: error instanceof Error ? error.message : "Login failed",
             isLoading: false,
             isAuthenticated: false,
             user: null,
@@ -91,8 +91,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
-          set({ error: error.message, isLoading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : "Registration failed", isLoading: false });
         }
       },
 
@@ -133,7 +133,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch (error: any) {
+        } catch {
           if (typeof window !== "undefined") {
             localStorage.removeItem("auth_token");
           }
@@ -163,9 +163,9 @@ export const useAuthStore = create<AuthState>()(
             user: updatedUser,
             isLoading: false,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
-            error: error.message || "Update failed",
+            error: error instanceof Error ? error.message : "Update failed",
             isLoading: false,
           });
           throw error;

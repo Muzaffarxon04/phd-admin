@@ -25,8 +25,11 @@ export default function Header() {
 
   useEffect(() => {
     const user = tokenStorage.getUser() as { full_name?: string } | null;
-    if (user?.full_name) {
-      setUserName(user.full_name.split(" ").pop() || "Admin");
+    const fullName = user?.full_name;
+    if (fullName) {
+      setTimeout(() => {
+        setUserName(fullName.split(" ").pop() || "Admin");
+      }, 0);
     }
   }, []);
 

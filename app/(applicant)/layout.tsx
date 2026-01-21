@@ -25,7 +25,7 @@ export default function ApplicantLayout({
   useEffect(() => {
     // Don't check auth for login and register pages
     if (pathname === "/login" || pathname === "/register") {
-      setIsChecking(false);
+      setTimeout(() => setIsChecking(false), 0);
       return;
     }
 
@@ -37,7 +37,7 @@ export default function ApplicantLayout({
     if (isProtectedRoute && !accessToken) {
       router.push("/login");
     } else {
-      setIsChecking(false);
+      setTimeout(() => setIsChecking(false), 0);
     }
   }, [pathname, router]);
 

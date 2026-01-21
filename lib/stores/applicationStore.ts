@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Application, ApplicationStatus, DocumentType } from "@/types";
+import type { Application, ApplicationStatus, DocumentType, ForeignLanguage } from "@/types";
 import { delay } from "@/lib/data";
 
 interface ApplicationState {
@@ -42,9 +42,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         applications: [],
         isLoading: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to fetch applications",
+        error: error instanceof Error ? error.message : "Failed to fetch applications",
         isLoading: false,
       });
     }
@@ -61,9 +61,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         currentApplication: app || null,
         isLoading: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to fetch application",
+        error: error instanceof Error ? error.message : "Failed to fetch application",
         isLoading: false,
       });
     }
@@ -79,7 +79,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
         id: Date.now().toString(),
         applicantId: "1",
         specializationId: data.specializationId,
-        foreignLanguage: data.foreignLanguage as any,
+        foreignLanguage: data.foreignLanguage as ForeignLanguage,
         organizationName: data.organizationName,
         examRules: data.examRules,
         status: "draft",
@@ -95,9 +95,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       }));
 
       return newApplication;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to create application",
+        error: error instanceof Error ? error.message : "Failed to create application",
         isLoading: false,
       });
       throw error;
@@ -126,9 +126,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             : state.currentApplication,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to update application",
+        error: error instanceof Error ? error.message : "Failed to update application",
         isLoading: false,
       });
       throw error;
@@ -161,9 +161,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             : state.currentApplication,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to submit application",
+        error: error instanceof Error ? error.message : "Failed to submit application",
         isLoading: false,
       });
       throw error;
@@ -207,9 +207,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             : state.currentApplication,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to upload document",
+        error: error instanceof Error ? error.message : "Failed to upload document",
         isLoading: false,
       });
       throw error;
@@ -244,9 +244,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
             : state.currentApplication,
         isLoading: false,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.message || "Failed to delete document",
+        error: error instanceof Error ? error.message : "Failed to delete document",
         isLoading: false,
       });
       throw error;
