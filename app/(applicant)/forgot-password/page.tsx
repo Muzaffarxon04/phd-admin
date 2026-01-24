@@ -2,92 +2,62 @@
 
 import { useState } from "react";
 import { Form, Input, Button, Card, Steps, App } from "antd";
-import { PhoneOutlined, LockOutlined, UserOutlined, MailOutlined, SafetyOutlined } from "@ant-design/icons";
+import { PhoneOutlined, LockOutlined, SafetyOutlined, ArrowLeftOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
-import { useQueryClient } from "@tanstack/react-query";
-import { tokenStorage } from "@/lib/utils";
-import { useAuthStore } from "@/lib/stores/authStore";
+// import { useAuthStore } from "@/lib/stores/authStore";
 import Link from "next/link";
 
 // const { Step } = Steps;
 
-interface RegisterData {
+interface RequestResetData {
   phone_number: string;
+}
+
+interface VerifyOTPResponse {
+  data: {
+    verified: boolean;
+  };
+  message?: string;
+  status: number;
 }
 
 interface VerifyOTPData {
   phone_number: string;
   otp_code: string;
-  purpose?: "REGISTRATION" | "LOGIN" | "PASSWORD_RESET" | "PHONE_VERIFICATION";
 }
 
-interface CompleteRegistrationData {
+interface ResetPasswordData {
   phone_number: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  email?: string;
-  password: string;
+  otp_code: string;
+  new_password: string;
   confirm_password: string;
 }
 
-interface User {
-  id: number;
-  phone_number: string;
-  email?: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  full_name: string;
-  role: string;
-  is_verified: boolean;
-  photo?: string | null;
-  profile_completion: number;
-  date_joined: string;
-  last_login: string;
-}
-
-interface RegisterResponse {
-  user: User;
-  tokens: {
-    refresh: string;
-    access: string;
-  };
+interface ResetPasswordResponse {
   message: string;
   status: number;
 }
 
-function getRedirectPath(role: string): string {
-  const roleUpper = role.toUpperCase();
-  
-  if (roleUpper === "ADMIN" || roleUpper === "SUPER_ADMIN" || roleUpper === "SUPERADMIN") {
-    return "/admin-panel";
-  }
-  
-  return "/dashboard";
-}
-
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { message } = App.useApp();
-  const { resendOTP } = useAuthStore();
+  const [isOTPVerified, setIsOTPVerified] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
 
-  // Step 1: Register
-  const { mutate: register, isPending: isRegistering } = usePost<unknown, RegisterData>("/auth/register/", {
+  const router = useRouter();
+  const { message } = App.useApp();
+
+  // Step 1: Request password reset
+  const { mutate: requestReset, isPending: isRequesting } = usePost<unknown, RequestResetData>("/auth/password/reset/", {
     onSuccess: () => {
       setCurrentStep(1);
       message.success("OTP kod telefon raqamingizga yuborildi!");
     },
     onError: (error) => {
-      // Handle array error format from backend
       let errorMessage = error.message || "Xatolik yuz berdi";
       
-      // Agar backenddan array formatida error kelgan bo'lsa
-      if (Array.isArray((error).data)) {
+      if (Array.isArray((error ).data)) {
         errorMessage = (error).data.join(", ");
       }
       
@@ -96,60 +66,69 @@ export default function RegisterPage() {
   });
 
   // Step 2: Verify OTP
-  const { mutate: verifyOTP, isPending: isVerifying } = usePost<unknown, VerifyOTPData>("/auth/register/verify/", {
-    onSuccess: () => {
-      setCurrentStep(2);
-      message.success("OTP tasdiqlandi!");
+  const { mutate: verifyOTP, isPending: isVerifying } = usePost<VerifyOTPResponse, VerifyOTPData>("/auth/password/reset/verify/", {
+    onSuccess: (response) => {
+      if (response?.data?.verified) {
+        setIsOTPVerified(true);
+        setCurrentStep(2);
+        message.success(response?.message || "OTP tasdiqlandi!");
+      } else {
+        message.error("OTP kod noto'g'ri!");
+      }
     },
     onError: (error) => {
-      message.error(error.message || "OTP xato yoki muddati o&apos;tgan");
-    },
-  });
-
-  // Step 3: Complete registration
-  const { mutate: completeRegistration, isPending: isCompleting } = usePost<RegisterResponse, CompleteRegistrationData>("/auth/register/complete/", {
-    onSuccess: (response) => {
-      // Save tokens
-      tokenStorage.setTokens(response.tokens.access, response.tokens.refresh);
+      let errorMessage = error.message || "Xatolik yuz berdi";
       
-      // Save user data to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(response.user));
+      if (Array.isArray((error ).data)) {
+        errorMessage = (error ).data.join(", ");
       }
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
-      
-      // Get redirect path based on user role
-      const redirectPath = getRedirectPath(response.user.role);
-      
-      message.success(response.message || "Muvaffaqiyatli ro&apos;yxatdan o&apos;tdingiz!");
-      router.push(redirectPath);
-    },
-    onError: (error) => {
-      message.error(error.message || "Ro&apos;yxatdan o&apos;tishda xatolik");
+      message.error(errorMessage);
     },
   });
 
-  const onPhoneSubmit = (values: RegisterData) => {
+  // Step 3: Reset password
+  const { mutate: resetPassword, isPending: isResetting } = usePost<ResetPasswordResponse, ResetPasswordData>("/auth/password/reset/confirm/", {
+    onSuccess: (response) => {
+      message.success(response.message || "Parol muvaffaqiyatli o'zgartirildi!");
+      router.push("/login");
+    },
+    onError: (error) => {
+      let errorMessage = error.message || "Xatolik yuz berdi";
+      
+      if (Array.isArray((error ).data)) {
+        errorMessage = (error ).data.join(", ");
+      }
+      
+      message.error(errorMessage);
+    },
+  });
+
+  const onRequestSubmit = (values: RequestResetData) => {
     setPhoneNumber(values.phone_number);
-    register(values);
+    requestReset(values);
   };
 
   const onOTPSubmit = (values: { otp_code: string }) => {
+    setOtpCode(values.otp_code);
     verifyOTP({
       phone_number: phoneNumber,
       otp_code: values.otp_code,
-      purpose: "REGISTRATION",
     });
   };
 
-  const onCompleteSubmit = (values: CompleteRegistrationData) => {
-    if (values.password !== values.confirm_password) {
+  const onResetSubmit = (values: ResetPasswordData) => {
+    if (values.new_password !== values.confirm_password) {
       message.error("Parollar mos kelmadi!");
       return;
     }
-    completeRegistration(values);
+    
+    resetPassword({
+      phone_number: phoneNumber,
+      otp_code: otpCode,
+      new_password: values.new_password,
+      confirm_password: values.confirm_password,
+    });
   };
 
   return (
@@ -188,15 +167,31 @@ export default function RegisterPage() {
       <Card 
         className="w-full max-w-md shadow-2xl fade-in"
         style={{
-          background: "rgba(255, 255, 255, 0.98)",
+          background: "rgba(255,255,255,0.98)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          border: "1px solid rgba(255,255,255,0.2)",
           borderRadius: "20px",
           position: "relative",
           zIndex: 1,
         }}
       >
         <div className="text-center mb-8">
+          <Link 
+            href="/login" 
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#667eea",
+              fontWeight: 600,
+              marginBottom: "24px",
+              textDecoration: "none",
+            }}
+          >
+            <ArrowLeftOutlined />
+            Orqaga
+          </Link>
+          
           <div
             style={{
               width: 64,
@@ -211,7 +206,7 @@ export default function RegisterPage() {
               boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4)",
             }}
           >
-            ✨
+            🔐
           </div>
           <h1 
             className="text-3xl font-bold mb-2"
@@ -222,9 +217,11 @@ export default function RegisterPage() {
               backgroundClip: "text",
             }}
           >
-            Ro&apos;yxatdan o&apos;tish
+            Parolni Tiklash
           </h1>
-          <p className="text-gray-600" style={{ fontSize: "15px" }}>Yangi hisob yarating</p>
+          <p className="text-gray-600" style={{ fontSize: "15px" }}>
+            Parolni unutdingizmi? Tiklashish uchun quyidagi amallarni bajaring
+          </p>
         </div>
 
         <Steps 
@@ -233,13 +230,13 @@ export default function RegisterPage() {
           style={{ marginBottom: "32px" }}
           items={[
             { title: "Telefon", icon: <PhoneOutlined /> },
-            { title: "Tasdiqlash", icon: <SafetyOutlined /> },
-            { title: "Ma'lumotlar", icon: <UserOutlined /> },
+            { title: "Tasdiqlash", icon: <CheckCircleOutlined /> },
+            { title: "Yangi parol", icon: <LockOutlined /> },
           ]}
         />
 
         {currentStep === 0 && (
-          <Form name="register_phone" onFinish={onPhoneSubmit} layout="vertical" size="large">
+          <Form name="request_reset" onFinish={onRequestSubmit} layout="vertical" size="large">
             <Form.Item
               name="phone_number"
               label={<span style={{ fontWeight: 600 }}>Telefon raqam</span>}
@@ -259,7 +256,7 @@ export default function RegisterPage() {
               <Button 
                 type="primary" 
                 htmlType="submit" 
-                loading={isRegistering} 
+                loading={isRequesting} 
                 block 
                 className="h-12"
                 style={{
@@ -285,108 +282,8 @@ export default function RegisterPage() {
             </Form.Item>
 
             <div className="text-center mt-6">
-              <Button 
-                type="link" 
-                onClick={() => {
-                  setCurrentStep(0);
-                  // Agar register jarayon bo'lsa, login sahifasiga o'ting
-                  if (!isRegistering) {
-                    router.push('/login');
-                  }
-                }}
-                style={{ color: "#667eea", fontWeight: 500 }}
-              >
-                ← Orqaga
-              </Button>
-            </div>
-          </Form>
-        )}
-
-        {currentStep === 1 && (
-          <Form name="verify_otp" onFinish={onOTPSubmit} layout="vertical" size="large">
-            <div 
-              className="mb-6 p-4 rounded-lg"
-              style={{
-                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                border: "1px solid rgba(102, 126, 234, 0.2)",
-              }}
-            >
-              <p className="text-sm" style={{ color: "#667eea", fontWeight: 500 }}>
-                OTP kod <strong style={{ color: "#764ba2" }}>{phoneNumber}</strong> raqamiga yuborildi.
-              </p>
-            </div>
-
-            <Form.Item
-              name="otp_code"
-              label={<span style={{ fontWeight: 600 }}>OTP kod</span>}
-              rules={[
-                { required: true, message: "OTP kodni kiriting!" },
-                { len: 6, message: "OTP kod 6 raqamdan iborat bo'lishi kerak!" },
-              ]}
-            >
-              <Input 
-                prefix={<SafetyOutlined style={{ color: "#667eea" }} />} 
-                placeholder="123456" 
-                maxLength={6}
-                style={{ borderRadius: "8px", fontSize: "18px", letterSpacing: "4px", textAlign: "center" }}
-              />
-            </Form.Item>
-
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isVerifying} 
-                block 
-                className="h-12"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                }}
-              >
-                Tasdiqlash
-              </Button>
-            </Form.Item>
-
-            <div className="text-center mt-4">
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Button 
-                  type="link" 
-                  onClick={() => setCurrentStep(0)}
-                  style={{ color: "#667eea", fontWeight: 500 }}
-                >
-                  ← Orqaga
-                </Button>
-                <Button 
-                  type="link" 
-                  onClick={() => resendOTP({ phone: phoneNumber })}
-                  style={{ color: "#667eea", fontWeight: 500 }}
-                >
-                  OTP qayta yuborish
-                </Button>
-              </div>
-            </div>
-          </Form>
-        )}
-
-        {currentStep === 2 && (
-          <Form name="complete_registration" onFinish={onCompleteSubmit} layout="vertical" size="large">
-            <div className="text-center mt-6">
               <p className="text-gray-600" style={{ fontSize: "14px" }}>
-                Allaqachon hisobingiz bormi?{" "}
+                Hisobingiz bormi?{" "}
                 <Link 
                   href="/login" 
                   style={{
@@ -403,25 +300,6 @@ export default function RegisterPage() {
                   }}
                 >
                   Kirish
-                </Link>
-              </p>
-              <p className="text-gray-600" style={{ fontSize: "14px", marginTop: "8px" }}>
-                <Link 
-                  href="/forgot-password" 
-                  style={{
-                    color: "#667eea",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#764ba2";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#667eea";
-                  }}
-                >
-                  Parolni unutdingizmi?
                 </Link>
               </p>
             </div>
@@ -500,66 +378,37 @@ export default function RegisterPage() {
         )}
 
         {currentStep === 2 && (
-          <Form name="complete_registration" onFinish={onCompleteSubmit} layout="vertical" size="large">
-            <Form.Item name="phone_number" initialValue={phoneNumber} hidden>
+          <Form name="reset_password" onFinish={onResetSubmit} layout="vertical" size="large">
+            {isOTPVerified && (
+              <div 
+                className="mb-6 p-4 rounded-lg"
+                style={{
+                  background: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)",
+                  border: "1px solid rgba(34, 197, 94, 0.2)",
+                }}
+              >
+                <p className="text-sm" style={{ color: "#22c55e", fontWeight: 500, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircleOutlined style={{ fontSize: "18px" }} />
+                  OTP kod tasdiqlandi! Endi yangi parol kiriting.
+                </p>
+              </div>
+            )}
+
+            <Form.Item name="otp_code" initialValue={phoneNumber} hidden>
               <Input />
             </Form.Item>
 
             <Form.Item
-              name="first_name"
-              label={<span style={{ fontWeight: 600 }}>Ism</span>}
-              rules={[{ required: true, message: "Ismingizni kiriting!" }]}
-            >
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Ismingiz"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="last_name"
-              label={<span style={{ fontWeight: 600 }}>Familiya</span>}
-              rules={[{ required: true, message: "Familiyangizni kiriting!" }]}
-            >
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Familiyangiz"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item name="middle_name" label={<span style={{ fontWeight: 600 }}>Otasining ismi</span>}>
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Otasining ismi"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label={<span style={{ fontWeight: 600 }}>Email</span>}
-              rules={[{ type: "email", message: "Email formati noto'g'ri!" }]}
-            >
-              <Input 
-                prefix={<MailOutlined style={{ color: "#667eea" }} />} 
-                placeholder="email@example.com"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              label={<span style={{ fontWeight: 600 }}>Parol</span>}
+              name="new_password"
+              label={<span style={{ fontWeight: 600 }}>Yangi parol</span>}
               rules={[
-                { required: true, message: "Parolni kiriting!" },
+                { required: true, message: "Yangi parolni kiriting!" },
                 { min: 8, message: "Parol kamida 8 belgidan iborat bo'lishi kerak!" },
               ]}
             >
               <Input.Password 
                 prefix={<LockOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Parol"
+                placeholder="Yangi parol"
                 style={{ borderRadius: "8px" }}
               />
             </Form.Item>
@@ -567,12 +416,12 @@ export default function RegisterPage() {
             <Form.Item
               name="confirm_password"
               label={<span style={{ fontWeight: 600 }}>Parolni tasdiqlang</span>}
-              dependencies={["password"]}
+              dependencies={["new_password"]}
               rules={[
                 { required: true, message: "Parolni tasdiqlang!" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue("password") === value) {
+                    if (!value || getFieldValue("new_password") === value) {
                       return Promise.resolve();
                     }
                     return Promise.reject(new Error("Parollar mos kelmadi!"));
@@ -591,7 +440,7 @@ export default function RegisterPage() {
               <Button 
                 type="primary" 
                 htmlType="submit" 
-                loading={isCompleting} 
+                loading={isResetting} 
                 block 
                 className="h-12"
                 style={{
@@ -612,14 +461,17 @@ export default function RegisterPage() {
                   e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
                 }}
               >
-                Ro&apos;yxatdan o&apos;tish
+                Parolni o&apos;zgartirish
               </Button>
             </Form.Item>
 
             <div className="text-center mt-4">
               <Button 
                 type="link" 
-                onClick={() => setCurrentStep(1)}
+                onClick={() => {
+                  setCurrentStep(1);
+                  setIsOTPVerified(false);
+                }}
                 style={{ color: "#667eea", fontWeight: 500 }}
               >
                 ← Orqaga

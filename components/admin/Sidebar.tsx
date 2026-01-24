@@ -1,14 +1,18 @@
 "use client";
 
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Avatar, Dropdown } from "antd";
 import {
   DashboardOutlined,
   FileTextOutlined,
-  HomeOutlined,
-  ApiOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import { tokenStorage } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import type { MenuProps } from "antd";
 
 const { Sider } = Layout;
 
@@ -29,20 +33,61 @@ const menuItems = [
     label: "Topshirilgan Arizalar",
   },
 
-
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useThemeStore();
+  const [userName, setUserName] = useState<string>("Admin");
+const [role, setRole] = useState<string>("Admin");
+
+  useEffect(() => {
+    const loadUser = () => {
+      const user = tokenStorage.getUser() as { full_name?: string, role?: string } | null;
+      const fullName = user?.full_name;
+      setRole(user?.role || "Admin");
+      if (fullName) {
+        setUserName(fullName);
+      }
+    };
+    loadUser();
+  }, []);
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    // Swagger docs opens in new tab, so don't navigate
     if (key !== "swagger") {
       router.push(key);
     }
   };
+
+  const handleLogout = () => {
+    tokenStorage.removeTokens();
+    router.push("/login");
+  };
+
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "Profil",
+      onClick: () => router.push("/admin-panel/profile"),
+    },
+    // {
+    //   key: "settings",
+    //   icon: <SettingOutlined />,
+    //   label: "Sozlamalar",
+    // },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Chiqish",
+      onClick: handleLogout,
+      danger: true,
+    },
+  ];
 
   return (
     <Sider
@@ -55,70 +100,54 @@ export default function Sidebar() {
         top: 0,
         bottom: 0,
         background: theme === "dark" 
-          ? "linear-gradient(180deg, #1a1d29 0%, #1f2230 100%)" 
+          ? "#1a1d29" 
           : "#ffffff",
-        borderRight: `1px solid ${theme === "dark" ? "#252836" : "#e8e8e8"}`,
+        borderRight: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"}`,
         boxShadow: theme === "dark" 
           ? "4px 0 20px rgba(0, 0, 0, 0.3)" 
           : "2px 0 8px rgba(0, 0, 0, 0.05)",
         transition: "all 0.3s ease",
       }}
     >
+      {/* Logo Section */}
       <div
         style={{
           padding: "24px",
-          borderBottom: theme === "dark" ? "1px solid #252836" : "1px solid #e8e8e8",
-          background: theme === "dark" 
-            ? "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)" 
-            : "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
+          borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: "12px",
+              width: 40,
+              height: 40,
+              borderRadius: "10px",
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
-              fontSize: "24px",
-              transition: "transform 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
+              fontSize: "20px",
+              fontWeight: "bold",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
             }}
           >
-            ⚙️
+         👨‍🎓
           </div>
-          <div>
-            <div
-              style={{
-                fontWeight: 700,
-                color: theme === "dark" ? "#ffffff" : "#1a1a1a",
-                fontSize: "18px",
-                letterSpacing: "-0.5px",
-              }}
-            >
-              Admin Panel
-            </div>
-            <div
-              style={{
-                fontSize: "12px",
-                color: theme === "dark" ? "#a0a0a0" : "#666",
-                marginTop: 2,
-              }}
-            >
-              Boshqaruv paneli
-            </div>
+          <div
+            style={{
+              fontWeight: 700,
+              color: theme === "dark" ? "#ffffff" : "#1a1a1a",
+              fontSize: "18px",
+              letterSpacing: "-0.5px",
+            }}
+          >
+             Admin Panel
           </div>
         </div>
       </div>
+
+      {/* Menu */}
       <Menu
         mode="inline"
         selectedKeys={[pathname]}
@@ -127,11 +156,79 @@ export default function Sidebar() {
         style={{
           borderRight: 0,
           background: "transparent",
-          padding: "16px 8px",
+          padding: "8px",
         }}
         theme={theme === "dark" ? "dark" : "light"}
         className="custom-menu-admin"
       />
+
+      {/* User Profile Section */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: "16px 24px",
+          borderTop: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+          background: theme === "dark" ? "#1a1d29" : "#ffffff",
+        }}
+      >
+        <Dropdown 
+          menu={{ items: userMenuItems }}
+          trigger={["click"]}
+          placement="topLeft"
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              cursor: "pointer",
+              padding: "8px",
+              borderRadius: "8px",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <Avatar
+              size={36}
+              icon={<UserOutlined />}
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  color: theme === "dark" ? "#ffffff" : "#1a1a1a",
+                  fontSize: "14px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userName}
+              </div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: theme === "dark" ? "#8b8b8b" : "#666",
+                  marginTop: 2,
+                }}
+              >
+             {role}
+              </div>
+            </div>
+          </div>
+        </Dropdown>
+      </div>
       <style jsx global>{`
         .custom-menu-admin .ant-menu-item {
           margin: 6px 8px !important;

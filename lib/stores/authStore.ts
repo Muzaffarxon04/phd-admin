@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Applicant } from "@/types";
-import { delay } from "@/lib/data";
+import { authApi, type User } from "@/lib/api";
+import { tokenStorage } from "@/lib/utils";
 
 interface AuthState {
   user: Applicant | null;
@@ -10,15 +11,44 @@ interface AuthState {
   error: string | null;
   
   // Actions
-  login: (oneIdData: {
-    passportSeries: string;
-    passportNumber: string;
-    pinfl: string;
+  login: (credentials: {
+    username: string;
+    password: string;
+  }) => Promise<void>;
+  register: (data: {
     phone: string;
+    full_name: string;
+  }) => Promise<void>;
+  verifyOTP: (data: {
+    phone: string;
+    otp: string;
+  }) => Promise<void>;
+  completeRegistration: (data: {
+    pinfl: string;
+    passport_series: string;
+    passport_number: string;
+    address: string;
+    email?: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  updateProfile: (data: Partial<Applicant>) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  requestPasswordReset: (data: {
+    phone: string;
+  }) => Promise<void>;
+  verifyPasswordResetOTP: (data: {
+    phone: string;
+    otp: string;
+  }) => Promise<void>;
+  confirmPasswordReset: (data: {
+    phone: string;
+    otp: string;
+    new_password: string;
+    confirm_password: string;
+  }) => Promise<void>;
+  resendOTP: (data: {
+    phone: string;
+  }) => Promise<void>;
   setError: (error: string | null) => void;
 }
 
@@ -30,36 +60,31 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
 
-      login: async (oneIdData) => {
+      login: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-          // Mock login - API ready bo'lganda o'zgartirish kerak
-          await delay(800);
+          const response = await authApi.login(credentials);
           
-          // Simulate API call
-          // const response = await authApi.loginWithOneId(oneIdData);
+          // Store tokens
+          tokenStorage.setTokens(response.access, response.refresh);
           
-          // Mock user data
-          const mockUser: Applicant = {
-            id: "1",
-            oneId: oneIdData.pinfl,
-            fullName: "Test User",
-            address: "Toshkent shahri",
-            passportSeries: oneIdData.passportSeries,
-            passportNumber: oneIdData.passportNumber,
-            pinfl: oneIdData.pinfl,
-            phone: oneIdData.phone,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+          // Convert API user to Applicant type
+          const user: Applicant = {
+            id: response.user?.id || "",
+            oneId: response.user?.pinfl || "",
+            fullName: response.user?.full_name || "",
+            address: response.user?.address || "",
+            passportSeries: response.user?.passport_series || "",
+            passportNumber: response.user?.passport_number || "",
+            pinfl: response.user?.pinfl || "",
+            phone: response.user?.phone || "",
+            email: response.user?.email,
+            createdAt: response.user?.created_at || new Date().toISOString(),
+            updatedAt: response.user?.updated_at || new Date().toISOString(),
           };
 
-          // Mock token
-          if (typeof window !== "undefined") {
-            localStorage.setItem("auth_token", "mock_token_" + Date.now());
-          }
-
           set({
-            user: mockUser,
+            user,
             isAuthenticated: true,
             isLoading: false,
             error: null,
@@ -75,15 +100,98 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      register: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.register(data);
+          set({ isLoading: false });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "Registration failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      verifyOTP: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.verifyRegistrationOTP(data);
+          
+          // Store tokens
+          tokenStorage.setTokens(response.access, response.refresh);
+          
+          // Convert API user to Applicant type
+          const user: Applicant = {
+            id: response.user.id,
+            oneId: response.user.pinfl || "",
+            fullName: response.user.full_name || "",
+            address: response.user.address || "",
+            passportSeries: response.user.passport_series || "",
+            passportNumber: response.user.passport_number || "",
+            pinfl: response.user.pinfl || "",
+            phone: response.user.phone || "",
+            email: response.user.email,
+            createdAt: response.user.created_at,
+            updatedAt: response.user.updated_at,
+          };
+
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "OTP verification failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      completeRegistration: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const user = await authApi.completeRegistration(data);
+          
+          // Update current user with completed registration data
+          const currentUser = get().user;
+          if (currentUser) {
+            const updatedUser: Applicant = {
+              ...currentUser,
+              oneId: user.pinfl || "",
+              fullName: user.full_name || currentUser.fullName,
+              address: user.address || "",
+              passportSeries: user.passport_series || "",
+              passportNumber: user.passport_number || "",
+              pinfl: user.pinfl || "",
+              phone: user.phone || currentUser.phone,
+              email: user.email,
+              updatedAt: user.updated_at,
+            };
+
+            set({
+              user: updatedUser,
+              isLoading: false,
+            });
+          }
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "Registration completion failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
       logout: async () => {
         set({ isLoading: true });
         try {
-          // await authApi.logout();
-          await delay(300);
-          
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("auth_token");
-          }
+          // Clear tokens
+          tokenStorage.removeTokens();
 
           set({
             user: null,
@@ -92,19 +200,15 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: unknown) {
-          set({ error: error instanceof Error ? error.message : "Registration failed", isLoading: false });
+          set({ error: error instanceof Error ? error.message : "Logout failed", isLoading: false });
         }
       },
 
       checkAuth: async () => {
         set({ isLoading: true });
         try {
-          // const response = await authApi.getMe();
-          await delay(300);
-          
-          const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-          
-          if (!token) {
+          // Check if tokens exist
+          if (!tokenStorage.hasTokens()) {
             set({
               user: null,
               isAuthenticated: false,
@@ -113,30 +217,32 @@ export const useAuthStore = create<AuthState>()(
             return;
           }
 
-          // Mock: if token exists, user is authenticated
-          // In real app, verify token with backend
-          const mockUser: Applicant = {
-            id: "1",
-            oneId: "12345678901234",
-            fullName: "Test User",
-            address: "Toshkent shahri",
-            passportSeries: "AA",
-            passportNumber: "1234567",
-            pinfl: "12345678901234",
-            phone: "+998901234567",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+          // Fetch current user from API
+          const user = await authApi.getMe();
+          
+          // Convert API user to Applicant type
+          const applicant: Applicant = {
+            id: user.id,
+            oneId: user.pinfl || "",
+            fullName: user.full_name || "",
+            address: user.address || "",
+            passportSeries: user.passport_series || "",
+            passportNumber: user.passport_number || "",
+            pinfl: user.pinfl || "",
+            phone: user.phone || "",
+            email: user.email,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
           };
 
           set({
-            user: mockUser,
+            user: applicant,
             isAuthenticated: true,
             isLoading: false,
           });
         } catch {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("auth_token");
-          }
+          // Clear tokens on error
+          tokenStorage.removeTokens();
           set({
             user: null,
             isAuthenticated: false,
@@ -148,24 +254,89 @@ export const useAuthStore = create<AuthState>()(
       updateProfile: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          await delay(500);
+          const updatedUser = await authApi.patchMe(data);
           
-          const currentUser = get().user;
-          if (!currentUser) throw new Error("User not authenticated");
-
-          const updatedUser: Applicant = {
-            ...currentUser,
-            ...data,
-            updatedAt: new Date().toISOString(),
+          // Convert API user to Applicant type
+          const applicant: Applicant = {
+            id: updatedUser.id,
+            oneId: updatedUser.pinfl || "",
+            fullName: updatedUser.full_name || "",
+            address: updatedUser.address || "",
+            passportSeries: updatedUser.passport_series || "",
+            passportNumber: updatedUser.passport_number || "",
+            pinfl: updatedUser.pinfl || "",
+            phone: updatedUser.phone || "",
+            email: updatedUser.email,
+            createdAt: updatedUser.created_at,
+            updatedAt: updatedUser.updated_at,
           };
 
           set({
-            user: updatedUser,
+            user: applicant,
             isLoading: false,
           });
         } catch (error: unknown) {
           set({
             error: error instanceof Error ? error.message : "Update failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      requestPasswordReset: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.requestPasswordReset(data);
+          set({ isLoading: false });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "Password reset request failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      verifyPasswordResetOTP: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.verifyPasswordResetOTP(data);
+          if (!response.valid) {
+            throw new Error("OTP code is invalid");
+          }
+          set({ isLoading: false });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "OTP verification failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      confirmPasswordReset: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.confirmPasswordReset(data);
+          set({ isLoading: false });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "Password reset confirmation failed",
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      resendOTP: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.resendOTP(data);
+          set({ isLoading: false });
+        } catch (error: unknown) {
+          set({
+            error: error instanceof Error ? error.message : "Failed to resend OTP",
             isLoading: false,
           });
           throw error;

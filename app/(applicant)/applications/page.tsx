@@ -1,8 +1,12 @@
 "use client";
 
-import { Card, Spin, Empty, Button } from "antd";
-import { FileTextOutlined } from "@ant-design/icons";
+import { Card, Button, Row, Col } from "antd";
+import { FileTextOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
+import { useThemeStore } from "@/lib/stores/themeStore";
+import { CardSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/utils";
@@ -41,6 +45,7 @@ interface ApplicationsResponse {
 
 export default function ApplicationsPage() {
   const router = useRouter();
+  const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
   
   // Handle different response formats
@@ -57,18 +62,49 @@ export default function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spin size="large" />
+      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+        <h1 style={{ 
+          fontSize: "24px", 
+          fontWeight: 700,
+          marginBottom: 24,
+          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+        }}>
+          Mavjud Arizalar
+        </h1>
+        <Row gutter={[16, 16]}>
+          {[1, 2, 3].map((i) => (
+            <Col xs={24} sm={12} lg={8} key={i}>
+              <CardSkeleton />
+            </Col>
+          ))}
+        </Row>
       </div>
     );
   }
 
   if (error) {
+    // Handle array error format from backend
+    let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
+    
+    // Agar backenddan array formatida error kelgan bo'lsa
+    if (Array.isArray((error as any).data)) {
+      errorMessage = (error as any).data.join(", ");
+    }
+    
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <p className="text-red-600">Xatolik: {error.message}</p>
-        </Card>
+      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+        <h1 style={{ 
+          fontSize: "24px", 
+          fontWeight: 700,
+          marginBottom: 24,
+          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+        }}>
+          Mavjud Arizalar
+        </h1>
+        <ErrorState 
+          description={errorMessage}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -76,56 +112,137 @@ export default function ApplicationsPage() {
   // Ensure applications is always an array
   const tableData = Array.isArray(applications) ? applications : [];
 
+  const cardStyle = {
+    background: theme === "dark" ? "#252836" : "#ffffff",
+    border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+    borderRadius: "12px",
+    boxShadow: theme === "dark" 
+      ? "0 4px 12px rgba(0, 0, 0, 0.2)" 
+      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+    transition: "all 0.3s ease",
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Mavjud Arizalar</h1>
-      </div>
+    <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+      <h1 style={{ 
+        fontSize: "24px", 
+        fontWeight: 700,
+        marginBottom: 24,
+        color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+      }}>
+        Mavjud Arizalar
+      </h1>
 
       {!tableData || tableData.length === 0 ? (
-        <Card>
-          <Empty description="Hozircha mavjud arizalar yo&apos;q" />
-        </Card>
+        <EmptyState 
+          description="Hozircha mavjud arizalar yo'q"
+          action={
+            <Link href="/applications">
+              <Button 
+                type="primary"
+                style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                }}
+              >
+                Yangi ariza yaratish
+              </Button>
+            </Link>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Row gutter={[16, 16]}>
           {tableData.map((app) => (
-            <Card
-              key={app.id}
-              hoverable
-              title={app.title}
-              extra={
-                <Link href={`/applications/${app.id}`} onClick={(e) => e.stopPropagation()}>
-                  <Button type="primary">Batafsil</Button>
-                </Link>
-              }
-              onClick={() => router.push(`/applications/${app.id}`)}
-              style={{ cursor: "pointer" }}
-            >
-              <p className="text-gray-600 mb-4 line-clamp-3">{app.description}</p>
-              <div className="space-y-2 text-sm">
-                <p>
-                  <strong>Boshlanish:</strong> {formatDate(app.start_date)}
+            <Col xs={24} sm={12} lg={8} key={app.id}>
+              <Card
+                hoverable
+                style={{
+                  ...cardStyle,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = theme === "dark"
+                    ? "0 8px 24px rgba(102, 126, 234, 0.3)"
+                    : "0 8px 24px rgba(102, 126, 234, 0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = cardStyle.boxShadow;
+                }}
+                onClick={() => router.push(`/applications/${app.id}`)}
+                title={
+                  <span style={{ 
+                    fontSize: "18px", 
+                    fontWeight: 600,
+                    color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+                  }}>
+                    {app.title}
+                  </span>
+                }
+                extra={
+                  <Link href={`/applications/${app.id}`} onClick={(e) => e.stopPropagation()}>
+                    <Button 
+                      type="primary"
+                      icon={<ArrowRightOutlined />}
+                      style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Batafsil
+                    </Button>
+                  </Link>
+                }
+              >
+                <p style={{ 
+                  color: theme === "dark" ? "#8b8b8b" : "#666",
+                  marginBottom: 16,
+                  minHeight: 60,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}>
+                  {app.description}
                 </p>
-                <p>
-                  <strong>Tugash:</strong> {formatDate(app.end_date)}
-                </p>
-                {app.exam_date && (
-                  <p>
-                    <strong>Imtihon sana:</strong> {formatDate(app.exam_date)}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "14px" }}>
+                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
+                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Boshlanish:</strong> {formatDate(app.start_date)}
                   </p>
-                )}
-                <p>
-                  <strong>To&apos;lov:</strong> {app.application_fee} UZS
-                </p>
-              </div>
-              {app.can_apply === false && (
-                <div className="mt-4 p-2 bg-yellow-50 rounded text-yellow-800 text-sm">
-                  {app.can_apply_message}
+                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
+                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Tugash:</strong> {formatDate(app.end_date)}
+                  </p>
+                  {app.exam_date && (
+                    <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
+                      <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Imtihon sana:</strong> {formatDate(app.exam_date)}
+                    </p>
+                  )}
+                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
+                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>To'lov:</strong> {app.application_fee} UZS
+                  </p>
                 </div>
-              )}
-            </Card>
+                {app.can_apply === false && (
+                  <div style={{
+                    marginTop: 16,
+                    padding: "12px",
+                    background: theme === "dark" ? "rgba(255, 193, 7, 0.1)" : "#fffbe6",
+                    borderRadius: "8px",
+                    border: `1px solid ${theme === "dark" ? "rgba(255, 193, 7, 0.3)" : "#ffe58f"}`,
+                    color: theme === "dark" ? "#ffc107" : "#d48806",
+                    fontSize: "13px",
+                  }}>
+                    {app.can_apply_message}
+                  </div>
+                )}
+              </Card>
+            </Col>
           ))}
-        </div>
+        </Row>
       )}
     </div>
   );

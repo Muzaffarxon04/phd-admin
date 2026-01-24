@@ -80,25 +80,92 @@ Sayt `http://localhost:3000` da ochiladi.
 
 ## 🔌 API Integratsiyasi
 
-Frontend allaqachon API integratsiyasi uchun tayyorlangan. `lib/api/client.ts` faylida API client mavjud.
+Frontend allaqachon API bilan to'liq integratsiya qilingan. Swagger docs: https://api-doktarant.tashmeduni.uz/swagger/
 
-### Backend tayyor bo'lganda:
+### API Struktura
 
-1. `.env.local` faylida `NEXT_PUBLIC_API_URL` o'rnating:
+Loyiha uchta API sektordan iborat:
+
+**1. Auth API (`lib/api/auth.ts`)**
+- Login / Logout
+- Register (telefon orqali)
+- OTP tasdiqlash
+- Parolni tiklash
+- Profilni tahrirlash
+
+**2. Applicant API (`lib/api/applicant.ts`)**
+- Arizalarni olish
+- Ariza topshirish
+- Hujjatlarni yuklash
+- Arizani ko'rib chiqish
+
+**3. Admin API (`lib/api/admin.ts`)**
+- Arizalarni boshqarish
+- Ariza yaratish / o'zgartirish / o'chirish
+- Ariza maydonlarini boshqarish
+- Arizalarni tasdiqlash / rad etish
+
+### Konfiguratsiya
+
+`.env.local` faylida API URL ni o'rnating:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_API_URL=https://api-doktarant.tashmeduni.uz/api/v1
    ```
-
-2. `lib/stores/` da mock funksiyalarni API chaqiruvlari bilan almashtiring
-
-3. `lib/api/client.ts` da API endpoints'larni to'g'ri sozlang
 
 ### Hozirgi holat:
 
-- ✅ API client struktura tayyor
-- ✅ Mock data bilan ishlaydi
-- ✅ Store'lar mock funksiyalar bilan ishlaydi
-- ✅ API ready bo'lganda osonlik bilan ulash mumkin
+- ✅ API servislari to'liq integratsiya qilingan
+- ✅ TypeScript types tayyor
+- ✅ AuthStore real API'dan foydalanadi
+- ✅ ApplicationStore real API'dan foydalanadi
+- ✅ Token refresh avtomatik
+- ✅ Error handling tayyor
+- ✅ File upload qo'llab-quvvatlanadi
+
+### Foydalanish Misollari
+
+```typescript
+// Auth
+import { authApi } from "@/lib/api";
+
+// Login
+const response = await authApi.login({
+  username: "user@example.com",
+  password: "password123"
+});
+
+// Get current user
+const user = await authApi.getMe();
+
+// Applicant
+import { applicantApi } from "@/lib/api";
+
+// Get applications
+const apps = await applicantApi.getApplications();
+
+// Create submission
+const submission = await applicantApi.createSubmission({
+  application_id: "app-123"
+});
+
+// Upload document
+const formData = new FormData();
+formData.append("file", file);
+await applicantApi.uploadDocument(submissionId, formData);
+
+// Admin
+import { adminApi } from "@/lib/api";
+
+// Get all submissions
+const response = await adminApi.getSubmissions(1, 20);
+
+// Approve submission
+await adminApi.approveSubmission(submissionId);
+```
+
+### Batafsil ma'lumot
+
+Batafsil API integratsiya bo'yicha ma'lumot uchun `API_INTEGRATION.md` faylini o'qing.
 
 ## 📝 Static/Mock Data
 

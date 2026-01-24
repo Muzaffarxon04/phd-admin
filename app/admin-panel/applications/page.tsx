@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Button, Tag, Space, Card, Spin } from "antd";
+import { Table, Button, Tag, Space, Card } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
+import { useThemeStore } from "@/lib/stores/themeStore";
+import { TableSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ErrorState";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 
@@ -103,6 +106,7 @@ const columns: ColumnsType<Application> = [
 ];
 
 export default function AdminApplicationsPage() {
+  const { theme } = useThemeStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   
@@ -128,34 +132,98 @@ export default function AdminApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spin size="large" />
+      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          marginBottom: 24 
+        }}>
+          <h1 style={{ 
+            fontSize: "24px", 
+            fontWeight: 700,
+            margin: 0,
+            color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+          }}>
+            Arizalar
+          </h1>
+        </div>
+        <TableSkeleton />
       </div>
     );
   }
 
   if (error) {
+    // Handle array error format from backend
+    let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
+    
+    // Agar backenddan array formatida error kelgan bo'lsa
+    if (Array.isArray((error as any).data)) {
+      errorMessage = (error as any).data.join(", ");
+    }
+    
     return (
-      <div>
-        <h1 className="text-3xl font-bold mb-6">Arizalar</h1>
-        <Card>
-          <p className="text-red-600">Xatolik: {error.message}</p>
-        </Card>
+      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+        <h1 style={{ 
+          fontSize: "24px", 
+          fontWeight: 700,
+          marginBottom: 24,
+          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+        }}>
+          Arizalar
+        </h1>
+        <ErrorState 
+          description={errorMessage}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
 
+  const cardStyle = {
+    background: theme === "dark" ? "#252836" : "#ffffff",
+    border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+    borderRadius: "12px",
+    padding: "24px",
+    boxShadow: theme === "dark" 
+      ? "0 4px 12px rgba(0, 0, 0, 0.2)" 
+      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+  };
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Arizalar</h1>
+    <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: 24 
+      }}>
+        <h1 style={{ 
+          fontSize: "24px", 
+          fontWeight: 700,
+          margin: 0,
+          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
+        }}>
+          Arizalar
+        </h1>
         <Link href="/admin-panel/applications/create">
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              border: "none",
+              borderRadius: "8px",
+              height: "40px",
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+            }}
+          >
             Yangi ariza
           </Button>
         </Link>
       </div>
-      <Card>
+      <Card style={cardStyle} bodyStyle={{ padding: 0 }}>
         <Table
           columns={columns}
           dataSource={applications || []}
@@ -177,8 +245,79 @@ export default function AdminApplicationsPage() {
               setCurrentPage(1);
               setPageSize(size);
             },
+            style: {
+              padding: "16px 24px",
+              background: theme === "dark" ? "#252836" : "#ffffff",
+            },
           }}
+          className="custom-admin-table"
         />
+        <style jsx global>{`
+          .custom-admin-table .ant-table {
+            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .custom-admin-table .ant-table-thead > tr > th {
+            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)"} !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#1a1a1a"} !important;
+            font-weight: 600 !important;
+            padding: 16px !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr > td {
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.04)"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            padding: 16px !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr:hover > td {
+            background: ${theme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.05)"} !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr.ant-table-row-selected > td {
+            background: ${theme === "dark" ? "rgba(102, 126, 234, 0.15)" : "rgba(102, 126, 234, 0.08)"} !important;
+          }
+          .custom-admin-table .ant-pagination {
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .custom-admin-table .ant-pagination-item {
+            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
+            border-color: ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"} !important;
+          }
+          .custom-admin-table .ant-pagination-item a {
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .custom-admin-table .ant-pagination-item-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-color: transparent !important;
+          }
+          .custom-admin-table .ant-pagination-item-active a {
+            color: #ffffff !important;
+          }
+          .custom-admin-table .ant-pagination-prev,
+          .custom-admin-table .ant-pagination-next {
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .custom-admin-table .ant-pagination-prev:hover,
+          .custom-admin-table .ant-pagination-next:hover {
+            color: #667eea !important;
+          }
+          .custom-admin-table .ant-select-selector {
+            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
+            border-color: ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .custom-admin-table .ant-btn-link {
+            color: ${theme === "dark" ? "#667eea" : "#667eea"} !important;
+          }
+          .custom-admin-table .ant-btn-link:hover {
+            color: ${theme === "dark" ? "#764ba2" : "#764ba2"} !important;
+          }
+          .custom-admin-table .ant-tag {
+            border-radius: 6px !important;
+            padding: 4px 12px !important;
+            font-weight: 500 !important;
+            border: none !important;
+          }
+        `}</style>
       </Card>
     </div>
   );

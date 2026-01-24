@@ -24,8 +24,24 @@ interface User {
 
 export default function DashboardPage() {
   const user = tokenStorage.getUser() as User | null;
-  const { data: userData, isLoading } = useGet<User>("/auth/me/");
+  const { data: userData, isLoading, error } = useGet<User>("/auth/me/");
   const { theme } = useThemeStore();
+
+  // Handle error
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div style={{ color: theme === "dark" ? "#ffffff" : "#000000", textAlign: "center" }}>
+          <h2 style={{ fontSize: "20px", marginBottom: 16 }}>Profilni yuklashda xatolik</h2>
+          <p style={{ color: "#666" }}>
+            {Array.isArray((error as any).data) 
+              ? (error as any).data.join(", ")
+              : error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const currentUser = userData || user;
 

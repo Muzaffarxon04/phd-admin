@@ -20,7 +20,7 @@ export default function ApplicantLayout({
   const router = useRouter();
   const { theme } = useThemeStore();
   const [isChecking, setIsChecking] = useState(true);
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname === "/reset-password";
   
   useEffect(() => {
     // Use requestAnimationFrame to avoid setState in effect warning
