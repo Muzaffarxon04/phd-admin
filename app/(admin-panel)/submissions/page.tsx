@@ -1,41 +1,25 @@
 "use client";
 
-import { 
-  Card, 
-  Table, 
-  Tag, 
-  Button, 
-  Space, 
-  Typography, 
-  Progress, 
-  Badge, 
-  Timeline,
-  Statistic,
-  Row,
-  Col,
-  Alert,
-  Tooltip
-} from "antd";
+import { Card, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Timeline, Alert, Badge, Tooltip } from "antd";
 import { 
   EyeOutlined, 
-  FileTextOutlined, 
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  TrophyOutlined,
-  ReloadOutlined,
+  CheckCircleOutlined, 
+  ClockCircleOutlined, 
+  ExclamationCircleOutlined,
   DollarOutlined,
+  UserOutlined,
   CalendarOutlined,
-  DownloadOutlined,
-  EyeInvisibleOutlined,
-  PlusOutlined
+  FileTextOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  FilterOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
-import Link from "next/link";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getPaymentStatusColor } from "@/lib/utils";
 import { useState, useMemo } from "react";
 
 const { Title, Text } = Typography;
@@ -43,14 +27,16 @@ const { Title, Text } = Typography;
 interface Submission {
   id: number;
   submission_number: string;
+  application: number;
   application_title: string;
+  applicant: number;
+  applicant_name: string;
+  applicant_phone: string;
   status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
+  submitted_at?: string | null;
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
   created_at: string;
-  submitted_at?: string;
-  review_notes?: string;
-  documents_uploaded?: number;
-  total_required_documents?: number;
+  updated_at: string;
 }
 
 interface SubmissionsResponse {
@@ -68,26 +54,24 @@ interface SubmissionsResponse {
   to: number;
 }
 
-export default function MySubmissionsPage() {
+export default function SubmissionsPage() {
   const { theme } = useThemeStore();
-  const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse | Submission[]>("/applicant/my-submissions/");
+  const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse>("/admin/submissions/");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Handle different response formats
-  const submissions = useMemo(() => {
-    if (!submissionsData) return [];
-    if (Array.isArray(submissionsData)) return submissionsData;
-    if (submissionsData.data && submissionsData.data.data && Array.isArray(submissionsData.data.data)) return submissionsData.data.data;
-    if (submissionsData.data && Array.isArray(submissionsData.data)) return submissionsData.data;
-    return [];
-  }, [submissionsData]);
+  // Handle the specific response structure
+  let submissions: Submission[] = [];
+  if (submissionsData) {
+    submissions = submissionsData.data.data || [];
+  }
   
   // Filter submissions based on status and search
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(submission => {
       const matchesStatus = statusFilter === "all" || submission.status === statusFilter;
       const matchesSearch = submission.application_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           submission.applicant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            submission.submission_number.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStatus && matchesSearch;
     });
@@ -103,18 +87,6 @@ export default function MySubmissionsPage() {
     paid: filteredSubmissions.filter(s => s.payment_status === "PAID").length,
     pendingPayment: filteredSubmissions.filter(s => s.payment_status === "PENDING").length,
   }), [filteredSubmissions]);
-
-  // Timeline data for visual representation
-  const timelineData = filteredSubmissions.slice(0, 5).map(submission => ({
-    key: submission.id,
-    status: submission.status,
-    title: submission.application_title,
-    submissionNumber: submission.submission_number,
-    date: submission.created_at,
-    paymentStatus: submission.payment_status,
-    reviewNotes: submission.review_notes,
-    color: getApplicationStatusColor(submission.status),
-  }));
 
   const columns = [
     {
@@ -141,12 +113,33 @@ export default function MySubmissionsPage() {
     {
       title: (
         <div className="flex items-center gap-2">
-          <TrophyOutlined />
+          <FileTextOutlined />
           <span>Ariza nomi</span>
         </div>
       ),
       dataIndex: "application_title",
       key: "application_title",
+      render: (text: string, record: Submission) => (
+        <div>
+          <div className="font-medium truncate max-w-xs" title={text}>
+            {text}
+          </div>
+          <div className="text-xs text-gray-500">
+            #{record.application}
+          </div>
+        </div>
+      ),
+      width: 200,
+    },
+    {
+      title: (
+        <div className="flex items-center gap-2">
+          <UserOutlined />
+          <span>Ariza beruvchi</span>
+        </div>
+      ),
+      dataIndex: "applicant_name",
+      key: "applicant_name",
       render: (text: string, record: Submission) => (
         <div className="max-w-xs">
           <Tooltip title={text}>
@@ -155,11 +148,11 @@ export default function MySubmissionsPage() {
             </div>
           </Tooltip>
           <div className="text-xs text-gray-500">
-            {record.submitted_at && "Topshirilgan: " + formatDate(record.submitted_at)}
+            {record.applicant_phone}
           </div>
         </div>
       ),
-      width: 250,
+      width: 180,
     },
     {
       title: (
@@ -171,10 +164,9 @@ export default function MySubmissionsPage() {
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Badge 
-          status={status === "APPROVED" ? "success" : status === "REJECTED" ? "error" : "processing"} 
-          text={getApplicationStatusLabel(status)}
-        />
+        <Tag color={getApplicationStatusColor(status)}>
+          {getApplicationStatusLabel(status)}
+        </Tag>
       ),
       width: 150,
     },
@@ -182,7 +174,7 @@ export default function MySubmissionsPage() {
       title: (
         <div className="flex items-center gap-2">
           <DollarOutlined />
-          <span>Tolov</span>
+          <span>To'lov</span>
         </div>
       ),
       dataIndex: "payment_status",
@@ -212,47 +204,44 @@ export default function MySubmissionsPage() {
       title: (
         <div className="flex items-center gap-2">
           <CalendarOutlined />
+          <span>Sanalar</span>
+        </div>
+      ),
+      key: "dates",
+      render: (_, record: Submission) => (
+        <div className="text-sm">
+          <div className="text-gray-500">Yaratilgan:</div>
+          <div>{formatDate(record.created_at)}</div>
+          {record.submitted_at && (
+            <>
+              <div className="text-gray-500 mt-1">Topshirilgan:</div>
+              <div>{formatDate(record.submitted_at)}</div>
+            </>
+          )}
+        </div>
+      ),
+      width: 150,
+    },
+    {
+      title: (
+        <div className="flex items-center gap-2">
+          <EyeOutlined />
           <span>Amallar</span>
         </div>
       ),
       key: "actions",
-      render: (_: unknown, record: Submission) => (
+      render: (_, record: Submission) => (
         <Space size="small">
-          <Link href={`/my-submissions/${record.id}`}>
-            <Tooltip title="Ko'rish">
-              <Button 
-                type="primary" 
-                size="small" 
-                icon={<EyeOutlined />}
-                className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
-              />
-            </Tooltip>
-          </Link>
-          
-          {record.status === "DRAFT" && (
-        <Link href={`/my-submissions/${record.id}`}>
-              <Tooltip title="Tahrirlash">
-                <Button 
-                  size="small"
-                  icon={<EyeInvisibleOutlined />}
-                />
-              </Tooltip>
-        </Link>
-          )}
-          
-          {record.documents_uploaded && record.total_required_documents && (
-            <Tooltip title={`${record.documents_uploaded}/${record.total_required_documents} hujjat yuklandi`}>
-              <Button 
-                size="small"
-                icon={<DownloadOutlined />}
-              >
-                {record.documents_uploaded}
-              </Button>
-            </Tooltip>
-          )}
+          <Tooltip title="Ko'rish">
+            <Button 
+              type="primary" 
+              size="small" 
+              icon={<EyeOutlined />}
+            />
+          </Tooltip>
         </Space>
       ),
-      width: 120,
+      width: 80,
     },
   ];
 
@@ -260,50 +249,56 @@ export default function MySubmissionsPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
-          <Title level={2} className="mb-8">Mening Arizalarim</Title>
-        <TableSkeleton />
+          <Title level={2} className="mb-8">Topshirilgan Arizalar</Title>
+          <TableSkeleton />
         </div>
       </div>
     );
   }
 
   if (error) {
-    // Handle array error format from backend
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
     
-    const errorData = (error).data;
-    if (errorData && Array.isArray(errorData)) {
-      errorMessage = errorData.join(", ");
+    // Handle different error formats
+    if (typeof error === "object" && error !== null) {
+      const errorData = (error as any).data;
+      if (errorData) {
+        if (Array.isArray(errorData)) {
+          errorMessage = errorData.join(", ");
+        } else if (typeof errorData === "string") {
+          errorMessage = errorData;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      }
     }
     
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-4xl mx-auto text-center">
-        <ErrorState 
+          <ErrorState 
             description={errorMessage}
-          onRetry={() => window.location.reload()}
-        />
+            onRetry={() => window.location.reload()}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header Section */}
-      <div className={`text-white`}>
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center mb-8">
-            <Title className="text-4xl font-bold mb-4">Mening Arizalarim</Title>
-            <Text className="text-xl text-purple-100">O&apos;zingiz topshirgan arizalarni kuzating</Text>
+            <h1 className="text-4xl font-bold mb-4">Topshirilgan Arizalar</h1>
+            <p className="text-xl text-purple-100">Barcha arizalarni boshqarish</p>
           </div>
 
           {/* Statistics */}
           <Row gutter={[24, 24]} className="mb-8">
             <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
                 <Statistic
                   title="Jami Arizalar"
                   value={stats.total}
@@ -313,11 +308,19 @@ export default function MySubmissionsPage() {
               </div>
             </Col>
             <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
                 <Statistic
-                  title="Ko&apos;rib chiqilmoqda"
+                  title="Topshirilgan"
+                  value={stats.submitted}
+                  valueStyle={{ color: "#1890ff" }}
+                  prefix={<FileTextOutlined />}
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={6}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                <Statistic
+                  title="Ko'rib chiqilmoqda"
                   value={stats.underReview}
                   valueStyle={{ color: "#1890ff" }}
                   prefix={<ClockCircleOutlined />}
@@ -325,26 +328,12 @@ export default function MySubmissionsPage() {
               </div>
             </Col>
             <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
                 <Statistic
                   title="Tasdiqlangan"
                   value={stats.approved}
                   valueStyle={{ color: "#52c41a" }}
                   prefix={<CheckCircleOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
-                <Statistic
-                  title="To&apos;langan"
-                  value={stats.paid}
-                  valueStyle={{ color: "#faad14" }}
-                  prefix={<DollarOutlined />}
                 />
               </div>
             </Col>
@@ -355,18 +344,18 @@ export default function MySubmissionsPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <Title level={2} className="mb-0">Arizalar ro&apos;yxati</Title>
+          <Title level={2} className="!mb-0">Arizalar jadvali</Title>
           
           <div className="flex items-center gap-4">
             <div className="relative">
+              <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Ariza nomi raqamini qidirish..."
+                placeholder="Qidirish..."
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FileTextOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
             
             <select
@@ -377,9 +366,10 @@ export default function MySubmissionsPage() {
               <option value="all">Barchasi</option>
               <option value="DRAFT">Tayyorlanmoqda</option>
               <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
+              <option value="UNDER_REVIEW">Ko'rib chiqilmoqda</option>
               <option value="APPROVED">Tasdiqlangan</option>
               <option value="REJECTED">Rad etilgan</option>
+              <option value="WITHDRAWN">O'chirilgan</option>
             </select>
           </div>
         </div>
@@ -389,13 +379,13 @@ export default function MySubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">Holatlar bo&apos;yicha taqsimot</Title>
+                <Title level={4} className="!mb-0">Holatlar bo'yicha taqsimot</Title>
                 <ReloadOutlined className="text-gray-400 cursor-pointer" />
               </div>
               <div className="space-y-3">
                 {[
                   { label: "Topshirilgan", value: stats.submitted, color: "blue" },
-                  { label: "Ko&apos;rib chiqilmoqda", value: stats.underReview, color: "processing" },
+                  { label: "Ko'rib chiqilmoqda", value: stats.underReview, color: "processing" },
                   { label: "Tasdiqlangan", value: stats.approved, color: "success" },
                   { label: "Rad etilgan", value: stats.rejected, color: "error" },
                 ].map((item) => (
@@ -405,22 +395,10 @@ export default function MySubmissionsPage() {
                       <span>{item.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Progress
-                        percent={stats.total > 0 ? (item.value / stats.total) * 100 : 0}
-                        size="small"
-                        showInfo={false}
-                        strokeColor={{
-                          '0%': item.color === "blue" ? "#1890ff" : 
-                                item.color === "processing" ? "#1890ff" :
-                                item.color === "success" ? "#52c41a" : "#ff4d4f",
-                          '100%': item.color === "blue" ? "#1890ff" : 
-                                  item.color === "processing" ? "#1890ff" :
-                                  item.color === "success" ? "#52c41a" : "#ff4d4f",
-                        }}
-                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
-                        style={{ width: "80px" }}
-                      />
-                      <span className="text-sm font-medium w-8 text-right">{item.value}</span>
+                      <Badge count={item.value} />
+                      <span className="text-sm text-gray-500">
+                        {stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -431,12 +409,12 @@ export default function MySubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">To&apos;lov holati</Title>
+                <Title level={4} className="!mb-0">To'lov holati</Title>
                 <DollarOutlined className="text-green-500" />
               </div>
               <div className="space-y-3">
                 {[
-                  { label: "To&apos;langan", value: stats.paid, color: "green" },
+                  { label: "To'langan", value: stats.paid, color: "green" },
                   { label: "Kutilmoqda", value: stats.pendingPayment, color: "orange" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between">
@@ -445,18 +423,10 @@ export default function MySubmissionsPage() {
                       <span>{item.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Progress
-                        percent={stats.total > 0 ? (item.value / stats.total) * 100 : 0}
-                        size="small"
-                        showInfo={false}
-                        strokeColor={{
-                          '0%': item.color === "green" ? "#52c41a" : "#faad14",
-                          '100%': item.color === "green" ? "#52c41a" : "#faad14",
-                        }}
-                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
-                        style={{ width: "80px" }}
-                      />
-                      <span className="text-sm font-medium w-8 text-right">{item.value}</span>
+                      <Badge count={item.value} />
+                      <span className="text-sm text-gray-500">
+                        {stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -471,45 +441,26 @@ export default function MySubmissionsPage() {
           bodyStyle={{ 
             padding: "0",
             borderRadius: "16px",
-            overflow: "hidden",
-            background: theme === "dark" ? "#1a1d29" : "#ffffff"
+            overflow: "hidden"
           }}
         >
           <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <Title level={3} className="mb-0">Arizalar jadvali</Title>
-              <Space>
-                <Badge count={filteredSubmissions.length} overflowCount={999} />
-              <Link href="/applications">
-                <Button 
-                  type="primary"
-                    icon={<PlusOutlined />}
-                    className=" from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
-                  >
-                    Yangi ariza
-                  </Button>
-                </Link>
-              </Space>
-            </div>
-
             {filteredSubmissions.length === 0 ? (
               <div className="text-center py-12">
                 <EmptyState 
                   description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
                   action={
-                    <Link href="/applications">
-                      <Button type="primary">
-                  Yangi ariza yaratish
-                </Button>
-              </Link>
-            }
-          />
+                    <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
+                      Barchalarini ko'rish
+                    </Button>
+                  }
+                />
               </div>
-        ) : (
-          <Table 
-            columns={columns} 
+            ) : (
+              <Table 
+                columns={columns} 
                 dataSource={filteredSubmissions} 
-            rowKey="id"
+                rowKey="id"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
@@ -522,40 +473,6 @@ export default function MySubmissionsPage() {
             )}
           </div>
         </Card>
-
-        {/* Recent Activities */}
-        <div className="mt-8">
-          <Timeline
-            items={timelineData.map(item => ({
-              color: item.color,
-              dot: <ClockCircleOutlined />,
-              children: (
-                <Card 
-                  size="small"
-                  className="mb-4 bg-white dark:bg-gray-800 border-l-4 border-l-blue-500"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold">{item.title}</h4>
-                    <Tag color={item.color}>{getApplicationStatusLabel(item.status)}</Tag>
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    #{item.submissionNumber} • {formatDate(item.date)}
-                    {item.reviewNotes && (
-                      <div className="mt-2">
-                        <Alert 
-                          message="Izoh" 
-                          description={item.reviewNotes} 
-                          type="info" 
-                          showIcon 
-                        />
-                      </div>
-                    )}
-                  </div>
-      </Card>
-              )
-            }))}
-          />
-        </div>
       </div>
     </div>
   );

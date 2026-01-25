@@ -1,7 +1,34 @@
 "use client";
 
-import { Card, Button, Row, Col } from "antd";
-import { FileTextOutlined, ArrowRightOutlined } from "@ant-design/icons";
+import { 
+  Card, 
+  Button, 
+  Row, 
+  Col, 
+  Tag, 
+  Badge, 
+  Typography, 
+  Space, 
+  Divider, 
+  Tooltip,
+  Progress,
+  Statistic,
+  Timeline
+} from "antd";
+import { 
+  FileTextOutlined, 
+  ArrowRightOutlined,
+  ClockCircleOutlined,
+  CalendarOutlined,
+  DollarOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  TrophyOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  FilterOutlined,
+  SearchOutlined
+} from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { CardSkeleton } from "@/components/LoadingSkeleton";
@@ -9,7 +36,10 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
+import { useState } from "react";
+
+const { Title, Text, Paragraph } = Typography;
 
 interface AvailableApplication {
   id: number;
@@ -26,6 +56,7 @@ interface AvailableApplication {
   instructions?: string;
   required_documents?: unknown[];
   user_submission_count?: number;
+  status?: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
 }
 
 interface ApplicationsResponse {
@@ -47,6 +78,8 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // Handle different response formats
   let applications: AvailableApplication[] = [];
@@ -60,191 +93,343 @@ export default function ApplicationsPage() {
     }
   }
 
+  // Filter applications based on search and status
+  const filteredApplications = applications.filter(app => {
+    const matchesSearch = app.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   if (isLoading) {
     return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{ 
-          fontSize: "24px", 
-          fontWeight: 700,
-          marginBottom: 24,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Mavjud Arizalar
-        </h1>
-        <Row gutter={[16, 16]}>
-          {[1, 2, 3].map((i) => (
-            <Col xs={24} sm={12} lg={8} key={i}>
-              <CardSkeleton />
-            </Col>
-          ))}
-        </Row>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Title level={2} className="mb-8 text-center">Mavjud Arizalar</Title>
+          <Row gutter={[24, 24]}>
+            {[1, 2, 3].map((i) => (
+              <Col xs={24} sm={12} lg={8} xl={6} key={i}>
+                <CardSkeleton />
+              </Col>
+            ))}
+          </Row>
+        </div>
       </div>
     );
   }
 
   if (error) {
     // Handle array error format from backend
-    let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
+    let errorMessage = error.message || "Ma&apos;lumotlarni yuklashda xatolik yuz berdi";
     
-    // Agar backenddan array formatida error kelgan bo'lsa
-    if (Array.isArray((error as any).data)) {
-      errorMessage = (error as any).data.join(", ");
+    // Agar backenddan array formatida error kelgan bo&apos;lsa
+    if (Array.isArray((error ).data)) {
+      errorMessage = (error ).data.join(", ");
     }
     
     return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{ 
-          fontSize: "24px", 
-          fontWeight: 700,
-          marginBottom: 24,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Mavjud Arizalar
-        </h1>
-        <ErrorState 
-          description={errorMessage}
-          onRetry={() => window.location.reload()}
-        />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <ErrorState 
+            description={errorMessage}
+            onRetry={() => window.location.reload()}
+          />
+        </div>
       </div>
     );
   }
 
-  // Ensure applications is always an array
-  const tableData = Array.isArray(applications) ? applications : [];
-
-  const cardStyle = {
-    background: theme === "dark" ? "#252836" : "#ffffff",
-    border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
-    borderRadius: "12px",
-    boxShadow: theme === "dark" 
-      ? "0 4px 12px rgba(0, 0, 0, 0.2)" 
-      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-    transition: "all 0.3s ease",
-  };
+  // Calculate statistics
+  const totalApplications = filteredApplications.length;
+  const activeApplications = filteredApplications.filter(app => 
+    new Date(app.start_date) <= new Date() && new Date(app.end_date) >= new Date()
+  ).length;
+  const upcomingApplications = filteredApplications.filter(app => 
+    new Date(app.start_date) > new Date()
+  ).length;
+  const expiredApplications = filteredApplications.filter(app => 
+    new Date(app.end_date) < new Date()
+  ).length;
 
   return (
-    <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-      <h1 style={{ 
-        fontSize: "24px", 
-        fontWeight: 700,
-        marginBottom: 24,
-        color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-      }}>
-        Mavjud Arizalar
-      </h1>
+    <div className="min-h-screen">
+      {/* Header Section */}
+      <div className={`text-white `}>
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center mb-8">
+            <Title className="text-4xl font-bold mb-4">PhD Imtihonlar Tizimi</Title>
+            <Text className="text-xl text-purple-100">O&apos;zingizning ilmiy karerangizni boshlang</Text>
+          </div>
 
-      {!tableData || tableData.length === 0 ? (
-        <EmptyState 
-          description="Hozircha mavjud arizalar yo'q"
-          action={
-            <Link href="/applications">
-              <Button 
-                type="primary"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                }}
-              >
-                Yangi ariza yaratish
-              </Button>
-            </Link>
-          }
-        />
-      ) : (
-        <Row gutter={[16, 16]}>
-          {tableData.map((app) => (
-            <Col xs={24} sm={12} lg={8} key={app.id}>
-              <Card
-                hoverable
-                style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = theme === "dark"
-                    ? "0 8px 24px rgba(102, 126, 234, 0.3)"
-                    : "0 8px 24px rgba(102, 126, 234, 0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = cardStyle.boxShadow;
-                }}
-                onClick={() => router.push(`/applications/${app.id}`)}
-                title={
-                  <span style={{ 
-                    fontSize: "18px", 
-                    fontWeight: 600,
-                    color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-                  }}>
-                    {app.title}
-                  </span>
-                }
-                extra={
-                  <Link href={`/applications/${app.id}`} onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      type="primary"
-                      icon={<ArrowRightOutlined />}
-                      style={{
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        border: "none",
-                        borderRadius: "8px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Batafsil
+          {/* Statistics */}
+          <Row gutter={[24, 24]} className="mb-8">
+            <Col xs={24} sm={6}>
+              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
+                theme === "dark" ? "bg-white/10" : "bg-black/10"
+              }`}>
+                <Statistic
+                  title="Jami Arizalar"
+                  value={totalApplications}
+                  valueStyle={{ color: "#ffffff" }}
+                  prefix={<FileTextOutlined />}
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={6}>
+              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
+                theme === "dark" ? "bg-white/10" : "bg-black/10"
+              }`}>
+                <Statistic
+                  title="Faol"
+                  value={activeApplications}
+                  valueStyle={{ color: "#52c41a" }}
+                  prefix={<ClockCircleOutlined />}
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={6}>
+              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
+                theme === "dark" ? "bg-white/10" : "bg-black/10"
+              }`}>
+                <Statistic
+                  title="Kutilayotgan"
+                  value={upcomingApplications}
+                  valueStyle={{ color: "#faad14" }}
+                  prefix={<CalendarOutlined />}
+                />
+              </div>
+            </Col>
+            <Col xs={24} sm={6}>
+              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
+                theme === "dark" ? "bg-white/10" : "bg-black/10"
+              }`}>
+                <Statistic
+                  title="O&apos;tgan"
+                  value={expiredApplications}
+                  valueStyle={{ color: "#ff4d4f" }}
+                  prefix={<ExclamationCircleOutlined />}
+                />
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <Title level={2} className="!mb-0">Mavjud Arizalar</Title>
+            <Badge count={filteredApplications.length} overflowCount={999} />
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Izlash..."
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <select
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Barchasi</option>
+              <option value="DRAFT">Tayyorlanmoqda</option>
+              <option value="SUBMITTED">Topshirilgan</option>
+              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Tag 
+            className={`cursor-pointer ${statusFilter === "all" ? "bg-blue-500 text-white" : ""}`}
+            onClick={() => setStatusFilter("all")}
+          >
+            Barchasi ({filteredApplications.length})
+          </Tag>
+          <Tag 
+            className={`cursor-pointer ${statusFilter === "DRAFT" ? "bg-blue-500 text-white" : ""}`}
+            onClick={() => setStatusFilter("DRAFT")}
+          >
+            Tayyorlanmoqda ({filteredApplications.filter(a => a.status === "DRAFT").length})
+          </Tag>
+          <Tag 
+            className={`cursor-pointer ${statusFilter === "SUBMITTED" ? "bg-blue-500 text-white" : ""}`}
+            onClick={() => setStatusFilter("SUBMITTED")}
+          >
+            Topshirilgan ({filteredApplications.filter(a => a.status === "SUBMITTED").length})
+          </Tag>
+          <Tag 
+            className={`cursor-pointer ${statusFilter === "UNDER_REVIEW" ? "bg-blue-500 text-white" : ""}`}
+            onClick={() => setStatusFilter("UNDER_REVIEW")}
+          >
+            Ko&apos;rib chiqilmoqda ({filteredApplications.filter(a => a.status === "UNDER_REVIEW").length})
+          </Tag>
+        </div>
+
+        {/* Applications Grid */}
+        {filteredApplications.length === 0 ? (
+          <div className="text-center py-12">
+            <EmptyState 
+              description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha mavjud arizalar yo&apos;q"}
+              action={
+                searchTerm ? 
+                  <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>Barchalarini ko&apos;rish</Button>
+                  : 
+                  <Link href="/dashboard">
+                    <Button type="primary">
+                      Yangi ariza yaratish
                     </Button>
                   </Link>
-                }
-              >
-                <p style={{ 
-                  color: theme === "dark" ? "#8b8b8b" : "#666",
-                  marginBottom: 16,
-                  minHeight: 60,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}>
-                  {app.description}
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "14px" }}>
-                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Boshlanish:</strong> {formatDate(app.start_date)}
-                  </p>
-                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Tugash:</strong> {formatDate(app.end_date)}
-                  </p>
-                  {app.exam_date && (
-                    <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                      <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>Imtihon sana:</strong> {formatDate(app.exam_date)}
-                    </p>
-                  )}
-                  <p style={{ margin: 0, color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                    <strong style={{ color: theme === "dark" ? "#ffffff" : "#1a1a1a" }}>To'lov:</strong> {app.application_fee} UZS
-                  </p>
-                </div>
-                {app.can_apply === false && (
-                  <div style={{
-                    marginTop: 16,
-                    padding: "12px",
-                    background: theme === "dark" ? "rgba(255, 193, 7, 0.1)" : "#fffbe6",
-                    borderRadius: "8px",
-                    border: `1px solid ${theme === "dark" ? "rgba(255, 193, 7, 0.3)" : "#ffe58f"}`,
-                    color: theme === "dark" ? "#ffc107" : "#d48806",
-                    fontSize: "13px",
-                  }}>
-                    {app.can_apply_message}
+              }
+            />
+          </div>
+        ) : (
+          <Row gutter={[24, 24]}>
+            {filteredApplications.map((app) => (
+              <Col xs={24} sm={12} lg={8} xl={6} key={app.id}>
+                <Card
+                  className="h-full transform hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  hoverable
+                  bodyStyle={{
+                    padding: "0",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                    background: theme === "dark" ? "#1a1d29" : "#ffffff",
+                    color: theme === "dark" ? "#ffffff" : "#333333"
+                  }}
+                  actions={[
+                    <Link href={`/applications/${app.id}`} key="view" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        type="primary"
+                        icon={<EyeOutlined />}
+                        className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+                      >
+                        Ko&apos;rish
+                      </Button>
+                    </Link>
+                  ]}
+                >
+                  {/* Header */}
+                  <div className="p-6 pb-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-2 line-clamp-2" title={app.title}>
+                          {app.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <CalendarOutlined />
+                          <span>{formatDate(app.start_date)} - {formatDate(app.end_date)}</span>
+                        </div>
+                      </div>
+                      <Tag 
+                        color={getApplicationStatusColor(app.status || "DRAFT")}
+                        className="flex-shrink-0"
+                      >
+                        {getApplicationStatusLabel(app.status || "DRAFT")}
+                      </Tag>
+                    </div>
                   </div>
-                )}
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
+
+                  {/* Body */}
+                  <div className="p-6">
+                    <div className="mb-4">
+                      <Progress 
+                        percent={app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0}
+                        strokeColor={{
+                          '0%': '#1890ff',
+                          '100%': '#722ed1',
+                        }}
+                        showInfo={false}
+                        size="small"
+                        className="mb-2"
+                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
+                      />
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Arizalar</span>
+                        <span>{app.user_submission_count || 0}/{app.max_submissions || 1}</span>
+                      </div>
+                    </div>
+
+                    <Paragraph className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3" ellipsis={{ rows: 3 }}>
+                      {app.description}
+                    </Paragraph>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarOutlined className="text-green-500" />
+                        <span className="font-semibold">{app.application_fee} UZS</span>
+                      </div>
+                    </div>
+
+                    {/* Application Info */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">Imtihon sanasi:</span>
+                        <span className="font-medium">
+                          {app.exam_date ? formatDate(app.exam_date) : "Aniqlanmagan"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">Tekshirish:</span>
+                        <div className="flex items-center gap-1">
+                          {app.requires_oneid_verification ? (
+                            <>
+                              <ExclamationCircleOutlined className="text-orange-500" />
+                              <span>Talab qilinadi</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircleOutlined className="text-green-500" />
+                              <span>Zarur emas</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {!app.can_apply && (
+                      <div className="mb-4 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                        <Text type="warning" className="text-sm">
+                          {app.can_apply_message}
+                        </Text>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <Divider className="my-4" />
+                    <div className="flex items-center justify-between">
+                      <Text type="secondary" className="text-sm">
+                        <TrophyOutlined className="mr-1" />
+                        Shu yo&apos;nalish
+                      </Text>
+                      <Link href={`/applications/${app.id}`}>
+                        <Button 
+                          type="primary"
+                          icon={<ArrowRightOutlined />}
+                          size="small"
+                          className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+                        >
+                          Batafsil
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </div>
     </div>
   );
 }
-

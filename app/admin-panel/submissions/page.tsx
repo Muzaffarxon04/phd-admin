@@ -3,8 +3,8 @@
 import { Table, Tag, Button, Card } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EyeOutlined } from "@ant-design/icons";
-import { useGet, usePost } from "@/lib/hooks";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGet } from "@/lib/hooks";
+// import { useQueryClient } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
@@ -28,16 +28,17 @@ interface Submission {
 
 export default function AdminSubmissionsPage() {
   const { theme } = useThemeStore();
-  const queryClient = useQueryClient();
-  const { data: submissionsData, isLoading, error } = useGet<{ data: Submission[] } | Submission[]>("/admin/application/admin/submissions/");
+  // const queryClient = useQueryClient();
+  const { data: submissionsData, isLoading, error } = useGet<{data: {data: Submission[] } }>("/admin/application/admin/submissions/");
+  // console.log(submissionsData?.);
   
   // Handle different response formats
   let submissions: Submission[] = [];
   if (submissionsData) {
-    if (Array.isArray(submissionsData)) {
-      submissions = submissionsData;
-    } else if (submissionsData.data && Array.isArray(submissionsData.data)) {
-      submissions = submissionsData.data;
+    if (Array.isArray(submissionsData?.data?.data)) {
+      submissions = submissionsData.data.data;
+    } else if (submissionsData.data && Array.isArray(submissionsData.data.data)) {
+      submissions = submissionsData.data.data;
     }
   }
 
@@ -123,8 +124,8 @@ export default function AdminSubmissionsPage() {
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
     
     // Agar backenddan array formatida error kelgan bo'lsa
-    if (Array.isArray((error as any).data)) {
-      errorMessage = (error as any).data.join(", ");
+    if (Array.isArray((error).data)) {
+      errorMessage = (error).data.join(", ");
     }
     
     return (
@@ -144,7 +145,7 @@ export default function AdminSubmissionsPage() {
       </div>
     );
   }
-
+  console.log(submissions);
   // Ensure submissions is always an array
   const tableData = Array.isArray(submissions) ? submissions : [];
 
