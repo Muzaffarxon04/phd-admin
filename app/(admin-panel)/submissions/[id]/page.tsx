@@ -20,14 +20,14 @@ import {
 } from "antd";
 import { useGet } from "@/lib/hooks";
 import Link from "next/link";
-import { useThemeStore } from "@/lib/stores/themeStore";
+// import { useThemeStore } from "@/lib/stores/themeStore";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getPaymentStatusColor } from "@/lib/utils";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
-  DollarOutlined,
+  // DollarOutlined,
   ArrowLeftOutlined,
   MailOutlined,
   PhoneOutlined,
@@ -191,7 +191,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             <Card className="mb-8">
               <Steps
                 current={currentStep}
-                items={statusTimeline.map((step, index) => ({
+                items={statusTimeline.map((step) => ({
                   key: step.status,
                   title: step.title,
                   description: step.description,

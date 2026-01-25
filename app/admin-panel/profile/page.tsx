@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Form, Input, Button, Card, App, Avatar, Upload, Row, Col, Divider, Space, UploadFile } from "antd";
+import { Form, Input, Button, Card, App, Avatar, Upload, Row, Col, Divider, Space } from "antd";
 import { UserOutlined, MailOutlined, PhoneOutlined, SecurityScanOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useGet, usePatch } from "@/lib/hooks";
