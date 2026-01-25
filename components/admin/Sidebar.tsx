@@ -5,6 +5,8 @@ import {
   DashboardOutlined,
   FileTextOutlined,
   UserOutlined,
+  TeamOutlined,
+  BookOutlined,
   // SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -32,6 +34,16 @@ const menuItems = [
     icon: <FileTextOutlined />,
     label: "Topshirilgan Arizalar",
   },
+  // {
+  //   key: "/admin-panel/examiners",
+  //   icon: <TeamOutlined />,
+  //   label: "Imtihonchilar",
+  // },
+  // {
+  //   key: "/admin-panel/specialities",
+  //   icon: <BookOutlined />,
+  //   label: "Mutaxassisliklar",
+  // },
 
 ];
 

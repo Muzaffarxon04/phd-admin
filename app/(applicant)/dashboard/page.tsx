@@ -220,9 +220,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-8">
+    <div className="min-h-screen px-4 py-8!">
       <Breadcrumb
-        className="mb-6"
+        className="mb-6!"
         items={[
           {
             href: "/",
@@ -237,7 +237,7 @@ export default function DashboardPage() {
       />
 
       {/* HEADER */}
-      <Card className="mb-8 rounded-2xl">
+      <Card className="mb-8! rounded-2xl">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-6">
             <div className="relative">

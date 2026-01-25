@@ -123,7 +123,7 @@ export default function AdminApplicationsPage() {
     };
     from: number;
     to: number;
-  }>(`/admin/application/admin/applications/?page=${currentPage}&page_size=${pageSize}`);
+  }>(`/admin/application/?page=${currentPage}&page_size=${pageSize}`);
   
   // Extract applications from nested response structure
   const applications = applicationsData?.data?.data || [];

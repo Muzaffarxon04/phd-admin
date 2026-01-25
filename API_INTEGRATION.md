@@ -124,22 +124,22 @@ Handles admin-specific operations.
 #### Endpoints
 
 **Applications Management:**
-- `GET /admin/application/admin/applications/` - Get all applications
-- `GET /admin/application/admin/applications/{id}/` - Get application details
-- `POST /admin/application/admin/applications/create/` - Create new application
-- `PUT /admin/application/admin/applications/{id}/update/` - Update application
-- `DELETE /admin/application/admin/applications/{id}/delete/` - Delete application
+- `GET /admin/application/` - Get all applications
+- `GET /admin/application/{id}/` - Get application details
+- `POST /admin/application/create/` - Create new application
+- `PUT /admin/application/{id}/update/` - Update application
+- `DELETE /admin/application/{id}/delete/` - Delete application
 
 **Application Fields:**
-- `POST /admin/application/admin/applications/{app_id}/fields/create/` - Create field
-- `PUT /admin/application/admin/applications/{app_id}/fields/{field_id}/update/` - Update field
-- `DELETE /admin/application/admin/applications/{app_id}/fields/{field_id}/delete/` - Delete field
+- `POST /admin/application/{app_id}/fields/create/` - Create field
+- `PUT /admin/application/{app_id}/fields/{field_id}/update/` - Update field
+- `DELETE /admin/application/{app_id}/fields/{field_id}/delete/` - Delete field
 
 **Submissions Management:**
-- `GET /admin/application/admin/submissions/` - Get all submissions
-- `GET /admin/application/admin/submissions/{id}/` - Get submission details
-- `POST /admin/application/admin/submissions/{id}/approve/` - Approve submission
-- `POST /admin/application/admin/submissions/{id}/reject/` - Reject submission
+- `GET /admin/application/submissions/` - Get all submissions
+- `GET /admin/application/submissions/{id}/` - Get submission details
+- `POST /admin/application/submissions/{id}/approve/` - Approve submission
+- `POST /admin/application/submissions/{id}/reject/` - Reject submission
 
 #### Usage Example
 

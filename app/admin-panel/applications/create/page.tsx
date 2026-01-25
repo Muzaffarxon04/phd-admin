@@ -61,10 +61,10 @@ export default function CreateApplicationPage() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
 
-  const { mutate: createApplication, isPending: isCreating } = usePost<{ data: Application }, CreateApplicationData>("/admin/application/admin/applications/create/", {
+  const { mutate: createApplication, isPending: isCreating } = usePost<{ data: Application }, CreateApplicationData>("/admin/application/create/", {
     onSuccess: () => {
       message.success("Ariza muvaffaqiyatli yaratildi!");
-      queryClient.invalidateQueries({ queryKey: ["/admin/application/admin/applications/"] });
+      queryClient.invalidateQueries({ queryKey: ["/admin/application/"] });
       router.push("/admin-panel/applications");
     },
     onError: (error) => {

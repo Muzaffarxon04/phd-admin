@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import type { ApplicationListResponse, ApplicationSubmissionListResponse } from "@/lib/api";
 import { DashboardSkeleton } from "@/components/LoadingSkeleton";
 import {
   PieChart,
@@ -28,41 +29,27 @@ import {
 } from "recharts";
 import { formatDate } from "@/lib/utils";
 
-interface Submission {
-  status: string;
-  payment_status?: string;
-  application_title?: string;
-  created_at?: string;
-  [key: string]: unknown;
-}
 
-interface Application {
-  id: number;
-  title: string;
-  status: string;
-  total_submissions?: number;
-  [key: string]: unknown;
-}
 
 export default function AdminPanelPage() {
   const { theme } = useThemeStore();
-  const { data: applications, isLoading: isLoadingApps } = useGet<unknown[]>("/admin/application/");
-  const { data: submissions, isLoading: isLoadingSubs } = useGet<unknown[]>("/admin/application/submissions/");
-
-  const totalApplications = applications?.length || 0;
-  const totalSubmissions = submissions?.length || 0;
-  const submissionsList = (submissions as Submission[]) || [];
+  const { data: applications, isLoading: isLoadingApps } = useGet<ApplicationListResponse>("/admin/application/");
+  const { data: submissions, isLoading: isLoadingSubs } = useGet<ApplicationSubmissionListResponse>("/admin/application/submissions/");
+console.log(applications, submissions);
+  const totalApplications = applications?.results?.length || 0;
+  const totalSubmissions = submissions?.count || 0;
+  const submissionsList = submissions?.results || [];
   
   // Arizalar holati boyicha statistika
-  const approvedCount = submissionsList.filter((s) => s.status === "APPROVED").length;
-  const rejectedCount = submissionsList.filter((s) => s.status === "REJECTED").length;
-  const pendingCount = submissionsList.filter((s) => s.status === "UNDER_REVIEW" || s.status === "SUBMITTED").length;
-  const draftCount = submissionsList.filter((s) => s.status === "DRAFT").length;
+  const approvedCount = submissionsList.filter((s) => s.status === "approved").length;
+  const rejectedCount = submissionsList.filter((s) => s.status === "rejected").length;
+  const pendingCount = submissionsList.filter((s) => s.status === "under_review" || s.status === "submitted").length;
+  const draftCount = submissionsList.filter((s) => s.status === "draft").length;
   
-  // Tolovlar boyicha statistika
-  const paidCount = submissionsList.filter((s) => s.payment_status === "PAID").length;
-  const pendingPaymentCount = submissionsList.filter((s) => s.payment_status === "PENDING").length;
-  const failedPaymentCount = submissionsList.filter((s) => s.payment_status === "FAILED").length;
+  // Tolovlar boyicha statistika (ReviewSubmission da payment_status yo'q)
+  const paidCount = 0; // submissionsList.filter((s) => s.payment_status === "PAID").length;
+  const pendingPaymentCount = 0; // submissionsList.filter((s) => s.payment_status === "PENDING").length;
+  const failedPaymentCount = 0; // submissionsList.filter((s) => s.payment_status === "FAILED").length;
   
   // Oylik statistika (oxirgi 6 oy)
   const currentMonth = new Date().getMonth();
@@ -77,16 +64,13 @@ export default function AdminPanelPage() {
     return {
       month: months[monthIndex],
       arizalar: monthSubmissions.length,
-      qabul: monthSubmissions.filter((s) => s.status === "APPROVED").length,
-      rad: monthSubmissions.filter((s) => s.status === "REJECTED").length,
+      qabul: monthSubmissions.filter((s) => s.status === "approved").length,
+      rad: monthSubmissions.filter((s) => s.status === "rejected").length,
     };
   });
   
-  // Eng kop ariza berilgan arizalar (top 5)
-  const applicationsList = (applications as Application[]) || [];
-  const topApplications = [...applicationsList]
-    .sort((a, b) => (b.total_submissions || 0) - (a.total_submissions || 0))
-    .slice(0, 5);
+  // Eng kop ariza berilgan arizalar (top 5) - API da total_submissions yo'q
+  // const topApplications = [];
   
   // Oxirgi arizalar (5 ta)
   const recentSubmissions = [...submissionsList]
@@ -401,32 +385,11 @@ export default function AdminPanelPage() {
             }
           >
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {topApplications.length > 0 ? (
-                topApplications.map((app) => (
-                  <div key={app.id} style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px",
-                    background: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
-                    borderRadius: "8px"
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, marginBottom: 4, fontSize: "14px" }}>
-                        {app.title || `Ariza #${app.id}`}
-                      </div>
-                      <div style={{ fontSize: "12px", color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                        {app.total_submissions || 0} ta ariza
-                      </div>
-                    </div>
-                    <Tag color={app.status === "PUBLISHED" ? "green" : "default"} style={{ marginLeft: 8 }}>
-                      {app.status === "PUBLISHED" ? "Faol" : app.status}
-                    </Tag>
-                  </div>
-                ))
-              ) : (
+                {false ? (
+                  <div></div>
+                ) : (
                 <div style={{ textAlign: "center", padding: "20px", color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-                  Ma&apos;lumotlar mavjud emas
+                  Eng ko&apos;p ariza berilgan arizalar statistikasi tez orada qo&apos;shiladi
                 </div>
               )}
             </div>
@@ -511,7 +474,7 @@ export default function AdminPanelPage() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, marginBottom: 4, fontSize: "13px" }}>
-                          {submission.application_title || "Ariza"}
+                          {`Ariza #${submission.application_id}`}
                         </div>
                         <div style={{ fontSize: "11px", color: theme === "dark" ? "#8b8b8b" : "#666" }}>
                           {submission.created_at ? formatDate(submission.created_at) : "-"}
@@ -519,16 +482,16 @@ export default function AdminPanelPage() {
                       </div>
                       <Tag 
                         color={
-                          submission.status === "APPROVED" ? "green" :
-                          submission.status === "REJECTED" ? "red" :
-                          submission.status === "UNDER_REVIEW" ? "orange" : "default"
+                          submission.status === "approved" ? "green" :
+                          submission.status === "rejected" ? "red" :
+                          submission.status === "under_review" ? "orange" : "default"
                         }
                         style={{ fontSize: "11px" }}
                       >
-                        {submission.status === "APPROVED" ? "Qabul" :
-                         submission.status === "REJECTED" ? "Rad" :
-                         submission.status === "UNDER_REVIEW" ? "Tekshirilmoqda" :
-                         submission.status === "SUBMITTED" ? "Topshirilgan" : submission.status}
+                        {submission.status === "approved" ? "Qabul" :
+                         submission.status === "rejected" ? "Rad" :
+                         submission.status === "under_review" ? "Tekshirilmoqda" :
+                         submission.status === "submitted" ? "Topshirilgan" : submission.status}
                       </Tag>
                     </div>
                   </div>

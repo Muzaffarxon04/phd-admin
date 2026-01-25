@@ -192,16 +192,16 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const { message, modal } = App.useApp();
   const fieldType = Form.useWatch("field_type", form);
 
-  const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/admin/applications/${id}/`);
+  const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
   
   const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<{ data: Application }, Partial<Application>>(
-    `/admin/application/admin/applications/${id}/update/`,
+    `/admin/application/${id}/update/`,
     {
     onSuccess: () => {
         message.success("Ariza muvaffaqiyatli yangilandi!");
         setIsApplicationModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/applications/${id}/`] });
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
     },
       onError: (error) => {
         message.error(error.message || "Arizani yangilashda xatolik");
@@ -210,13 +210,13 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   );
 
   const { mutate: createField, isPending: isCreatingField } = usePost<{ data: ApplicationField }, CreateFieldData>(
-    `/admin/application/admin/applications/${id}/fields/create/`,
+    `/admin/application/${id}/fields/create/`,
     {
       onSuccess: () => {
         message.success("Maydon muvaffaqiyatli yaratildi!");
         setIsFieldModalOpen(false);
         form.resetFields();
-        queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/applications/${id}/`] });
+        queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
       },
       onError: (error) => {
         message.error(error.message || "Maydon yaratishda xatolik");
@@ -291,7 +291,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const handleUpdateField = async (fieldId: number, fieldData: CreateFieldData) => {
     setIsUpdatingField(true);
     try {
-      await apiRequest(`/admin/application/admin/applications/${id}/fields/${fieldId}/update/`, {
+      await apiRequest(`/admin/application/${id}/fields/${fieldId}/update/`, {
         method: "PUT",
         body: JSON.stringify(fieldData),
       });
@@ -299,7 +299,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       setIsFieldModalOpen(false);
       setEditingField(null);
       form.resetFields();
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/applications/${id}/`] });
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Maydon yangilashda xatolik";
       message.error(errorMessage);
@@ -343,11 +343,11 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await apiRequest(`/admin/application/admin/applications/${id}/fields/${fieldId}/delete/`, {
+          await apiRequest(`/admin/application/${id}/fields/${fieldId}/delete/`, {
             method: "DELETE",
           });
           message.success("Maydon ochirildi!");
-          queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/applications/${id}/`] });
+          queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : "Maydon ochirishda xatolik";
           message.error(errorMessage);
@@ -383,11 +383,11 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await apiRequest(`/admin/application/admin/applications/${id}/delete/`, {
+          await apiRequest(`/admin/application/${id}/delete/`, {
             method: "DELETE",
           });
           message.success("Ariza muvaffaqiyatli ochirildi!");
-          queryClient.invalidateQueries({ queryKey: ["/admin/application/admin/applications/"] });
+          queryClient.invalidateQueries({ queryKey: ["/admin/application/"] });
           router.push("/admin-panel/applications");
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : "Arizani ochirishda xatolik";

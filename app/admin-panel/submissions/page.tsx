@@ -29,7 +29,7 @@ interface Submission {
 export default function AdminSubmissionsPage() {
   const { theme } = useThemeStore();
   // const queryClient = useQueryClient();
-  const { data: submissionsData, isLoading, error } = useGet<{data: {data: Submission[] } }>("/admin/application/admin/submissions/");
+  const { data: submissionsData, isLoading, error } = useGet<{data: {data: Submission[] } }>("/admin/application/submissions/");
   // console.log(submissionsData?.);
   
   // Handle different response formats

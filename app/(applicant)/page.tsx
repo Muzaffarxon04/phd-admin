@@ -5,11 +5,11 @@ import { FileTextOutlined, RocketOutlined, CheckCircleOutlined, ClockCircleOutli
 
 export default function ApplicantHome() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center p-6 md:p-24">
+    <main className="min-h-screen  from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center p-6 md:p-24">
       <div className="text-center max-w-5xl w-full">
         {/* Hero Section */}
         <div className="mb-12 animate-fade-in">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
             PhD Imtihonlar Tizimi
           </h1>
           <p className="text-xl md:text-2xl text-gray-700 mb-4 font-medium">
@@ -24,11 +24,11 @@ export default function ApplicantHome() {
         <div className="max-w-2xl mx-auto">
           <div className="group relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
             {/* Decorative gradient overlay */}
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            <div className="absolute top-0 left-0 w-full h-2 from-blue-500 via-indigo-500 to-purple-500"></div>
             
             <div className="p-8 md:p-10">
               <div className="flex items-center justify-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <div className="w-16 h-16  from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <FileTextOutlined className="text-3xl text-white" />
                 </div>
               </div>
@@ -43,7 +43,7 @@ export default function ApplicantHome() {
 
               <Link
                 href="/applications"
-                className="inline-flex items-center justify-center gap-2 w-full md:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 w-full md:w-auto px-8 py-4 from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105"
               >
                 <RocketOutlined />
                 <span>Boshlash</span>

@@ -117,7 +117,7 @@ export interface ApproveResponse {
 // Admin API Service
 export const adminApi = {
   /**
-   * GET /admin/application/admin/applications/
+   * GET /admin/application/
    * Get list of all applications
    */
   getApplications: async (
@@ -125,7 +125,7 @@ export const adminApi = {
     pageSize = 20
   ): Promise<ApplicationListResponse> => {
     return apiRequest<ApplicationListResponse>(
-      `/admin/application/admin/applications/?page=${page}&page_size=${pageSize}`,
+      `/admin/application/?page=${page}&page_size=${pageSize}`,
       {
         method: "GET",
       }
@@ -133,12 +133,12 @@ export const adminApi = {
   },
 
   /**
-   * GET /admin/application/admin/applications/{id}/
+   * GET /admin/application/{id}/
    * Get application details by ID
    */
   getApplication: async (id: string): Promise<ApplicationDetail> => {
     return apiRequest<ApplicationDetail>(
-      `/admin/application/admin/applications/${id}/`,
+      `/admin/application/${id}/`,
       {
         method: "GET",
       }
@@ -146,12 +146,12 @@ export const adminApi = {
   },
 
   /**
-   * POST /admin/application/admin/applications/create/
+   * POST /admin/application/create/
    * Create a new application
    */
   createApplication: async (data: ApplicationCreate): Promise<ApplicationDetail> => {
     return apiRequest<ApplicationDetail>(
-      "/admin/application/admin/applications/create/",
+      "/admin/application/create/",
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -160,7 +160,7 @@ export const adminApi = {
   },
 
   /**
-   * PUT /admin/application/admin/applications/{id}/update/
+   * PUT /admin/application/{id}/update/
    * Update an application
    */
   updateApplication: async (
@@ -168,7 +168,7 @@ export const adminApi = {
     data: ApplicationUpdate
   ): Promise<ApplicationDetail> => {
     return apiRequest<ApplicationDetail>(
-      `/admin/application/admin/applications/${id}/update/`,
+      `/admin/application/${id}/update/`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -177,12 +177,12 @@ export const adminApi = {
   },
 
   /**
-   * DELETE /admin/application/admin/applications/{id}/delete/
+   * DELETE /admin/application/{id}/delete/
    * Delete an application
    */
   deleteApplication: async (id: string): Promise<{ message: string }> => {
     return apiRequest<{ message: string }>(
-      `/admin/application/admin/applications/${id}/delete/`,
+      `/admin/application/${id}/delete/`,
       {
         method: "DELETE",
       }
@@ -190,7 +190,7 @@ export const adminApi = {
   },
 
   /**
-   * POST /admin/application/admin/applications/{application_id}/fields/create/
+   * POST /admin/application/{application_id}/fields/create/
    * Create a new field for an application
    */
   createApplicationField: async (
@@ -198,7 +198,7 @@ export const adminApi = {
     data: ApplicationFieldCreate
   ): Promise<ApplicationField> => {
     return apiRequest<ApplicationField>(
-      `/admin/application/admin/applications/${applicationId}/fields/create/`,
+      `/admin/application/${applicationId}/fields/create/`,
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -207,7 +207,7 @@ export const adminApi = {
   },
 
   /**
-   * PUT /admin/application/admin/applications/{application_id}/fields/{field_id}/update/
+   * PUT /admin/application/{application_id}/fields/{field_id}/update/
    * Update an application field
    */
   updateApplicationField: async (
@@ -216,7 +216,7 @@ export const adminApi = {
     data: Partial<ApplicationFieldCreate>
   ): Promise<ApplicationField> => {
     return apiRequest<ApplicationField>(
-      `/admin/application/admin/applications/${applicationId}/fields/${fieldId}/update/`,
+      `/admin/application/${applicationId}/fields/${fieldId}/update/`,
       {
         method: "PUT",
         body: JSON.stringify(data),
@@ -225,7 +225,7 @@ export const adminApi = {
   },
 
   /**
-   * DELETE /admin/application/admin/applications/{application_id}/fields/{field_id}/delete/
+   * DELETE /admin/application/{application_id}/fields/{field_id}/delete/
    * Delete an application field
    */
   deleteApplicationField: async (
@@ -233,7 +233,7 @@ export const adminApi = {
     fieldId: string
   ): Promise<{ message: string }> => {
     return apiRequest<{ message: string }>(
-      `/admin/application/admin/applications/${applicationId}/fields/${fieldId}/delete/`,
+      `/admin/application/${applicationId}/fields/${fieldId}/delete/`,
       {
         method: "DELETE",
       }
@@ -241,7 +241,7 @@ export const adminApi = {
   },
 
   /**
-   * GET /admin/application/admin/submissions/
+   * GET /admin/application/submissions/
    * Get list of all submissions
    */
   getSubmissions: async (
@@ -256,7 +256,7 @@ export const adminApi = {
     if (status) params.append("status", status);
 
     return apiRequest<ApplicationSubmissionListResponse>(
-      `/admin/application/admin/submissions/?${params.toString()}`,
+      `/admin/application/submissions/?${params.toString()}`,
       {
         method: "GET",
       }
@@ -264,12 +264,12 @@ export const adminApi = {
   },
 
   /**
-   * GET /admin/application/admin/submissions/{id}/
+   * GET /admin/application/submissions/{id}/
    * Get submission details by ID
    */
   getSubmission: async (id: string): Promise<ReviewSubmission> => {
     return apiRequest<ReviewSubmission>(
-      `/admin/application/admin/submissions/${id}/`,
+      `/admin/application/submissions/${id}/`,
       {
         method: "GET",
       }
@@ -277,12 +277,12 @@ export const adminApi = {
   },
 
   /**
-   * POST /admin/application/admin/submissions/{id}/approve/
+   * POST /admin/application/submissions/{id}/approve/
    * Approve a submission
    */
   approveSubmission: async (id: string): Promise<ApproveResponse> => {
     return apiRequest<ApproveResponse>(
-      `/admin/application/admin/submissions/${id}/approve/`,
+      `/admin/application/submissions/${id}/approve/`,
       {
         method: "POST",
       }
@@ -290,7 +290,7 @@ export const adminApi = {
   },
 
   /**
-   * POST /admin/application/admin/submissions/{id}/reject/
+   * POST /admin/application/submissions/{id}/reject/
    * Reject a submission
    */
   rejectSubmission: async (
@@ -298,7 +298,7 @@ export const adminApi = {
     data: RejectRequest
   ): Promise<RejectResponse> => {
     return apiRequest<RejectResponse>(
-      `/admin/application/admin/submissions/${id}/reject/`,
+      `/admin/application/submissions/${id}/reject/`,
       {
         method: "POST",
         body: JSON.stringify(data),

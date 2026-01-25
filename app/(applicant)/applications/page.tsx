@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { 
   Card, 
   Button, 
@@ -74,7 +76,7 @@ interface ApplicationsResponse {
   to: number;
 }
 
-export default function ApplicationsPage() {
+function ApplicationsPage() {
   // const router = useRouter();
   const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
@@ -433,3 +435,7 @@ export default function ApplicationsPage() {
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(ApplicationsPage), {
+  ssr: false,
+});

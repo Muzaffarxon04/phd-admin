@@ -28,6 +28,34 @@ export interface Specialization {
   isActive: boolean;
 }
 
+// Examiner Types
+export interface Examiner {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  specialization_id: string;
+  specialization?: Specialization;
+  degree: string; // Masalan: "PhD", "DSc"
+  position: string; // Lavozimi
+  organization: string; // Ish joyi
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Speciality Types (enhanced from Specialization)
+export interface Speciality {
+  id: string;
+  code: string; // Masalan: "03.00.01"
+  name: string; // Masalan: "Biokimyo"
+  description?: string;
+  field_of_science: string; // Fan sohasi
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Language Types
 export type ForeignLanguage = "english" | "german" | "french";
 

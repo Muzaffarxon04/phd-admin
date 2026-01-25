@@ -34,19 +34,19 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const queryClient = useQueryClient();
 
   const { data: submissionData, isLoading } = useGet<{ data: SubmissionDetail }>(
-    `/admin/application/admin/submissions/${id}/`
+    `/admin/application/submissions/${id}/`
   );
   const submission = submissionData?.data;
 
-  const { mutate: approveSubmission } = usePost(`/admin/application/admin/submissions/${id}/approve/`, {
+  const { mutate: approveSubmission } = usePost(`/admin/application/submissions/${id}/approve/`, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/submissions/${id}/`] });
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
     },
   });
 
-  const { mutate: rejectSubmission } = usePost(`/admin/application/admin/submissions/${id}/reject/`, {
+  const { mutate: rejectSubmission } = usePost(`/admin/application/submissions/${id}/reject/`, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/submissions/${id}/`] });
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
     },
   });
 
