@@ -6,29 +6,24 @@ import {
   Spin, 
   Tag, 
   Button, 
-  Timeline,
   Progress,
-  Alert,
-  Space,
   Typography,
   Row,
   Col,
-  Statistic,
-  Badge,
-  Tooltip,
-  Divider,
+  message,
+  Alert,
   List,
-  Descriptions,
-  Steps,
+  Tooltip,
+  Space,
   Result,
-  Avatar,
-  message
+  Badge,
+  Steps,
 } from "antd";
 import { 
   useGet, 
   usePost, 
-  usePatch, 
-  useUpload 
+  // usePatch, 
+  // useUpload 
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -145,25 +140,25 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     },
   });
 
-  const { mutate: updateSubmission } = usePatch(`/applicant/submissions/${id}/update/`, {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
-      message.success("Ariya yangilandi!");
-    },
-    onError: (error) => {
-      message.error(error.message || "Yangilashda xatolik");
-    },
-  });
+  // const { mutate: updateSubmission } = usePatch(`/applicant/submissions/${id}/update/`, {
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
+  //     message.success("Ariya yangilandi!");
+  //   },
+  //   onError: (error) => {
+  //     message.error(error.message || "Yangilashda xatolik");
+  //   },
+  // });
 
-  const { mutate: uploadDocument } = useUpload(`/applicant/submissions/${id}/documents/`, {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
-      message.success("Hujjat yuklandi!");
-    },
-    onError: (error) => {
-      message.error(error.message || "Hujjat yuklashda xatolik");
-    },
-  });
+  // const { mutate: uploadDocument } = useUpload(`/applicant/submissions/${id}/documents/`, {
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
+  //     message.success("Hujjat yuklandi!");
+  //   },
+  //   onError: (error) => {
+  //     message.error(error.message || "Hujjat yuklashda xatolik");
+  //   },
+  // });
 
   const getStatusTimeline = (status: string) => {
     const step = statusTimeline.findIndex(step => step.status === status);

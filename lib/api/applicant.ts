@@ -134,7 +134,7 @@ export const applicantApi = {
     submissionId: string,
     formData: FormData
   ): Promise<ApplicationDocument> => {
-    return apiUpload<ApplicationDocument>(
+    return apiUpload(
       `/applicant/submissions/${submissionId}/documents/`,
       formData
     ) as Promise<ApplicationDocument>;

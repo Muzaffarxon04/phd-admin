@@ -336,9 +336,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const handleDeleteField = async (fieldId: number) => {
     modal.confirm({
-      title: "Maydonni o'chirish",
-      content: "Haqiqatdan ham bu maydonni o'chirmoqchimisiz?",
-      okText: "Ha, o'chirish",
+      title: "Maydonni ochirish",
+      content: "Haqiqatdan ham bu maydonni ochirmoqchimisiz?",
+      okText: "Ha, ochirish",
       cancelText: "Bekor qilish",
       okButtonProps: { danger: true },
       onOk: async () => {
@@ -346,10 +346,10 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           await apiRequest(`/admin/application/admin/applications/${id}/fields/${fieldId}/delete/`, {
             method: "DELETE",
           });
-          message.success("Maydon o'chirildi!");
+          message.success("Maydon ochirildi!");
           queryClient.invalidateQueries({ queryKey: [`/admin/application/admin/applications/${id}/`] });
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : "Maydon o'chirishda xatolik";
+          const errorMessage = error instanceof Error ? error.message : "Maydon ochirishda xatolik";
           message.error(errorMessage);
         }
       },
@@ -376,9 +376,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const handleDeleteApplication = () => {
     modal.confirm({
-      title: "Arizani o'chirish",
-      content: "Haqiqatdan ham bu arizani o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi!",
-      okText: "Ha, o'chirish",
+      title: "Arizani ochirish",
+      content: "Haqiqatdan ham bu arizani ochirmoqchimisiz? Bu amalni qaytarib bolmaydi!",
+      okText: "Ha, ochirish",
       cancelText: "Bekor qilish",
       okButtonProps: { danger: true },
       onOk: async () => {
@@ -386,11 +386,11 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           await apiRequest(`/admin/application/admin/applications/${id}/delete/`, {
             method: "DELETE",
           });
-          message.success("Ariza muvaffaqiyatli o'chirildi!");
+          message.success("Ariza muvaffaqiyatli ochirildi!");
           queryClient.invalidateQueries({ queryKey: ["/admin/application/admin/applications/"] });
           router.push("/admin-panel/applications");
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : "Arizani o'chirishda xatolik";
+          const errorMessage = error instanceof Error ? error.message : "Arizani ochirishda xatolik";
           message.error(errorMessage);
         }
       },
@@ -596,7 +596,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       </Card>
 
       <Modal
-        title={editingField ? "Maydonni Tahrirlash" : "Yangi Maydon Qo'shish"}
+        title={editingField ? "Maydonni Tahrirlash" : "Yangi Maydon Qoshish"}
         open={isFieldModalOpen}
         onCancel={() => {
           setIsFieldModalOpen(false);
@@ -646,7 +646,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           </Form.Item>
 
           <Form.Item name="required" label="Majburiy" valuePropName="checked" initialValue={false}>
-            <Switch checkedChildren="Ha" unCheckedChildren="Yo'q" />
+            <Switch checkedChildren="Ha" unCheckedChildren="Yoq" />
           </Form.Item>
 
           <Form.Item name="placeholder" label="Placeholder">
@@ -654,7 +654,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           </Form.Item>
 
           <Form.Item name="help_text" label="Yordam matni">
-            <Input.TextArea rows={2} placeholder="Foydalanuvchiga ko'rsatma" />
+            <Input.TextArea rows={2} placeholder="Foydalanuvchiga korsatma" />
           </Form.Item>
 
           {fieldType === "FILE" && (
@@ -670,7 +670,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                 name="max_file_size"
                 label="Maksimal fayl hajmi (MB)"
                 rules={[
-                  { type: "number", min: 1, message: "Fayl hajmi kamida 1 MB bo'lishi kerak!" },
+                  { type: "number", min: 1, message: "Fayl hajmi kamida 1 MB bolishi kerak!" },
                 ]}
               >
                 <InputNumber className="w-full" placeholder="Masalan: 10" min={1} addonAfter="MB" />
@@ -744,7 +744,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={isCreatingField || isUpdatingField}>
-                {editingField ? "Yangilash" : "Qo'shish"}
+                {editingField ? "Yangilash" : "Qoshish"}
               </Button>
               <Button
                 onClick={() => {

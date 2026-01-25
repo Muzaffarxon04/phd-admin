@@ -4,7 +4,6 @@ import { use } from "react";
 import { 
   Card, 
   Button, 
-  Alert, 
   Form, 
   Input, 
   InputNumber, 
@@ -14,17 +13,12 @@ import {
   DatePicker, 
   Upload, 
   Progress,
-  Tag,
-  Timeline,
-  Divider,
-  Space,
   Typography,
   Row,
   Col,
-  Statistic,
   Badge,
-  Tooltip,
-  message
+  message,
+  Alert,
 } from "antd";
 import { 
   useGet, 
@@ -37,7 +31,7 @@ import {
   ArrowLeftOutlined, 
   UploadOutlined, 
   CheckCircleOutlined, 
-  ClockCircleOutlined,
+  // ClockCircleOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
   DollarOutlined,
@@ -50,6 +44,7 @@ import {
 import { formatDate, parseMoneyAmount } from "@/lib/utils";
 import { type Dayjs } from "dayjs";
 import { useState } from "react";
+import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -227,9 +222,8 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const router = useRouter();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
-  const [saving, setSaving] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [completedFields, setCompletedFields] = useState<Set<number>>(new Set());
+  // const [, setSubmitting] = useState(false);
+  const [completedFields] = useState<Set<number>>(new Set());
   const { theme } = useThemeStore();
 
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
@@ -249,18 +243,6 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     }
   );
 
-  // Track field completion
-  const handleFieldChange = (fieldId: number, value: unknown) => {
-    setCompletedFields(prev => {
-      const newSet = new Set(prev);
-      if (value && value !== "" && value !== null && value !== undefined) {
-        newSet.add(fieldId);
-      } else {
-        newSet.delete(fieldId);
-      }
-      return newSet;
-    });
-  };
 
   const calculateProgress = () => {
     if (!application) return 0;
@@ -361,8 +343,8 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       {/* Header */}
       <div className={`text-white ${
         theme === "dark" 
-          ? "bg-gradient-to-r from-blue-700 to-purple-700" 
-          : "bg-gradient-to-r from-blue-600 to-purple-600"
+          ? " from-blue-700 to-purple-700" 
+          : " from-blue-600 to-purple-600"
       }`}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-6">
@@ -523,7 +505,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             >
               {application.fields
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((field, index) => (
+                .map((field) => (
                   <div key={field.id} className="relative">
                     <Form.Item
                       name={`field_${field.id}`}
@@ -558,7 +540,6 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   size="large"
                   type="default"
                   icon={<SaveOutlined />}
-                  loading={saving}
                   className="flex-1"
                 >
                   Saqlash
@@ -569,7 +550,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   htmlType="submit"
                   loading={isCreating}
                   icon={<SendOutlined />}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+                  className="flex-1  from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
                 >
                   Arizani topshirish
                 </Button>

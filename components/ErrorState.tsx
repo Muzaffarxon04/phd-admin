@@ -37,7 +37,7 @@ export function ErrorState({
         }
         subTitle={
           <span style={{ color: theme === "dark" ? "#8b8b8b" : "#666" }}>
-            {description || "Iltimos, keyinroq qayta urinib ko'ring"}
+            {description || "Iltimos, keyinroq qayta urinib koring"}
           </span>
         }
         extra={

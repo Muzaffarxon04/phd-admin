@@ -80,17 +80,17 @@ export function getApplicationStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     DRAFT: "Qoralama",
     SUBMITTED: "Topshirilgan",
-    UNDER_REVIEW: "Ko'rib chiqilmoqda",
+    UNDER_REVIEW: "Korib chiqilmoqda",
     APPROVED: "Qabul qilingan",
     REJECTED: "Rad etilgan",
     WITHDRAWN: "Bekor qilingan",
     // Legacy statuses
     draft: "Qoralama",
     submitted: "Topshirilgan",
-    under_review: "Ko'rib chiqilmoqda",
+    under_review: "Korib chiqilmoqda",
     accepted: "Qabul qilingan",
     rejected: "Rad etilgan",
-    revision_required: "Qayta ko'rib chiqish talab qilinadi",
+    revision_required: "Qayta korib chiqish talab qilinadi",
   };
   return labels[status] || status;
 }
@@ -115,42 +115,60 @@ export function getApplicationStatusColor(status: string): string {
   return colors[status] || "gray";
 }
 
+// Get payment status color
+export function getPaymentStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    PENDING: "orange",
+    PAID: "green",
+    FAILED: "red",
+    REFUNDED: "gray",
+  };
+  return colors[status] || "gray";
+}
+
+// Parse and format money amount
+export function parseMoneyAmount(amount: string | number): string {
+  const value = typeof amount === "string" ? parseFloat(amount) : amount;
+  if (isNaN(value)) return "0 UZS";
+  return formatCurrency(value);
+}
+
 // Token management utilities
 export const tokenStorage = {
   getAccessToken: (): string | null => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("access_token");
   },
-  
+
   getRefreshToken: (): string | null => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("refresh_token");
   },
-  
+
   setTokens: (access: string, refresh: string): void => {
     if (typeof window === "undefined") return;
     localStorage.setItem("access_token", access);
     localStorage.setItem("refresh_token", refresh);
   },
-  
+
   removeTokens: (): void => {
     if (typeof window === "undefined") return;
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
   },
-  
+
   hasTokens: (): boolean => {
     if (typeof window === "undefined") return false;
     return !!localStorage.getItem("access_token") && !!localStorage.getItem("refresh_token");
   },
-  
+
   getUser: (): unknown | null => {
     if (typeof window === "undefined") return null;
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;
   },
-  
+
   setUser: (user: unknown): void => {
     if (typeof window === "undefined") return;
     localStorage.setItem("user", JSON.stringify(user));

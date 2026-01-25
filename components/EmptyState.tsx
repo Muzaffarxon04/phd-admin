@@ -1,6 +1,6 @@
 "use client";
 
-import { Empty, Button } from "antd";
+import { Empty } from "antd";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 interface EmptyStateProps {
@@ -11,7 +11,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ description, image, action }: EmptyStateProps) {
   const { theme } = useThemeStore();
-  
+
   return (
     <div
       style={{

@@ -5,7 +5,7 @@ import {
   DashboardOutlined,
   FileTextOutlined,
   UserOutlined,
-  SettingOutlined,
+  // SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";

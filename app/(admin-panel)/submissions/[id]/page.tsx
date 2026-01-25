@@ -1,42 +1,34 @@
 "use client";
 
 import { use } from "react";
-import { 
-  Card, 
-  Spin, 
-  Tag, 
-  Button, 
-  Timeline,
-  Progress,
-  Alert,
+import {
+  Card,
+  Spin,
+  Tag,
+  Button,
   Space,
   Typography,
   Row,
   Col,
-  Statistic,
   Badge,
   Descriptions,
   Steps,
   Result,
   Avatar,
-  Table,
-  Tabs
+  Tabs,
+  Progress
 } from "antd";
-import { 
-  useGet 
-} from "@/lib/hooks";
+import { useGet } from "@/lib/hooks";
+import Link from "next/link";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getPaymentStatusColor } from "@/lib/utils";
-import { 
-  FileTextOutlined, 
-  CheckCircleOutlined, 
-  ClockCircleOutlined, 
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
   DollarOutlined,
-  CalendarOutlined,
   ArrowLeftOutlined,
-  TrophyOutlined,
   MailOutlined,
   PhoneOutlined,
   EyeOutlined,
@@ -75,7 +67,6 @@ interface SubmissionsResponse {
 
 export default function SubmissionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { theme } = useThemeStore();
 
   const { data: submissionResponse, isLoading } = useGet<SubmissionsResponse>(`/admin/submissions/${id}/`);
   const submission = submissionResponse?.data;
@@ -101,7 +92,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             subTitle="Bunday ariya mavjud emas yoki sizga ruxsat etilmagan"
           />
           <Button type="primary" className="mt-4" href="/admin-panel/submissions">
-            Ariyalar ro'yxatiga qaytish
+            Ariyalar ro&apos;yxatiga qaytish
           </Button>
         </div>
       </div>
@@ -126,8 +117,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     },
     {
       status: "UNDER_REVIEW",
-      title: "Ko'rib chiqilmoqda",
-      description: "Komissiya ko'rib chiqmoqda",
+      title: "Ko&apos;rib chiqilmoqda",
+      description: "Komissiya ko&apos;rib chiqmoqda",
       icon: <TeamOutlined />,
       color: "processing"
     },
@@ -147,8 +138,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     },
     {
       status: "WITHDRAWN",
-      title: "O'chirilgan",
-      description: "Ariza o'chirildi",
+      title: "O&apos;chirilgan",
+      description: "Ariza o&apos;chirildi",
       icon: <UserOutlined />,
       color: "default"
     }
@@ -164,18 +155,18 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
+      <div className=" from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-6">
-            <a href="/admin-panel/submissions">
-              <Button 
-                type="primary" 
+            <Link href="/admin-panel/submissions">
+              <Button
+                type="primary"
                 icon={<ArrowLeftOutlined />}
                 className="bg-white/20 hover:bg-white/30 border-white/20"
               >
                 Orqaga
               </Button>
-            </a>
+            </Link>
             <div className="flex-1">
               <h1 className="text-3xl font-bold mb-2">Ariya #{submission.submission_number}</h1>
               <p className="text-purple-100">
@@ -183,9 +174,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               </p>
             </div>
             <div className="text-right">
-              <Badge 
-                count={getApplicationStatusLabel(submission.status)} 
-                status={getApplicationStatusColor(submission.status) as any}
+              <Badge
+                count={getApplicationStatusLabel(submission.status)}
+                status={getApplicationStatusColor(submission.status) as "success" | "processing" | "default" | "error" | "warning"}
                 className="bg-white/20 text-white"
               />
             </div>
@@ -195,7 +186,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultActiveKey="1" type="card">
-          <TabPane tab="Umumiy ma'lumot" key="1">
+          <TabPane tab="Umumiy ma&apos;lumot" key="1">
             {/* Timeline */}
             <Card className="mb-8">
               <Steps
@@ -241,15 +232,15 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               <Col xs={24} sm={12}>
                 <Card className="h-full">
                   <div className="flex items-center justify-between mb-4">
-                    <Title level={4}>To'lov holati</Title>
+                    <Title level={4}>To&apos;lov holati</Title>
                     <Tag color={getPaymentStatusColor(submission.payment_status)}>
-                      {submission.payment_status === "PAID" ? "To'langan" : submission.payment_status}
+                      {submission.payment_status === "PAID" ? "To&apos;langan" : submission.payment_status}
                     </Tag>
                   </div>
                   <Space direction="vertical" className="w-full">
                     <div className="flex items-center justify-between">
-                      <span>To'lov turi</span>
-                      <Text>Online to'lov</Text>
+                      <span>To&apos;lov turi</span>
+                      <Text>Online to&apos;lov</Text>
                     </div>
                     {submission.payment_amount && (
                       <div className="flex items-center justify-between">
@@ -271,7 +262,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
             {/* Applicant Information */}
             <Card className="mb-8">
-              <Title level={4} className="mb-6">Ariza beruvchi ma'lumotlari</Title>
+              <Title level={4} className="mb-6">Ariza beruvchi ma&apos;lumotlari</Title>
               <Descriptions bordered column={2}>
                 <Descriptions.Item label="Ism">
                   <div className="flex items-center gap-2">
@@ -331,9 +322,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     type="primary" 
                     size="large"
                     icon={<TeamOutlined />}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+                    className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
                   >
-                    Ko'rib chiqishni boshlash
+                    Ko&apos;rib chiqishni boshlash
                   </Button>
                   <Button 
                     size="large"
@@ -350,7 +341,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   icon={<ClockCircleOutlined />}
                   loading
                 >
-                  Ko'rib chiqilmoqda
+                  Ko&apos;rib chiqilmoqda
                 </Button>
               )}
               
@@ -362,10 +353,10 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   icon={<CheckCircleOutlined className="text-6xl text-green-500" />}
                   extra={[
                     <Button key="approve" type="primary" icon={<SendOutlined />}>
-                      Tasdiqlanish haqida ma'lumot yuborish
+                      Tasdiqlanish haqida ma&apos;lumot yuborish
                     </Button>,
                     <Button key="view">
-                      Arizani ko'rish
+                      Arizani ko&apos;rish
                     </Button>
                   ]}
                 />
@@ -378,10 +369,10 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   subTitle="Ariyamiz rad etildi"
                   extra={[
                     <Button key="review" type="primary" icon={<EyeOutlined />}>
-                      Arizani qayta ko'rib chiqish
+                      Arizani qayta ko&apos;rib chiqish
                     </Button>,
                     <Button key="contact">
-                      Ariza beruvchiga bog'lanish
+                      Ariza beruvchiga bog&apos;lanish
                     </Button>
                   ]}
                 />
@@ -389,7 +380,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             </div>
           </TabPane>
 
-          <TabPane tab="Qo'shimcha ma'lumot" key="2">
+          <TabPane tab="Qo'shimcha ma&apos;lumot" key="2">
             <Card>
               <Row gutter={[16, 16]}>
                 <Col xs={24} md={12}>
@@ -425,14 +416,14 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                       </Tag>
                     </div>
                     <div>
-                      <Text type="secondary">To'lov holati:</Text>
+                      <Text type="secondary">To&apos;lov holati:</Text>
                       <Tag color={getPaymentStatusColor(submission.payment_status)} className="text-base">
-                        {submission.payment_status === "PAID" ? "To'langan" : submission.payment_status}
+                        {submission.payment_status === "PAID" ? "To&apos;langan" : submission.payment_status}
                       </Tag>
                     </div>
                     {submission.payment_amount && (
                       <div>
-                        <Text type="secondary">To'lov summasi:</Text>
+                        <Text type="secondary">To&apos;lov summasi:</Text>
                         <div className="text-lg font-medium text-green-600">
                           {submission.payment_amount.toLocaleString()} UZS
                         </div>

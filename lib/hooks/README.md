@@ -1,6 +1,6 @@
-# API Hooks Foydalanish Qo'llanmasi
+# API Hooks Foydalanish Qollanmasi
 
-Barcha API so'rovlar uchun `useUniversalFetch` hook'laridan to'g'ridan-to'g'ri foydalaning.
+Barcha API sorovlar uchun `useUniversalFetch` hook'laridan tog'ridan-tog'ri foydalaning.
 
 ## Import qilish
 

@@ -1,15 +1,12 @@
 "use client";
 
-import { Layout, Badge, Avatar, Dropdown, Space, Button } from "antd";
+import { Layout, Avatar, Dropdown, Space, Button, MenuProps } from "antd";
 import {
-  BellOutlined,
-  GlobalOutlined,
-  MoonOutlined,
-  SunOutlined,
-  UserOutlined,
   LogoutOutlined,
+  UserOutlined,
+  SunOutlined,
+  MoonOutlined,
 } from "@ant-design/icons";
-import type { MenuProps } from "antd";
 import { tokenStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -57,15 +54,15 @@ export default function ApplicantHeader() {
     <AntHeader
       className="applicant-header"
       style={{
-        background: theme === "dark" 
-          ? "linear-gradient(135deg, rgba(26, 29, 41, 0.98) 0%, rgba(37, 40, 54, 0.98) 100%)" 
+        background: theme === "dark"
+          ? "linear-gradient(135deg, rgba(26, 29, 41, 0.98) 0%, rgba(37, 40, 54, 0.98) 100%)"
           : "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
         padding: "0 40px",
         height: 72,
-        borderBottom: theme === "dark" 
-          ? "1px solid rgba(255, 255, 255, 0.08)" 
+        borderBottom: theme === "dark"
+          ? "1px solid rgba(255, 255, 255, 0.08)"
           : "1px solid rgba(0, 0, 0, 0.06)",
         display: "flex",
         alignItems: "center",
@@ -73,14 +70,14 @@ export default function ApplicantHeader() {
         position: "sticky",
         top: 0,
         zIndex: 1000,
-        boxShadow: theme === "dark" 
-          ? "0 4px 20px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)" 
+        boxShadow: theme === "dark"
+          ? "0 4px 20px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
           : "0 4px 20px rgba(0, 0, 0, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.03)",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
 
-    
+
 
       {/* Right side - Actions */}
       <Space size="middle" style={{ alignItems: "center" }}>
@@ -103,35 +100,35 @@ export default function ApplicantHeader() {
             overflow: "hidden",
           }}
         >
-          <span 
+          <span
             style={{
               position: "relative",
               zIndex: 1,
-             
+
             }}
             className="theme-icon"
           />
         </Button>
 
-  
-  
-    
-          <span
-            style={{
-              fontWeight: 700,
-              color: theme === "dark" ? "#ffffff" : "#333",
-              fontSize: "15px",
-              letterSpacing: "0.4px",
-            }}
-          >
-            {userName}
-          </span>
-       
-        <Dropdown 
-          menu={{ 
+
+
+
+        <span
+          style={{
+            fontWeight: 700,
+            color: theme === "dark" ? "#ffffff" : "#333",
+            fontSize: "15px",
+            letterSpacing: "0.4px",
+          }}
+        >
+          {userName}
+        </span>
+
+        <Dropdown
+          menu={{
             items: userMenuItems,
             className: "user-dropdown-menu",
-          }} 
+          }}
           trigger={["click"]}
           placement="bottomRight"
           overlayStyle={{ marginTop: 12 }}
@@ -166,7 +163,7 @@ export default function ApplicantHeader() {
           </Avatar>
         </Dropdown>
       </Space>
-      
+
       <style jsx>{`
         .applicant-header {
           position: relative;
@@ -223,9 +220,9 @@ export default function ApplicantHeader() {
         }
         .user-info-card:hover {
           transform: translateY(-2px);
-          box-shadow: ${theme === "dark" 
-            ? "0 6px 20px rgba(102, 126, 234, 0.25)" 
-            : "0 6px 20px rgba(102, 126, 234, 0.18)"};
+          box-shadow: ${theme === "dark"
+          ? "0 6px 20px rgba(102, 126, 234, 0.25)"
+          : "0 6px 20px rgba(102, 126, 234, 0.18)"};
           border-color: ${theme === "dark" ? "rgba(102, 126, 234, 0.5)" : "rgba(102, 126, 234, 0.35)"};
         }
         .status-indicator {
@@ -251,9 +248,9 @@ export default function ApplicantHeader() {
         :global(.user-dropdown-menu) {
           border-radius: 12px !important;
           padding: 8px !important;
-          box-shadow: ${theme === "dark" 
-            ? "0 8px 32px rgba(0, 0, 0, 0.4)" 
-            : "0 8px 32px rgba(0, 0, 0, 0.12)"} !important;
+          box-shadow: ${theme === "dark"
+          ? "0 8px 32px rgba(0, 0, 0, 0.4)"
+          : "0 8px 32px rgba(0, 0, 0, 0.12)"} !important;
           background: ${theme === "dark" ? "#1a1d29" : "#ffffff"} !important;
           border: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)"} !important;
         }

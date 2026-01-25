@@ -53,13 +53,13 @@ export default function AdminPanelPage() {
   const totalSubmissions = submissions?.length || 0;
   const submissionsList = (submissions as Submission[]) || [];
   
-  // Arizalar holati bo'yicha statistika
+  // Arizalar holati boyicha statistika
   const approvedCount = submissionsList.filter((s) => s.status === "APPROVED").length;
   const rejectedCount = submissionsList.filter((s) => s.status === "REJECTED").length;
   const pendingCount = submissionsList.filter((s) => s.status === "UNDER_REVIEW" || s.status === "SUBMITTED").length;
   const draftCount = submissionsList.filter((s) => s.status === "DRAFT").length;
   
-  // To'lovlar bo'yicha statistika
+  // Tolovlar boyicha statistika
   const paidCount = submissionsList.filter((s) => s.payment_status === "PAID").length;
   const pendingPaymentCount = submissionsList.filter((s) => s.payment_status === "PENDING").length;
   const failedPaymentCount = submissionsList.filter((s) => s.payment_status === "FAILED").length;
@@ -82,7 +82,7 @@ export default function AdminPanelPage() {
     };
   });
   
-  // Eng ko'p ariza berilgan arizalar (top 5)
+  // Eng kop ariza berilgan arizalar (top 5)
   const applicationsList = (applications as Application[]) || [];
   const topApplications = [...applicationsList]
     .sort((a, b) => (b.total_submissions || 0) - (a.total_submissions || 0))
@@ -97,7 +97,7 @@ export default function AdminPanelPage() {
     })
     .slice(0, 5);
 
-  // Chart data - Arizalar holati bo'yicha
+  // Chart data - Arizalar holati boyicha
   const statusData = [
     { name: "Qabul qilingan", value: approvedCount, color: "#52c41a" },
     { name: "Rad etilgan", value: rejectedCount, color: "#ff4d4f" },
@@ -105,14 +105,14 @@ export default function AdminPanelPage() {
     { name: "Qoralama", value: draftCount, color: "#8b8b8b" },
   ].filter((item) => item.value > 0);
 
-  // Chart data - To'lovlar holati bo'yicha
+  // Chart data - Tolovlar holati boyicha
   const paymentData = [
-    { name: "To'langan", value: paidCount, color: "#52c41a" },
+    { name: "Tolangan", value: paidCount, color: "#52c41a" },
     { name: "Kutilmoqda", value: pendingPaymentCount, color: "#faad14" },
     { name: "Xatolik", value: failedPaymentCount, color: "#ff4d4f" },
   ].filter((item) => item.value > 0);
   
-  // Foiz o'zgarishlar (mock data - keyinroq API'dan keladi)
+  // Foiz ozgarishlar (mock data - keyinroq API'dan keladi)
   const calculatePercentage = (current: number, total: number) => {
     if (total === 0) return 0;
     return Math.round((current / total) * 100);

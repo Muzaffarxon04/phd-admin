@@ -173,7 +173,7 @@ export default function CreateApplicationPage() {
             name="max_submissions"
             label="Maksimal arizalar soni"
             rules={[
-              { type: "number", min: 1, message: "Maksimal arizalar soni 1 dan katta bo'lishi kerak!" },
+              { type: "number", min: 1, message: "Maksimal arizalar soni 1 dan katta bolishi kerak!" },
             ]}
           >
             <InputNumber className="w-full" placeholder="Maksimal arizalar soni" min={1} />
@@ -181,12 +181,12 @@ export default function CreateApplicationPage() {
 
           <Form.Item
             name="application_fee"
-            label="Ariza to'lovi (UZS)"
+            label="Ariza tolovi (UZS)"
             rules={[
-              { type: "number", min: 0, message: "To'lov 0 dan katta bo'lishi kerak!" },
+              { type: "number", min: 0, message: "Tolov 0 dan katta bolishi kerak!" },
             ]}
           >
-            <InputNumber className="w-full" placeholder="Ariza to'lovi" min={0} />
+            <InputNumber className="w-full" placeholder="Ariza tolovi" min={0} />
           </Form.Item>
 
           <Form.Item
@@ -200,9 +200,9 @@ export default function CreateApplicationPage() {
 
           <Form.Item
             name="instructions"
-            label="Ko'rsatmalar"
+            label="Korsatmalar"
           >
-            <Input.TextArea rows={3} placeholder="Talabgorlar uchun ko'rsatmalar" />
+            <Input.TextArea rows={3} placeholder="Talabgorlar uchun korsatmalar" />
           </Form.Item>
 
           <Form.List name="fields">

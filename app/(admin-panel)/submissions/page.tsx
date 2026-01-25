@@ -1,28 +1,30 @@
 "use client";
 
-import { Card, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Timeline, Alert, Badge, Tooltip } from "antd";
-import { 
-  EyeOutlined, 
-  CheckCircleOutlined, 
-  ClockCircleOutlined, 
-  ExclamationCircleOutlined,
+import { Card, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Badge, Tooltip } from "antd";
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  // ExclamationCircleOutlined,
   DollarOutlined,
-  UserOutlined,
   CalendarOutlined,
-  FileTextOutlined,
   ReloadOutlined,
   SearchOutlined,
-  FilterOutlined
+  FileTextOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
-import { useThemeStore } from "@/lib/stores/themeStore";
+// import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getPaymentStatusColor } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel, getApplicationStatusColor
+  //  getPaymentStatusColor
+
+ } from "@/lib/utils";
 import { useState, useMemo } from "react";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface Submission {
   id: number;
@@ -55,16 +57,17 @@ interface SubmissionsResponse {
 }
 
 export default function SubmissionsPage() {
-  const { theme } = useThemeStore();
   const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse>("/admin/submissions/");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   
   // Handle the specific response structure
-  let submissions: Submission[] = [];
-  if (submissionsData) {
-    submissions = submissionsData.data.data || [];
-  }
+  const submissions = useMemo(() => {
+    if (submissionsData) {
+      return submissionsData.data.data || [];
+    }
+    return [];
+  }, [submissionsData]);
   
   // Filter submissions based on status and search
   const filteredSubmissions = useMemo(() => {
@@ -174,7 +177,7 @@ export default function SubmissionsPage() {
       title: (
         <div className="flex items-center gap-2">
           <DollarOutlined />
-          <span>To'lov</span>
+          <span>To&apos;lov</span>
         </div>
       ),
       dataIndex: "payment_status",
@@ -208,7 +211,7 @@ export default function SubmissionsPage() {
         </div>
       ),
       key: "dates",
-      render: (_, record: Submission) => (
+      render: (_: unknown, record: Submission) => (
         <div className="text-sm">
           <div className="text-gray-500">Yaratilgan:</div>
           <div>{formatDate(record.created_at)}</div>
@@ -230,7 +233,7 @@ export default function SubmissionsPage() {
         </div>
       ),
       key: "actions",
-      render: (_, record: Submission) => (
+      render: () => (
         <Space size="small">
           <Tooltip title="Ko'rish">
             <Button 
@@ -261,14 +264,14 @@ export default function SubmissionsPage() {
     
     // Handle different error formats
     if (typeof error === "object" && error !== null) {
-      const errorData = (error as any).data;
+      const errorData = (error as { data?: unknown }).data;
       if (errorData) {
         if (Array.isArray(errorData)) {
           errorMessage = errorData.join(", ");
         } else if (typeof errorData === "string") {
           errorMessage = errorData;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
+        } else if (typeof errorData === "object" && errorData !== null && "message" in errorData) {
+          errorMessage = String(errorData.message);
         }
       }
     }
@@ -288,7 +291,7 @@ export default function SubmissionsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
+      <div className=" from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Topshirilgan Arizalar</h1>
@@ -344,7 +347,7 @@ export default function SubmissionsPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <Title level={2} className="!mb-0">Arizalar jadvali</Title>
+          <Title level={2} className="mb-0!">Arizalar jadvali</Title>
           
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -366,10 +369,10 @@ export default function SubmissionsPage() {
               <option value="all">Barchasi</option>
               <option value="DRAFT">Tayyorlanmoqda</option>
               <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Ko'rib chiqilmoqda</option>
+              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
               <option value="APPROVED">Tasdiqlangan</option>
               <option value="REJECTED">Rad etilgan</option>
-              <option value="WITHDRAWN">O'chirilgan</option>
+              <option value="WITHDRAWN">O&apos;chirilgan</option>
             </select>
           </div>
         </div>
@@ -379,7 +382,7 @@ export default function SubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="!mb-0">Holatlar bo'yicha taqsimot</Title>
+                <Title level={4} className="mb-0!">Holatlar bo&apos;yicha taqsimot</Title>
                 <ReloadOutlined className="text-gray-400 cursor-pointer" />
               </div>
               <div className="space-y-3">
@@ -409,12 +412,12 @@ export default function SubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="!mb-0">To'lov holati</Title>
+                <Title level={4} className="mb-0!">To&apos;lov holati</Title>
                 <DollarOutlined className="text-green-500" />
               </div>
               <div className="space-y-3">
                 {[
-                  { label: "To'langan", value: stats.paid, color: "green" },
+                  { label: "To&apos;langan", value: stats.paid, color: "green" },
                   { label: "Kutilmoqda", value: stats.pendingPayment, color: "orange" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between">
@@ -451,7 +454,7 @@ export default function SubmissionsPage() {
                   description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
                   action={
                     <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
-                      Barchalarini ko'rish
+                      Barchalarini ko&apos;rish
                     </Button>
                   }
                 />

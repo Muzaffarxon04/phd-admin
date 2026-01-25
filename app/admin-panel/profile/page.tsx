@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Form, Input, Button, Card, App, Avatar, Upload, Row, Col, Divider, Space } from "antd";
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, SecurityScanOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import { Form, Input, Button, Card, App, Avatar, Upload, Row, Col, Divider, Space, UploadFile } from "antd";
+import { UserOutlined, MailOutlined, PhoneOutlined, SecurityScanOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useGet, usePatch } from "@/lib/hooks";
 import { useAuthStore } from "@/lib/stores/authStore";
-import { authApi } from "@/lib/api/auth";
-import Link from "next/link";
 
 interface AdminProfileData {
   id: number;
@@ -39,17 +37,13 @@ export default function AdminProfilePage() {
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [filePath, setFilePath] = useState("");
-  const [fileList, setFileList] = useState<any[]>([]);
-  const [user, setUser] = useState<AdminProfileData | null>(null);
   
   const router = useRouter();
   const { message } = App.useApp();
   const { logout } = useAuthStore();
 
   // Get user profile data
-  const { data: profile, refetch } = useGet<AdminProfileData>("/auth/me/", {
-    queryKey: ["adminProfile"],
-  });
+  const { data: profile, refetch } = useGet<AdminProfileData>("/auth/me/");
 
   // Update profile mutation
   const { mutate: updateProfile, isPending: isUpdating } = usePatch<AdminProfileData, UpdateAdminProfileData>("/auth/me/", {
@@ -61,29 +55,25 @@ export default function AdminProfilePage() {
     onError: (error) => {
       let errorMessage = error.message || "Xatolik yuz berdi";
       
-      if (Array.isArray((error as any).data)) {
-        errorMessage = (error as any).data.join(", ");
+      if (Array.isArray((error).data)) {
+        errorMessage = (error).data.join(", ");
       }
       
       message.error(errorMessage);
     },
   });
 
-  useEffect(() => {
-    if (profile) {
-      setUser(profile);
-      form.setFieldsValue({
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        email: profile.email,
-        phone_number: profile.phone_number,
-        pinfl: profile.pinfl,
-        address: profile.address,
-        passport_series: profile.passport_series,
-        passport_number: profile.passport_number,
-      });
-    }
-  }, [profile, form]);
+  // Form initial values
+  const initialValues = profile ? {
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    email: profile.email,
+    phone_number: profile.phone_number,
+    pinfl: profile.pinfl,
+    address: profile.address,
+    passport_series: profile.passport_series,
+    passport_number: profile.passport_number,
+  } : {};
 
   const handleSave = (values: UpdateAdminProfileData) => {
     updateProfile(values);
@@ -115,21 +105,12 @@ export default function AdminProfilePage() {
     router.push("/login");
   };
 
-  const handleUpload = () => {
-    message.success("Profil rasmi yuklandi!");
-    setFileList([]);
-  };
 
   const uploadProps = {
-    onRemove: () => {
-      setFileList([]);
-    },
-    beforeUpload: (file: any) => {
-      setFileList([file]);
+    beforeUpload: (file: File) => {
       setFilePath(URL.createObjectURL(file));
       return false;
     },
-    fileList,
   };
 
   // Get user name from auth store
@@ -180,6 +161,7 @@ export default function AdminProfilePage() {
               layout="vertical"
               onFinish={handleSave}
               disabled={!isEditing}
+              initialValues={initialValues}
             >
               <Row gutter={[16, 16]}>
                 <Col span={12}>
@@ -231,7 +213,7 @@ export default function AdminProfilePage() {
 
               <Divider />
 
-              <h3 className="font-semibold mb-4">Passport ma'lumotlari</h3>
+              <h3 className="font-semibold mb-4">Passport ma&apos;lumotlari</h3>
               <Row gutter={[16, 16]}>
                 <Col span={12}>
                   <Form.Item
@@ -311,7 +293,7 @@ export default function AdminProfilePage() {
           </Col>
           <Col span={8}>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">Ro'yxatdan o'tgan</p>
+              <p className="text-sm text-gray-500">Ro&apos;yxatdan o&apos;tgan</p>
               <p className="font-semibold">{profile?.created_at?.split('T')[0]}</p>
             </div>
           </Col>
@@ -323,13 +305,13 @@ export default function AdminProfilePage() {
         title={
           <div className="flex items-center gap-2">
             <SecurityScanOutlined className="text-purple-600" />
-            <span>Parolni o'zgartirish</span>
+            <span>Parolni o&apos;zgartirish</span>
           </div>
         } 
         className="shadow-lg"
       >
         <p className="text-gray-600 mb-4">
-          Parolni o'zgartirish uchun parolni tiklash sahifasidan foydalaning.
+          Parolni o&apos;zgartirish uchun parolni tiklash sahifasidan foydalaning.
         </p>
         <Button 
           type="primary" 

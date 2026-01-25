@@ -6,11 +6,15 @@ export interface Applicant {
   id: string;
   oneId: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   address: string; // Doimiy yashash joyi
   passportSeries: string;
   passportNumber: string;
   pinfl: string;
   phone: string;
+  full_name?: string;
+  role?: string;
   email?: string;
   createdAt: string;
   updatedAt: string;
@@ -28,12 +32,12 @@ export interface Specialization {
 export type ForeignLanguage = "english" | "german" | "french";
 
 // Application Status
-export type ApplicationStatus = 
-  | "draft" 
-  | "submitted" 
-  | "under_review" 
-  | "accepted" 
-  | "rejected" 
+export type ApplicationStatus =
+  | "draft"
+  | "submitted"
+  | "under_review"
+  | "accepted"
+  | "rejected"
   | "revision_required";
 
 // Application Types
@@ -70,7 +74,7 @@ export interface ApplicationDocument {
 
 export type DocumentType =
   | "ilmiy_kengash_nusxasi" // Ilmiy kengash nusxasi yoki OAK (BAK) jurnali
-  | "yollanma_xat" // Yo'llanma xat
+  | "yollanma_xat" // Yollanma xat
   | "diplom" // Bakalavr va magistratura diplom nusxasi
   | "shakl_3_4" // 3-4 shakl
   | "annotatsiya"; // Annotatsiya
@@ -226,7 +230,7 @@ export interface AuditLog {
   action: string;
   resource: string;
   resourceId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;

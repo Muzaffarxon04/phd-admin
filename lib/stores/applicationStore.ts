@@ -1,12 +1,9 @@
 import { create } from "zustand";
-import type { Application, ApplicationStatus, DocumentType, ForeignLanguage } from "@/types";
 import { applicantApi, adminApi } from "@/lib/api";
 import type {
   AvailableApplication,
   MySubmission,
   ApplicationSubmissionDetail,
-  ApplicationSubmissionCreate,
-  ApplicationDocument,
   ApplicationDetail,
   ApplicationCreate,
   ApplicationUpdate,
@@ -28,7 +25,7 @@ interface ApplicationState {
   createSubmission: (applicationId: string) => Promise<MySubmission>;
   uploadDocument: (submissionId: string, file: File, documentType: string) => Promise<void>;
   submitSubmission: (submissionId: string) => Promise<void>;
-  updateSubmission: (id: string, data: any) => Promise<void>;
+  updateSubmission: (id: string, data: Record<string, unknown>) => Promise<void>;
   
   // Admin Actions
   adminFetchApplications: (page?: number, pageSize?: number) => Promise<void>;
@@ -47,7 +44,7 @@ interface ApplicationState {
   clearCurrent: () => void;
 }
 
-export const useApplicationStore = create<ApplicationState>((set, get) => ({
+export const useApplicationStore = create<ApplicationState>((set) => ({
   applications: [],
   submissions: [],
   currentApplication: null,
@@ -188,7 +185,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     }
   },
 
-  updateSubmission: async (id: string, data: any) => {
+  updateSubmission: async (id: string, data: Record<string, unknown>) => {
     set({ isLoading: true, error: null });
     try {
       const submission = await applicantApi.updateSubmission(id, data);
@@ -303,7 +300,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     try {
       const response = await adminApi.getSubmissions(page, pageSize, status);
       // Convert admin submission format to MySubmission format for display
-      const submissions = response.results as any[];
+      const submissions = response.results as MySubmission[];
       set({
         submissions: submissions,
         isLoading: false,
@@ -338,10 +335,10 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const result = await adminApi.approveSubmission(id);
       set((state) => ({
         submissions: state.submissions.map((sub) =>
-          sub.id === id ? result.submission : sub
+          sub.id === id ? (result.submission as unknown as MySubmission) : sub
         ),
         currentSubmission: state.currentSubmission?.id === id
-          ? (result.submission as ApplicationSubmissionDetail)
+          ? (result.submission as unknown as ApplicationSubmissionDetail)
           : state.currentSubmission,
         isLoading: false,
       }));
@@ -360,10 +357,10 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       const result = await adminApi.rejectSubmission(id, { reason });
       set((state) => ({
         submissions: state.submissions.map((sub) =>
-          sub.id === id ? result.submission : sub
+          sub.id === id ? (result.submission as unknown as MySubmission) : sub
         ),
         currentSubmission: state.currentSubmission?.id === id
-          ? (result.submission as ApplicationSubmissionDetail)
+          ? (result.submission as unknown as ApplicationSubmissionDetail)
           : state.currentSubmission,
         isLoading: false,
       }));

@@ -8,12 +8,12 @@ import {
   Tag, 
   Badge, 
   Typography, 
-  Space, 
+  // Space, 
   Divider, 
-  Tooltip,
+  // Tooltip,
   Progress,
   Statistic,
-  Timeline
+  // Timeline
 } from "antd";
 import { 
   FileTextOutlined, 
@@ -25,8 +25,8 @@ import {
   ExclamationCircleOutlined,
   TrophyOutlined,
   EyeOutlined,
-  PlusOutlined,
-  FilterOutlined,
+  // PlusOutlined,
+  // FilterOutlined,
   SearchOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
@@ -35,7 +35,7 @@ import { CardSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
 import { useState } from "react";
 
@@ -75,7 +75,7 @@ interface ApplicationsResponse {
 }
 
 export default function ApplicationsPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,7 +219,7 @@ export default function ApplicationsPage() {
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <Title level={2} className="!mb-0">Mavjud Arizalar</Title>
+            <Title level={2} className="mb-0!">Mavjud Arizalar</Title>
             <Badge count={filteredApplications.length} overflowCount={999} />
           </div>
           
@@ -333,7 +333,7 @@ export default function ApplicationsPage() {
                       </div>
                       <Tag 
                         color={getApplicationStatusColor(app.status || "DRAFT")}
-                        className="flex-shrink-0"
+                        className="shrink-0"
                       >
                         {getApplicationStatusLabel(app.status || "DRAFT")}
                       </Tag>

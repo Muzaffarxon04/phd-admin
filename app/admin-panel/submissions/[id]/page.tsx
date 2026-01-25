@@ -55,7 +55,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   };
 
   const handleReject = () => {
-    rejectSubmission({ notes: "Hujjatlar noto'g'ri" });
+    rejectSubmission({ notes: "Hujjatlar notog'ri" });
   };
 
   if (isLoading) {

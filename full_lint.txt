@@ -1,0 +1,123 @@
+
+> phd-client@0.1.0 lint
+> eslint
+
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(admin-panel)/submissions/[id]/page.tsx
+    9:3   warning  'Timeline' is defined but never used                             @typescript-eslint/no-unused-vars
+   11:3   warning  'Alert' is defined but never used                                @typescript-eslint/no-unused-vars
+   16:3   warning  'Statistic' is defined but never used                            @typescript-eslint/no-unused-vars
+   22:3   warning  'Table' is defined but never used                                @typescript-eslint/no-unused-vars
+  423:48  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(admin-panel)/submissions/page.tsx
+    3:76  warning  'Timeline' is defined but never used                                                                                                                                                 @typescript-eslint/no-unused-vars
+    3:86  warning  'Alert' is defined but never used                                                                                                                                                    @typescript-eslint/no-unused-vars
+    8:3   warning  'ExclamationCircleOutlined' is defined but never used                                                                                                                                @typescript-eslint/no-unused-vars
+   15:3   warning  'FilterOutlined' is defined but never used                                                                                                                                           @typescript-eslint/no-unused-vars
+   22:76  warning  'getPaymentStatusColor' is defined but never used                                                                                                                                    @typescript-eslint/no-unused-vars
+   25:16  warning  'Text' is assigned a value but never used                                                                                                                                            @typescript-eslint/no-unused-vars
+   58:11  warning  'theme' is assigned a value but never used                                                                                                                                           @typescript-eslint/no-unused-vars
+   64:7   warning  The 'submissions' array makes the dependencies of useMemo Hook (at line 78) change on every render. To fix this, wrap the initialization of 'submissions' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  233:16  warning  '_' is defined but never used                                                                                                                                                        @typescript-eslint/no-unused-vars
+  233:28  warning  'record' is defined but never used                                                                                                                                                   @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(applicant)/applications/[id]/page.tsx
+   17:3   warning  'Tag' is defined but never used                         @typescript-eslint/no-unused-vars
+   18:3   warning  'Timeline' is defined but never used                    @typescript-eslint/no-unused-vars
+   19:3   warning  'Divider' is defined but never used                     @typescript-eslint/no-unused-vars
+   20:3   warning  'Space' is defined but never used                       @typescript-eslint/no-unused-vars
+   24:3   warning  'Statistic' is defined but never used                   @typescript-eslint/no-unused-vars
+   26:3   warning  'Tooltip' is defined but never used                     @typescript-eslint/no-unused-vars
+   40:3   warning  'ClockCircleOutlined' is defined but never used         @typescript-eslint/no-unused-vars
+  230:18  warning  'setSaving' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  231:10  warning  'submitting' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  231:22  warning  'setSubmitting' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  253:9   warning  'handleFieldChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  526:30  warning  'index' is defined but never used                       @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(applicant)/applications/page.tsx
+  11:3  warning  'Space' is defined but never used            @typescript-eslint/no-unused-vars
+  13:3  warning  'Tooltip' is defined but never used          @typescript-eslint/no-unused-vars
+  16:3  warning  'Timeline' is defined but never used         @typescript-eslint/no-unused-vars
+  28:3  warning  'PlusOutlined' is defined but never used     @typescript-eslint/no-unused-vars
+  29:3  warning  'FilterOutlined' is defined but never used   @typescript-eslint/no-unused-vars
+  78:9  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(applicant)/dashboard/page.tsx
+    3:72   warning  'Space' is defined but never used                         @typescript-eslint/no-unused-vars
+    3:97   warning  'Alert' is defined but never used                         @typescript-eslint/no-unused-vars
+    3:110  warning  'Input' is defined but never used                         @typescript-eslint/no-unused-vars
+    3:117  warning  'Modal' is defined but never used                         @typescript-eslint/no-unused-vars
+    3:124  warning  'Upload' is defined but never used                        @typescript-eslint/no-unused-vars
+    7:3    warning  'SafetyOutlined' is defined but never used                @typescript-eslint/no-unused-vars
+   12:3    warning  'ArrowUpOutlined' is defined but never used               @typescript-eslint/no-unused-vars
+   13:3    warning  'ArrowRightOutlined' is defined but never used            @typescript-eslint/no-unused-vars
+   65:10   warning  'isProfileModalOpen' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   66:10   warning  'isEditing' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  184:9    warning  'handleStartEditing' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  188:9    warning  'handleCancelEditing' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  193:9    warning  'handleSaveProfile' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  197:9    warning  'handleAvatarUpload' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/(applicant)/my-submissions/[id]/page.tsx
+    9:3   warning  'Timeline' is defined but never used                   @typescript-eslint/no-unused-vars
+   16:3   warning  'Statistic' is defined but never used                  @typescript-eslint/no-unused-vars
+   19:3   warning  'Divider' is defined but never used                    @typescript-eslint/no-unused-vars
+   21:3   warning  'Descriptions' is defined but never used               @typescript-eslint/no-unused-vars
+   24:3   warning  'Avatar' is defined but never used                     @typescript-eslint/no-unused-vars
+  148:19  warning  'updateSubmission' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  158:19  warning  'uploadDocument' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/admin-panel/profile/page.tsx
+   42:10  warning  'user' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   71:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/admin-panel/profile/page.tsx:71:7
+  69 |   useEffect(() => {
+  70 |     if (profile) {
+> 71 |       setUser(profile);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  72 |       form.setFieldsValue({
+  73 |         first_name: profile.first_name,
+  74 |         last_name: profile.last_name,  react-hooks/set-state-in-effect
+  115:9   warning  'handleUpload' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/components/EmptyState.tsx
+  3:17  warning  'Button' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/components/admin/Sidebar.tsx
+  8:3  warning  'SettingOutlined' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/components/applicant/Header.tsx
+  3:18  warning  'Badge' is defined but never used           @typescript-eslint/no-unused-vars
+  5:3   warning  'BellOutlined' is defined but never used    @typescript-eslint/no-unused-vars
+  6:3   warning  'GlobalOutlined' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/lib/data.ts
+  4:3  warning  'Application' is defined but never used  @typescript-eslint/no-unused-vars
+  6:3  warning  'Applicant' is defined but never used    @typescript-eslint/no-unused-vars
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/lib/stores/applicationStore.ts
+    2:15  warning  'Application' is defined but never used                  @typescript-eslint/no-unused-vars
+    2:28  warning  'ApplicationStatus' is defined but never used            @typescript-eslint/no-unused-vars
+    2:47  warning  'DocumentType' is defined but never used                 @typescript-eslint/no-unused-vars
+    2:61  warning  'ForeignLanguage' is defined but never used              @typescript-eslint/no-unused-vars
+    8:3   warning  'ApplicationSubmissionCreate' is defined but never used  @typescript-eslint/no-unused-vars
+    9:3   warning  'ApplicationDocument' is defined but never used          @typescript-eslint/no-unused-vars
+   31:40  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   50:67  warning  'get' is defined but never used                          @typescript-eslint/no-unused-vars
+  191:46  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  306:47  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+/Users/muzaffarxonabdusalomov/Desktop/phd-client/types/index.ts
+  229:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 75 problems (6 errors, 69 warnings)
+

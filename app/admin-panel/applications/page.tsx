@@ -158,8 +158,9 @@ export default function AdminApplicationsPage() {
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
     
     // Agar backenddan array formatida error kelgan bo'lsa
-    if (Array.isArray((error as any).data)) {
-      errorMessage = (error as any).data.join(", ");
+    const errorData = (error as { data?: unknown }).data;
+    if (Array.isArray(errorData)) {
+      errorMessage = errorData.join(", ");
     }
     
     return (

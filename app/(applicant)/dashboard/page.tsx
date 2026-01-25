@@ -1,29 +1,48 @@
 "use client";
 
-import { Breadcrumb, Card, Row, Col, Statistic, Progress, Avatar, Tag, Space, Button, Timeline, Alert } from "antd";
-import { 
-  HomeOutlined, 
-  UserOutlined, 
-  // MailOutlined, 
-  // PhoneOutlined, 
-  SafetyOutlined, 
-  // TeamOutlined, 
+import {
+  Breadcrumb,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Avatar,
+  Tag,
+  Button,
+  Timeline,
+  Typography,
+  Modal,
+  // Upload,
+  Form,
+  Input,
+  message,
+} from "antd";
+
+import {
+  HomeOutlined,
+  UserOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
-  ArrowUpOutlined,
-  ArrowRightOutlined,
   CalendarOutlined,
-  DollarOutlined
+  DollarOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
-import { useGet } from "@/lib/hooks";
-import { tokenStorage } from "@/lib/utils";
-import { useThemeStore } from "@/lib/stores/themeStore";
+
+import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { uz } from "date-fns/locale";
-import { Typography } from "antd";
+
+import { useGet, usePatch } from "@/lib/hooks";
+import { tokenStorage } from "@/lib/utils";
+// import { useThemeStore } from "@/lib/stores/themeStore";
+
 const { Title, Text } = Typography;
+
+/* ================= TYPES ================= */
+
 interface User {
   id: number;
   phone_number: string;
@@ -49,280 +68,281 @@ interface RecentActivity {
   icon: React.ReactNode;
 }
 
-// Helper function to generate safe timestamp
+interface ProfileFormValues {
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  email?: string;
+  phone_number: string;
+}
+
+/* ================= HELPERS ================= */
+
 const generateTimestamp = (hoursAgo: number) => {
   const date = new Date();
   date.setHours(date.getHours() - hoursAgo);
   return date.toISOString();
 };
 
+const getStatusColor = (status: RecentActivity["status"]) => {
+  switch (status) {
+    case "completed":
+      return "green";
+    case "pending":
+      return "orange";
+    case "failed":
+      return "red";
+    default:
+      return "blue";
+  }
+};
+
+const getStatusIcon = (status: RecentActivity["status"]) => {
+  if (status === "completed") return <CheckCircleOutlined className="text-green-500" />;
+  if (status === "pending") return <ClockCircleOutlined className="text-orange-500" />;
+  return <ClockCircleOutlined />;
+};
+
+/* ================= PAGE ================= */
+
 export default function DashboardPage() {
-  const user = tokenStorage.getUser() as User | null;
+  const savedUser = tokenStorage.getUser() as User | null;
   const { data: userData, isLoading } = useGet<User>("/auth/me/");
-  const { theme } = useThemeStore();
+  const patchProfile = usePatch("/auth/update-profile/");
+  // const { theme } = useThemeStore();
 
-  const currentUser = userData || user;
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [, setIsEditing] = useState(false);
+  const [form] = Form.useForm<ProfileFormValues>();
 
-  const fullName = currentUser?.full_name || 
-    `${currentUser?.last_name || ""} ${currentUser?.first_name || ""} ${currentUser?.middle_name || ""}`.trim() || 
+  const currentUser = userData || savedUser;
+
+  const fullName =
+    currentUser?.full_name ||
+    `${currentUser?.last_name ?? ""} ${currentUser?.first_name ?? ""} ${currentUser?.middle_name ?? ""}`.trim() ||
     "Foydalanuvchi";
 
   const recentActivities: RecentActivity[] = [
     {
       id: 1,
       action: "Ariza yaratildi",
-      description: "Fanlararo PhD dasturiga",
+      description: "Fanlararo PhD dasturi",
       timestamp: currentUser?.last_login || generateTimestamp(3),
       status: "completed",
-      icon: <FileTextOutlined className="text-blue-500" />
+      icon: <FileTextOutlined />,
     },
     {
       id: 2,
-      action: "To'lov jarayoni",
-      description: "100 000 UZS to'landi",
+      action: "To‘lov amalga oshirildi",
+      description: "100 000 UZS",
       timestamp: generateTimestamp(2),
       status: "completed",
-      icon: <DollarOutlined className="text-green-500" />
+      icon: <DollarOutlined />,
     },
     {
       id: 3,
       action: "Hujjat yuklandi",
-      description: "Ta'lim darajasi haqidgi guvohnoma",
+      description: "Diplom nusxasi",
       timestamp: generateTimestamp(5),
       status: "completed",
-      icon: <CheckCircleOutlined className="text-green-500" />
+      icon: <CheckCircleOutlined />,
     },
     {
       id: 4,
-      action: "Oltmasli ariza",
-      description: "Nashrlar ro'yxati",
+      action: "Tekshiruvda",
+      description: "Nashrlar ro‘yxati",
       timestamp: generateTimestamp(24),
       status: "pending",
-      icon: <ClockCircleOutlined className="text-orange-500" />
-    }
+      icon: <ClockCircleOutlined />,
+    },
   ];
 
   const stats = [
     {
-      title: "Arizalar soni",
+      title: "Arizalar",
       value: 3,
       suffix: "/5",
-      prefix: <FileTextOutlined />,
-      valueStyle: { color: theme === "dark" ? "#ffffff" : "#1890ff" }
+      icon: <FileTextOutlined />,
+      color: "#1890ff",
     },
     {
       title: "Topshirilgan",
       value: 2,
-      suffix: "",
-      prefix: <CheckCircleOutlined />,
-      valueStyle: { color: theme === "dark" ? "#ffffff" : "#52c41a" }
+      icon: <CheckCircleOutlined />,
+      color: "#52c41a",
     },
     {
       title: "Kutilmoqda",
       value: 1,
-      suffix: "",
-      prefix: <ClockCircleOutlined />,
-      valueStyle: { color: theme === "dark" ? "#ffffff" : "#faad14" }
+      icon: <ClockCircleOutlined />,
+      color: "#faad14",
     },
     {
-      title: "Profil to'liqligi",
-      value: currentUser?.profile_completion || 0,
+      title: "Profil to‘liqligi",
+      value: currentUser?.profile_completion ?? 0,
       suffix: "%",
-      prefix: <TrophyOutlined />,
-      valueStyle: { color: theme === "dark" ? "#ffffff" : "#722ed1" }
-    }
+      icon: <TrophyOutlined />,
+      color: "#722ed1",
+    },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed": return "green";
-      case "pending": return "orange";
-      case "failed": return "red";
-      default: return "default";
+  /* ================= HANDLERS ================= */
+
+  const openProfileModal = () => {
+    setIsProfileModalOpen(true);
+    setIsEditing(false);
+    form.setFieldsValue({
+      first_name: currentUser?.first_name,
+      last_name: currentUser?.last_name,
+      middle_name: currentUser?.middle_name,
+      email: currentUser?.email,
+      phone_number: currentUser?.phone_number,
+    });
+  };
+
+  const handleSaveProfile = async (values: ProfileFormValues) => {
+    try {
+      await patchProfile.mutateAsync(values);
+      message.success("Profil muvaffaqiyatli yangilandi");
+      setIsEditing(false);
+      setIsProfileModalOpen(false);
+    } catch {
+      message.error("Profilni yangilashda xatolik yuz berdi");
     }
   };
 
-  const getStatusIcon = (status: string, icon: React.ReactNode) => {
-    if (status === "completed") {
-      return <CheckCircleOutlined className="text-green-500" />;
-    } else if (status === "pending") {
-      return <ClockCircleOutlined className="text-orange-500" />;
-    }
-    return icon;
-  };
-
-  if (isLoading && !user) {
+  if (isLoading && !currentUser) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-500">Profil yuklanmoqda...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-200">
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            {
-              href: "/",
-              title: (
-                <span className="flex items-center gap-2">
-                  <HomeOutlined /> Dashboard
-                </span>
-              ),
-            },
-            {
-              title: "Bosh sahifa",
-            },
-          ]}
-          className="mb-6"
-        />
+    <div className="min-h-screen px-4 py-8">
+      <Breadcrumb
+        className="mb-6"
+        items={[
+          {
+            href: "/",
+            title: (
+              <span className="flex items-center gap-2">
+                <HomeOutlined /> Dashboard
+              </span>
+            ),
+          },
+          { title: "Bosh sahifa" },
+        ]}
+      />
 
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <div className={`rounded-2xl p-8 text-white shadow-xl transform hover:scale-[1.02] transition-transform duration-300 ${
-            theme === "dark" 
-              ? " from-blue-700 to-purple-700" 
-              : " from-blue-600 to-purple-600"
-          }`}>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <Avatar
-                  size={100}
-                  src={currentUser?.photo}
-                  icon={<UserOutlined />}
-                  className="border-4 border-white shadow-lg"
-                />
-                <div>
-                  <Title level={1} className="text-3xl font-bold mb-2">{fullName}</Title>
-                  <Text className="text-blue-100 text-lg">
-                    {currentUser?.role === "APPLICANT" ? "Ariza beruvchi" : currentUser?.role || "Foydalanuvchi"}
-                  </Text>
-                  <div className="flex items-center gap-3 mt-3">
-                    {currentUser?.is_verified && (
-                      <Tag 
-                        icon={<CheckCircleOutlined />} 
-                        color="success"
-                        className="bg-white/20"
-                      >
-                        Tasdiqlangan
-                      </Tag>
-                    )}
-                    <Tag className="bg-white/20">
-                      <CalendarOutlined /> {formatDistanceToNow(new Date(currentUser?.date_joined || generateTimestamp(24 * 7)), { 
-                        addSuffix: true, 
-                        locale: uz 
-                      })}
-                    </Tag>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <Progress
-                  type="circle"
-                  percent={currentUser?.profile_completion || 0}
-                  strokeColor={{
-                    '0%': theme === "dark" ? '#60a5fa' : '#60a5fa',
-                    '100%': theme === "dark" ? '#7c3aed' : '#7c3aed',
-                  }}
-                  size={100}
-                  format={(percent) => `${percent}%`}
-                  trailColor={theme === "dark" ? '#1a1d29' : '#f0f0f0'}
-                />
-                <Text className="text-sm text-blue-100">Profil toliqligi</Text>
+      {/* HEADER */}
+      <Card className="mb-8 rounded-2xl">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Avatar size={96} src={currentUser?.photo} icon={<UserOutlined />} />
+              <Button
+                size="small"
+                shape="circle"
+                icon={<EditOutlined />}
+                className="absolute -bottom-2 -right-2"
+                onClick={openProfileModal}
+              />
+            </div>
+
+            <div>
+              <Title level={3}>{fullName}</Title>
+              <Text>{currentUser?.role || "Foydalanuvchi"}</Text>
+              <div className="mt-2 flex gap-2">
+                {currentUser?.is_verified && (
+                  <Tag color="success" icon={<CheckCircleOutlined />}>
+                    Tasdiqlangan
+                  </Tag>
+                )}
+                <Tag>
+                  <CalendarOutlined />{" "}
+                  {formatDistanceToNow(new Date(currentUser?.date_joined ?? generateTimestamp(24)), {
+                    addSuffix: true,
+                    locale: uz,
+                  })}
+                </Tag>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <Card
-                key={index}
-                className="transform hover:scale-105 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                bodyStyle={{ 
-                  padding: "24px",
-                  background: theme === "dark" ? "#1a1d29" : "#ffffff",
-                  borderRadius: "16px",
-                  color: theme === "dark" ? "#ffffff" : "#333333"
-                }}
-              >
-                <Statistic
-                  title={
-                    <div className="flex items-center gap-2">
-                      {stat.prefix}
-                      <span className={`text-gray-600 dark:text-gray-400`}>{stat.title}</span>
-                    </div>
-                  }
-                  value={stat.value}
-                  suffix={stat.suffix}
-                  valueStyle={stat.valueStyle}
-                  prefix={stat.prefix}
-                />
-              </Card>
-            ))}
-          </div>
+          <Progress
+            type="circle"
+            percent={currentUser?.profile_completion ?? 0}
+            size={90}
+          />
         </div>
+      </Card>
 
-        {/* Main Content Grid */}
-        <Row gutter={[24, 24]}>
-          {/* Recent Activities */}
-          <Col xs={24} lg={24}>
-            <Card
-              className="h-full transform hover:scale-[1.01] transition-all duration-300"
-              bodyStyle={{ 
-                padding: "24px",
-                background: theme === "dark" ? "#1a1d29" : "#ffffff",
-                borderRadius: "16px",
-                color: theme === "dark" ? "#ffffff" : "#333333"
-              }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <ClockCircleOutlined className="text-blue-500" />
-                  So&apos;nggi faoliyat
-                </h2>
-                <Button type="text" size="small">
-                  Barchasini ko&apos;rish
-                </Button>
-              </div>
-              
-              <Timeline
-                items={recentActivities.map(activity => ({
-                  dot: getStatusIcon(activity.status, activity.icon),
-                  color: getStatusColor(activity.status),
-                  children: (
-                    <div className={`p-4 rounded-lg ${theme === "dark" ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{activity.action}</h4>
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(activity.timestamp), { 
-                            addSuffix: true, 
-                            locale: uz 
-                          })}
-                        </span>
-                      </div>
-                      <p className={`text-gray-600 dark:text-gray-400`}>{activity.description}</p>
-                    </div>
-                  )
-                }))}
+      {/* STATS */}
+      <Row gutter={[24, 24]} className="mb-8">
+        {stats.map((stat) => (
+          <Col xs={24} md={12} lg={6} key={stat.title}>
+            <Card>
+              <Statistic
+                title={stat.title}
+                value={stat.value}
+                suffix={stat.suffix}
+                valueStyle={{ color: stat.color }}
+                prefix={stat.icon}
               />
             </Card>
           </Col>
+        ))}
+      </Row>
 
-        
-        </Row>
+      {/* ACTIVITIES */}
+      <Card title="So‘nggi faoliyat">
+        <Timeline
+          items={recentActivities.map((a) => ({
+            dot: getStatusIcon(a.status),
+            color: getStatusColor(a.status),
+            children: (
+              <div>
+                <strong>{a.action}</strong>
+                <p className="text-gray-500">{a.description}</p>
+                <small>
+                  {formatDistanceToNow(new Date(a.timestamp), {
+                    addSuffix: true,
+                    locale: uz,
+                  })}
+                </small>
+              </div>
+            ),
+          }))}
+        />
+      </Card>
 
-     
-      </div>
+      {/* PROFILE MODAL */}
+      <Modal
+        open={isProfileModalOpen}
+        title="Profilni tahrirlash"
+        onCancel={() => setIsProfileModalOpen(false)}
+        onOk={() => form.submit()}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSaveProfile}>
+          <Form.Item name="first_name" label="Ism" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="last_name" label="Familiya" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="middle_name" label="Sharif">
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label="Email">
+            <Input />
+          </Form.Item>
+          <Form.Item name="phone_number" label="Telefon" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

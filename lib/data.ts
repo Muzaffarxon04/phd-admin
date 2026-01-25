@@ -1,9 +1,7 @@
 import type {
   Specialization,
   FAQ,
-  Application,
   Exam,
-  Applicant,
   DocumentType,
 } from "@/types";
 
@@ -44,15 +42,15 @@ export const mockFAQ: FAQ[] = [
   {
     id: "1",
     question: "Ariza topshirish muddati qachon tugaydi?",
-    answer: "Ariza topshirish muddati har bir imtihon uchun alohida belgilanadi. Batafsil ma'lumotni 'Imtihon qoidalari' bo'limida ko'rishingiz mumkin.",
+    answer: "Ariza topshirish muddati har bir imtihon uchun alohida belgilanadi. Batafsil ma'lumotni 'Imtihon qoidalari' bolimida korishingiz mumkin.",
     category: "general",
     order: 1,
     isActive: true,
   },
   {
     id: "2",
-    question: "Qanday to'lov usullari mavjud?",
-    answer: "Hozirgi vaqtda Click va Payme orqali to'lov qilish mumkin.",
+    question: "Qanday tolov usullari mavjud?",
+    answer: "Hozirgi vaqtda Click va Payme orqali tolov qilish mumkin.",
     category: "payment",
     order: 2,
     isActive: true,
@@ -60,7 +58,7 @@ export const mockFAQ: FAQ[] = [
   {
     id: "3",
     question: "Hujjatlarni qayerdan yuklash mumkin?",
-    answer: "Hujjatlarni 'Ariza topshirish' bo'limida 'Yuklash' tugmasi orqali yuklashingiz mumkin. Faqat PDF, DOC, DOCX formatlari qabul qilinadi.",
+    answer: "Hujjatlarni 'Ariza topshirish' bolimida 'Yuklash' tugmasi orqali yuklashingiz mumkin. Faqat PDF, DOC, DOCX formatlari qabul qilinadi.",
     category: "documents",
     order: 3,
     isActive: true,
@@ -68,15 +66,15 @@ export const mockFAQ: FAQ[] = [
   {
     id: "4",
     question: "Arizam rad etilganda nima qilish kerak?",
-    answer: "Agar arizangiz rad etilgan bo'lsa, sababini ko'rishingiz va tavsiya qilingan o'zgartirishlarni amalga oshirib, qayta topshirishingiz mumkin.",
+    answer: "Agar arizangiz rad etilgan bolsa, sababini korishingiz va tavsiya qilingan ozgartirishlarni amalga oshirib, qayta topshirishingiz mumkin.",
     category: "application",
     order: 4,
     isActive: true,
   },
   {
     id: "5",
-    question: "Imtihon natijalarini qayerdan ko'rish mumkin?",
-    answer: "Imtihon natijalari Telegram guruh va bot orqali e'lon qilinadi. Shuningdek, shaxsiy kabinetingizda ham ko'rishingiz mumkin.",
+    question: "Imtihon natijalarini qayerdan korish mumkin?",
+    answer: "Imtihon natijalari Telegram guruh va bot orqali e'lon qilinadi. Shuningdek, shaxsiy kabinetingizda ham korishingiz mumkin.",
     category: "results",
     order: 5,
     isActive: true,
@@ -91,8 +89,8 @@ export const mockExams: Exam[] = [
     description: "2026-yil uchun PhD imtihoni",
     examDate: "2026-06-15",
     examTime: "09:00",
-    examLocation: "Toshkent, Navoiy ko'chasi, 1",
-    announcement: "Imtihon 2026-yil 15-iyun kuni soat 09:00 da boshlanadi. Barcha qatnashchilar imtihon joyiga o'z vaqtida kelishlari so'raladi.",
+    examLocation: "Toshkent, Navoiy kochasi, 1",
+    announcement: "Imtihon 2026-yil 15-iyun kuni soat 09:00 da boshlanadi. Barcha qatnashchilar imtihon joyiga oz vaqtida kelishlari soraladi.",
     requiredDocuments: [
       "ilmiy_kengash_nusxasi",
       "diplom",
@@ -108,7 +106,7 @@ export const mockExams: Exam[] = [
 // Document type labels
 export const documentTypeLabels: Record<DocumentType, string> = {
   ilmiy_kengash_nusxasi: "Ilmiy kengash nusxasi yoki OAK (BAK) jurnali Byulleten nusxasi",
-  yollanma_xat: "Yo'llanma xat va Mustaqil izlanuvchi yoki Tayanch doktoranturaga o'qishga qabul qilganlik to'g'risida buyrug'i",
+  yollanma_xat: "Yollanma xat va Mustaqil izlanuvchi yoki Tayanch doktoranturaga oqishga qabul qilganlik tog'risida buyrug'i",
   diplom: "Bakalavr va magistratura diplom nusxasi",
   shakl_3_4: "3-4 shakl",
   annotatsiya: "Annotatsiya",

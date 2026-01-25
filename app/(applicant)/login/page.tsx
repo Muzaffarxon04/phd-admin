@@ -80,8 +80,9 @@ export default function LoginPage() {
       let errorMessage = error.message || "Login xatosi";
       
       // Agar backenddan array formatida error kelgan bo'lsa
-      if (Array.isArray((error as any).data)) {
-        errorMessage = (error as any).data.join(", ");
+      const errorData = (error as { data?: unknown }).data;
+      if (Array.isArray(errorData)) {
+        errorMessage = errorData.join(", ");
       }
       
       message.error(errorMessage);
