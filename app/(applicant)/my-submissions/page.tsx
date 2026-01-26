@@ -295,7 +295,7 @@ export default function MySubmissionsPage() {
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <Title className="text-4xl font-bold mb-4">Mening Arizalarim</Title>
-            <Text className="text-xl text-purple-100">O&apos;zingiz topshirgan arizalarni kuzating</Text>
+            <Text className="text-xl text-purple-100">Ozingiz topshirgan arizalarni kuzating</Text>
           </div>
 
           {/* Statistics */}
@@ -317,7 +317,7 @@ export default function MySubmissionsPage() {
                 theme === "dark" ? "bg-white/10" : "bg-white/10"
               }`}>
                 <Statistic
-                  title="Ko&apos;rib chiqilmoqda"
+                  title="Korib chiqilmoqda"
                   value={stats.underReview}
                   valueStyle={{ color: "#1890ff" }}
                   prefix={<ClockCircleOutlined />}
@@ -341,7 +341,7 @@ export default function MySubmissionsPage() {
                 theme === "dark" ? "bg-white/10" : "bg-white/10"
               }`}>
                 <Statistic
-                  title="To&apos;langan"
+                  title="Tolangan"
                   value={stats.paid}
                   valueStyle={{ color: "#faad14" }}
                   prefix={<DollarOutlined />}
@@ -355,7 +355,7 @@ export default function MySubmissionsPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <Title level={2} className="mb-0">Arizalar ro&apos;yxati</Title>
+          <Title level={2} className="mb-0">Arizalar royxati</Title>
           
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -377,7 +377,7 @@ export default function MySubmissionsPage() {
               <option value="all">Barchasi</option>
               <option value="DRAFT">Tayyorlanmoqda</option>
               <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
+              <option value="UNDER_REVIEW">Korib chiqilmoqda</option>
               <option value="APPROVED">Tasdiqlangan</option>
               <option value="REJECTED">Rad etilgan</option>
             </select>
@@ -389,13 +389,13 @@ export default function MySubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">Holatlar bo&apos;yicha taqsimot</Title>
+                <Title level={4} className="mb-0">Holatlar boyicha taqsimot</Title>
                 <ReloadOutlined className="text-gray-400 cursor-pointer" />
               </div>
               <div className="space-y-3">
                 {[
                   { label: "Topshirilgan", value: stats.submitted, color: "blue" },
-                  { label: "Ko&apos;rib chiqilmoqda", value: stats.underReview, color: "processing" },
+                  { label: "Korib chiqilmoqda", value: stats.underReview, color: "processing" },
                   { label: "Tasdiqlangan", value: stats.approved, color: "success" },
                   { label: "Rad etilgan", value: stats.rejected, color: "error" },
                 ].map((item) => (
@@ -431,12 +431,12 @@ export default function MySubmissionsPage() {
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">To&apos;lov holati</Title>
+                <Title level={4} className="mb-0">Tolov holati</Title>
                 <DollarOutlined className="text-green-500" />
               </div>
               <div className="space-y-3">
                 {[
-                  { label: "To&apos;langan", value: stats.paid, color: "green" },
+                  { label: "Tolangan", value: stats.paid, color: "green" },
                   { label: "Kutilmoqda", value: stats.pendingPayment, color: "orange" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between">
