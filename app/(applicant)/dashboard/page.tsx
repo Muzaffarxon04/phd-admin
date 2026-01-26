@@ -10,7 +10,7 @@ import {
   Avatar,
   Tag,
   Button,
-  Timeline,
+  // Timeline,
   Typography,
   Modal,
   // Upload,
@@ -104,40 +104,40 @@ export default function DashboardPage() {
     `${currentUser?.last_name ?? ""} ${currentUser?.first_name ?? ""} ${currentUser?.middle_name ?? ""}`.trim() ||
     "Foydalanuvchi";
 
-  const recentActivities: RecentActivity[] = [
-    {
-      id: 1,
-      action: "Ariza yaratildi",
-      description: "Fanlararo PhD dasturi",
-      timestamp: currentUser?.last_login || generateTimestamp(3),
-      status: "completed",
-      icon: <FileTextOutlined />,
-    },
-    {
-      id: 2,
-      action: "To‘lov amalga oshirildi",
-      description: "100 000 UZS",
-      timestamp: generateTimestamp(2),
-      status: "completed",
-      icon: <DollarOutlined />,
-    },
-    {
-      id: 3,
-      action: "Hujjat yuklandi",
-      description: "Diplom nusxasi",
-      timestamp: generateTimestamp(5),
-      status: "completed",
-      icon: <CheckCircleOutlined />,
-    },
-    {
-      id: 4,
-      action: "Tekshiruvda",
-      description: "Nashrlar ro‘yxati",
-      timestamp: generateTimestamp(24),
-      status: "pending",
-      icon: <ClockCircleOutlined />,
-    },
-  ];
+  // const recentActivities: RecentActivity[] = [
+  //   {
+  //     id: 1,
+  //     action: "Ariza yaratildi",
+  //     description: "Fanlararo PhD dasturi",
+  //     timestamp: currentUser?.last_login || generateTimestamp(3),
+  //     status: "completed",
+  //     icon: <FileTextOutlined />,
+  //   },
+  //   {
+  //     id: 2,
+  //     action: "To‘lov amalga oshirildi",
+  //     description: "100 000 UZS",
+  //     timestamp: generateTimestamp(2),
+  //     status: "completed",
+  //     icon: <DollarOutlined />,
+  //   },
+  //   {
+  //     id: 3,
+  //     action: "Hujjat yuklandi",
+  //     description: "Diplom nusxasi",
+  //     timestamp: generateTimestamp(5),
+  //     status: "completed",
+  //     icon: <CheckCircleOutlined />,
+  //   },
+  //   {
+  //     id: 4,
+  //     action: "Tekshiruvda",
+  //     description: "Nashrlar ro‘yxati",
+  //     timestamp: generateTimestamp(24),
+  //     status: "pending",
+  //     icon: <ClockCircleOutlined />,
+  //   },
+  // ];
 
   const stats = [
     {
