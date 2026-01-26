@@ -306,7 +306,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center">
+      <div className="min-h-screen flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-500">Ariza yuklanmoqda...</p>
@@ -317,7 +317,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   if (!application) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto text-center">
           <Alert
             message="Xatolik"
@@ -335,18 +335,17 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const progress = calculateProgress();
   const canApply = application.can_apply.can_apply;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen ">
       {/* Header */}
       <div className={`text-white ${
         theme === "dark" 
           ? " from-blue-700 to-purple-700" 
           : " from-blue-600 to-purple-600"
       }`}>
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 ">
           <div className="flex items-center gap-4 mb-6">
             <Link href="/applications">
               <Button 
@@ -358,41 +357,14 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               </Button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{application.title}</h1>
-              <p className="text-blue-100">Ariza topshirish</p>
+              <Title className="text-3xl font-bold">{application.title}</Title>
+              <Text className="text-blue-100">Ariza topshirish</Text>
             </div>
           </div>
-
-          {/* Progress and Stats */}
-          <Row gutter={[24, 24]} className="mb-6">
-            <Col xs={24} sm={8}>
-              <div className={`backdrop-blur-sm rounded-lg p-4`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span>To&apos;ldirish holati</span>
-                  <Badge count={`${progress}%`} color="green" />
-                </div>
-                <Progress percent={progress} showInfo={false} />
-              </div>
-            </Col>
-            <Col xs={24} sm={8}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center`}>
-                <DollarOutlined className="text-2xl mb-2" />
-                <div className="text-xl font-bold">{parseMoneyAmount(application.application_fee)}</div>
-                <div className="text-sm text-blue-100">To&apos;lov miqdori</div>
-              </div>
-            </Col>
-            <Col xs={24} sm={8}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center`}>
-                <CalendarOutlined className="text-2xl mb-2" />
-                <div className="text-xl font-bold">{formatDate(application.end_date)}</div>
-                <div className="text-sm text-blue-100">Tugash muddati</div>
-              </div>
-            </Col>
-          </Row>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {!canApply && (
           <Alert
             message={application.can_apply.reason}
@@ -401,7 +373,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             className="mb-8"
             action={
               <Button size="small" type="link">
-                Ko&apos;proq ma&apos;lumot
+                Koproq malumot
               </Button>
             }
           />
@@ -425,6 +397,14 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   <div className="font-semibold">{formatDate(application.end_date)}</div>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+              <DollarOutlined className="text-purple-500" />
+                <div>
+                  <Text className="text-gray-500">Tolov miqdori</Text>
+                  <div className="font-semibold">{parseMoneyAmount(application.application_fee)}</div>
+                </div>
+              </div>
+         
               {application.exam_date && (
                 <div className="flex items-center gap-3">
                   <CalendarOutlined className="text-green-500" />
@@ -471,7 +451,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         </Card>
 
         {/* Description */}
-        <Card className="mb-8" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
+        <Card className="my-8!" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
           <Title level={4} className="mb-4">Ariza tavsifi</Title>
           <Paragraph className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
             {application.description}
@@ -483,7 +463,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           <Card className="mb-8 border-l-4 border-l-blue-500" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
             <Title level={4} className="mb-4 flex items-center gap-2">
               <InfoCircleOutlined className="text-blue-500" />
-              Ko&apos;rsatmalar
+              Korsatmalar
             </Title>
             <Paragraph className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
               {application.instructions}
@@ -494,7 +474,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         {/* Application Form */}
         {canApply && (
           <Card className="mb-8" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
-            <Title level={4} className="mb-6">Ariza to&apos;ldirish</Title>
+            <Title level={4} className="mb-6">Ariza toldirish</Title>
             
             <Form
               form={form}
@@ -524,7 +504,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                       rules={[
                         {
                           required: field.required,
-                          message: `${field.label} maydonini to&apos;ldirish majburiy!`,
+                          message: `${field.label} maydonini toldirish majburiy!`,
                         },
                       ]}
                       valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
