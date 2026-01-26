@@ -155,67 +155,7 @@ function ApplicationsPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header Section */}
-      <div className={`text-white `}>
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <Title className="text-4xl font-bold mb-4">PhD Imtihonlar Tizimi</Title>
-            <Text className="text-xl text-purple-100">O&apos;zingizning ilmiy karerangizni boshlang</Text>
-          </div>
-
-          {/* Statistics */}
-          <Row gutter={[24, 24]} className="mb-8">
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-black/10"
-              }`}>
-                <Statistic
-                  title="Jami Arizalar"
-                  value={totalApplications}
-                  valueStyle={{ color: "#ffffff" }}
-                  prefix={<FileTextOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-black/10"
-              }`}>
-                <Statistic
-                  title="Faol"
-                  value={activeApplications}
-                  valueStyle={{ color: "#52c41a" }}
-                  prefix={<ClockCircleOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-black/10"
-              }`}>
-                <Statistic
-                  title="Kutilayotgan"
-                  value={upcomingApplications}
-                  valueStyle={{ color: "#faad14" }}
-                  prefix={<CalendarOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-black/10"
-              }`}>
-                <Statistic
-                  title="O&apos;tgan"
-                  value={expiredApplications}
-                  valueStyle={{ color: "#ff4d4f" }}
-                  prefix={<ExclamationCircleOutlined />}
-                />
-              </div>
-            </Col>
-          </Row>
-        </div>
-      </div>
+  
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Controls */}
