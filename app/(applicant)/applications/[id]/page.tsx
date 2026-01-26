@@ -510,14 +510,6 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               <div className="flex gap-4 pt-6 border-t">
                 <Button
                   size="large"
-                  type="default"
-                  icon={<SaveOutlined />}
-                  className="flex-1"
-                >
-                  Saqlash
-                </Button>
-                <Button
-                  size="large"
                   type="primary"
                   htmlType="submit"
                   loading={isCreating}
