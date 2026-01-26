@@ -105,7 +105,7 @@ function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto">
           <Title level={2} className="mb-8 text-center">Mavjud Arizalar</Title>
           <Row gutter={[24, 24]}>
@@ -130,8 +130,8 @@ function ApplicationsPage() {
     }
     
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="min-h-screen ">
+        <div className=" text-center">
           <ErrorState 
             description={errorMessage}
             onRetry={() => window.location.reload()}
@@ -231,14 +231,14 @@ function ApplicationsPage() {
               <input
                 type="text"
                 placeholder="Izlash..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
             <select
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >

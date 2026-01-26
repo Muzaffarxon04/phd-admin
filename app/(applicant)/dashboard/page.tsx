@@ -296,7 +296,7 @@ export default function DashboardPage() {
         ))}
       </Row>
 
-      {/* ACTIVITIES */}
+      {/* ACTIVITIES
       <Card title="So‘nggi faoliyat">
         <Timeline
           items={recentActivities.map((a) => ({
@@ -316,7 +316,7 @@ export default function DashboardPage() {
             ),
           }))}
         />
-      </Card>
+      </Card> */}
 
       {/* PROFILE MODAL */}
       <Modal

@@ -258,7 +258,7 @@ export default function MySubmissionsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-7xl mx-auto">
           <Title level={2} className="mb-8">Mening Arizalarim</Title>
         <TableSkeleton />
@@ -277,7 +277,7 @@ export default function MySubmissionsPage() {
     }
     
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto text-center">
         <ErrorState 
             description={errorMessage}
@@ -362,7 +362,7 @@ export default function MySubmissionsPage() {
               <input
                 type="text"
                 placeholder="Ariza nomi raqamini qidirish..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -370,7 +370,7 @@ export default function MySubmissionsPage() {
             </div>
             
             <select
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -532,7 +532,7 @@ export default function MySubmissionsPage() {
               children: (
                 <Card 
                   size="small"
-                  className="mb-4 bg-white dark:bg-gray-800 border-l-4 border-l-blue-500"
+                  className="mb-4 border-l-4 border-l-blue-500"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-semibold">{item.title}</h4>
