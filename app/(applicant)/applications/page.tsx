@@ -14,13 +14,13 @@ import {
   Divider, 
   // Tooltip,
   Progress,
-  Statistic,
+  // Statistic,
   // Timeline
 } from "antd";
 import { 
-  FileTextOutlined, 
+  // FileTextOutlined, 
   ArrowRightOutlined,
-  ClockCircleOutlined,
+  // ClockCircleOutlined,
   CalendarOutlined,
   DollarOutlined,
   CheckCircleOutlined,
@@ -141,17 +141,7 @@ function ApplicationsPage() {
     );
   }
 
-  // Calculate statistics
-  const totalApplications = filteredApplications.length;
-  const activeApplications = filteredApplications.filter(app => 
-    new Date(app.start_date) <= new Date() && new Date(app.end_date) >= new Date()
-  ).length;
-  const upcomingApplications = filteredApplications.filter(app => 
-    new Date(app.start_date) > new Date()
-  ).length;
-  const expiredApplications = filteredApplications.filter(app => 
-    new Date(app.end_date) < new Date()
-  ).length;
+
 
   return (
     <div className="min-h-screen">

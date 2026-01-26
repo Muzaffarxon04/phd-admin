@@ -12,11 +12,9 @@ import {
   Checkbox, 
   DatePicker, 
   Upload, 
-  Progress,
+
   Typography,
-  Row,
-  Col,
-  Badge,
+
   message,
   Alert,
 } from "antd";
@@ -244,13 +242,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   );
 
 
-  const calculateProgress = () => {
-    if (!application) return 0;
-    
-    const totalFields = application.fields.length;
-    const completedCount = completedFields.size;
-    return Math.round((completedCount / totalFields) * 100);
-  };
+
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!application) return;

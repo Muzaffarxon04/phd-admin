@@ -5,8 +5,8 @@ import {
   DashboardOutlined,
   FileTextOutlined,
   UserOutlined,
-  TeamOutlined,
-  BookOutlined,
+  // TeamOutlined,
+  // BookOutlined,
   // SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";

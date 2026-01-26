@@ -84,24 +84,6 @@ const generateTimestamp = (hoursAgo: number) => {
   return date.toISOString();
 };
 
-const getStatusColor = (status: RecentActivity["status"]) => {
-  switch (status) {
-    case "completed":
-      return "green";
-    case "pending":
-      return "orange";
-    case "failed":
-      return "red";
-    default:
-      return "blue";
-  }
-};
-
-const getStatusIcon = (status: RecentActivity["status"]) => {
-  if (status === "completed") return <CheckCircleOutlined className="text-green-500" />;
-  if (status === "pending") return <ClockCircleOutlined className="text-orange-500" />;
-  return <ClockCircleOutlined />;
-};
 
 /* ================= PAGE ================= */
 
