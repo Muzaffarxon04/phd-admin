@@ -10,7 +10,7 @@ import {
   Progress, 
   Badge, 
   Timeline,
-  Statistic,
+  // Statistic,
   Row,
   Col,
   Alert,
@@ -19,7 +19,7 @@ import {
 import { 
   EyeOutlined, 
   FileTextOutlined, 
-  CheckCircleOutlined,
+  // CheckCircleOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
   ReloadOutlined,
@@ -298,61 +298,11 @@ export default function MySubmissionsPage() {
             <Text className="text-xl text-purple-100">Ozingiz topshirgan arizalarni kuzating</Text>
           </div>
 
-          {/* Statistics */}
-          <Row gutter={[24, 24]} className="mb-8">
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
-                <Statistic
-                  title="Jami Arizalar"
-                  value={stats.total}
-                  valueStyle={{ color: "#ffffff" }}
-                  prefix={<FileTextOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
-                <Statistic
-                  title="Korib chiqilmoqda"
-                  value={stats.underReview}
-                  valueStyle={{ color: "#1890ff" }}
-                  prefix={<ClockCircleOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
-                <Statistic
-                  title="Tasdiqlangan"
-                  value={stats.approved}
-                  valueStyle={{ color: "#52c41a" }}
-                  prefix={<CheckCircleOutlined />}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={6}>
-              <div className={`backdrop-blur-sm rounded-lg p-4 text-center ${
-                theme === "dark" ? "bg-white/10" : "bg-white/10"
-              }`}>
-                <Statistic
-                  title="Tolangan"
-                  value={stats.paid}
-                  valueStyle={{ color: "#faad14" }}
-                  prefix={<DollarOutlined />}
-                />
-              </div>
-            </Col>
-          </Row>
+     ]
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 ">
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <Title level={2} className="mb-0">Arizalar royxati</Title>
