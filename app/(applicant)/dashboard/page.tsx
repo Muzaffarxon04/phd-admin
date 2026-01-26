@@ -27,7 +27,7 @@ import {
   ClockCircleOutlined,
   TrophyOutlined,
   CalendarOutlined,
-  DollarOutlined,
+  // DollarOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 
@@ -59,14 +59,14 @@ interface User {
   last_login: string;
 }
 
-interface RecentActivity {
-  id: number;
-  action: string;
-  description: string;
-  timestamp: string;
-  status: "completed" | "pending" | "failed";
-  icon: React.ReactNode;
-}
+// interface RecentActivity {
+//   id: number;
+//   action: string;
+//   description: string;
+//   timestamp: string;
+//   status: "completed" | "pending" | "failed";
+//   icon: React.ReactNode;
+// }
 
 interface ProfileFormValues {
   first_name: string;
