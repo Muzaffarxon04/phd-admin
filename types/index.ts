@@ -31,11 +31,15 @@ export interface Specialization {
 // Examiner Types
 export interface Examiner {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone?: string;
+  specialization_ids?: number[];
   specialization_id: string;
-  specialization?: Specialization;
+  specialization?: Specialization[];
+  department:string
+  title:string
   degree: string; // Masalan: "PhD", "DSc"
   position: string; // Lavozimi
   organization: string; // Ish joyi

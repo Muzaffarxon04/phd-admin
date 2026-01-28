@@ -20,7 +20,6 @@ import {
   MailOutlined,
   PhoneOutlined,
   HomeOutlined,
-  BookOutlined,
   EditOutlined,
   CalendarOutlined,
 } from "@ant-design/icons";
@@ -39,7 +38,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
 
-  const { data: examiner, isLoading, error } = useGet<Examiner>(`/admin/examiners/${id}/`);
+  const { data: examiner, isLoading, error } = useGet<Examiner>(`/examiner/${id}/`);
 
   if (isLoading) {
     return (
@@ -83,7 +82,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
           items={[
             { href: "/admin-panel", title: "Admin Panel" },
             { href: "/admin-panel/examiners", title: "Imtihonchilar" },
-            { title: examiner.full_name },
+            { title: examiner.first_name + " " + examiner.last_name },
           ]}
           className="mb-4"
         />
@@ -112,7 +111,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
             />
 
             <Title level={3} className="mb-2">
-              {examiner.full_name}
+              {examiner.first_name} {examiner.last_name}
             </Title>
 
             <div className="space-y-2 mb-4">
@@ -144,7 +143,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
           <Card title="Asosiy ma&apos;lumotlar" className="mb-6">
             <Descriptions column={2} bordered>
               <Descriptions.Item label="To'liq ism">
-                <Text strong>{examiner.full_name}</Text>
+                <Text strong>{examiner.first_name} {examiner.last_name}</Text>
               </Descriptions.Item>
 
               <Descriptions.Item label="Email">
@@ -179,14 +178,12 @@ export default function ExaminerDetailPage({ params }: PageProps) {
               </Descriptions.Item>
 
               <Descriptions.Item label="Mutaxassislik">
-                {examiner.specialization ? (
-                  <div className="flex items-center gap-2">
-                    <BookOutlined className="text-blue-500" />
-                    <Tag color="blue">
-                      {examiner.specialization.code} - {examiner.specialization.name}
-                    </Tag>
-                  </div>
-                ) : (
+                {examiner.specialization ? examiner.specialization?.map((specialization) => (
+                  <Tag key={specialization.id} color="blue">
+                    {specialization.code} - {specialization.name}
+                  </Tag>
+                )
+) : (
                   <Text type="secondary">Kiritilmagan</Text>
                 )}
               </Descriptions.Item>
@@ -203,7 +200,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
           <Card title="Faoliyat tarixi">
             <div className="space-y-4">
               <div className="flex items-start gap-4">
-                <div className="w-3 h-3 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-3 h-3 bg-green-500 rounded-full mt-2 shrink-0"></div>
                 <div>
                   <div className="font-medium">Imtihonchi sifatida ro&apos;yxatdan o&apos;tdi</div>
                   <div className="text-sm text-gray-500 flex items-center gap-2">
@@ -215,7 +212,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
 
               {examiner.updated_at !== examiner.created_at && (
                 <div className="flex items-start gap-4">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mt-2 shrink-0"></div>
                   <div>
                     <div className="font-medium">Ma&apos;lumotlar yangilandi</div>
                     <div className="text-sm text-gray-500 flex items-center gap-2">

@@ -102,6 +102,14 @@ export interface TokenRefreshResponse {
   refresh?: string;
 }
 
+export interface PhoneNumberUpdateRequest {
+  phone_number: string;
+}
+
+export interface PhoneNumberVerifyRequest {
+  otp: string;
+}
+
 // Auth API Service
 export const authApi = {
   /**
@@ -230,6 +238,28 @@ export const authApi = {
    */
   refreshToken: async (data: TokenRefreshRequest): Promise<TokenRefreshResponse> => {
     return apiRequest<TokenRefreshResponse>("/auth/token/refresh/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * POST /auth/me/phone/request/
+   * Request phone number change
+   */
+  requestPhoneChange: async (data: PhoneNumberUpdateRequest): Promise<{ message: string }> => {
+    return apiRequest<{ message: string }>("/auth/me/phone/request/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * POST /auth/me/phone/verify/
+   * Verify phone number change with OTP
+   */
+  verifyPhoneChange: async (data: PhoneNumberVerifyRequest): Promise<User> => {
+    return apiRequest<User>("/auth/me/phone/verify/", {
       method: "POST",
       body: JSON.stringify(data),
     });

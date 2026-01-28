@@ -10,7 +10,6 @@ import {
   Tag,
   Modal,
   Form,
-  Select,
   message,
   Popconfirm,
   Breadcrumb,
@@ -21,15 +20,13 @@ import {
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  BookOutlined,
-  ExperimentOutlined,
+
 } from "@ant-design/icons";
 import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
 import type { Speciality } from "@/types";
-import { formatDate } from "@/lib/utils";
+// import { formatDate } from "@/lib/utils";
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+const { Title } = Typography;
 
 export default function SpecialitiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,13 +39,15 @@ export default function SpecialitiesPage() {
     count: number;
     next: string | null;
     previous: string | null;
-    results: Speciality[];
-  }>("/examiner/");
+    data: {
+      data: Speciality[];
+    };
+  }>("/speciality/list/");
 
-  const specialities = specialitiesData?.results || [];
+  const specialities = specialitiesData?.data?.data || [];
 
   // Mutations
-  const createSpeciality = usePost("/examiner/create/", {
+  const createSpeciality = usePost("/speciality/create/", {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli yaratildi");
       setIsModalOpen(false);
@@ -68,7 +67,7 @@ export default function SpecialitiesPage() {
     },
   });
 
-  const updateSpeciality = usePut(`/examiner/${editingSpeciality?.id}/update/`, {
+  const updateSpeciality = usePut(`/speciality/${editingSpeciality?.id}/update/`, {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli yangilandi");
       setIsModalOpen(false);
@@ -89,7 +88,7 @@ export default function SpecialitiesPage() {
     },
   });
 
-  const deleteSpeciality = useDelete(`/examiner/${editingSpeciality?.id}/delete/`, {
+  const deleteSpeciality = useDelete(`/speciality/${editingSpeciality?.id}/delete/`, {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli o'chirildi");
       refetchSpecialities();
@@ -140,47 +139,41 @@ export default function SpecialitiesPage() {
 
   const columns = [
     {
-      title: "Kod",
-      dataIndex: "code",
-      key: "code",
-      render: (code: string) => (
-        <Tag color="blue" className="font-mono">
-          {code}
-        </Tag>
-      ),
-    },
-    {
-      title: "Nomi",
+      title: "Mutaxassislik nomi",
       dataIndex: "name",
       key: "name",
       render: (name: string) => (
         <div className="flex items-center gap-3">
-          <BookOutlined className="text-blue-500" />
-          <div>
-            <div className="font-medium">{name}</div>
-          </div>
+          <span className="font-medium">{name}</span>
         </div>
       ),
     },
     {
-      title: "Fan sohasi",
-      dataIndex: "field_of_science",
-      key: "field_of_science",
-      render: (field: string) => (
-        <div className="flex items-center gap-2">
-          <ExperimentOutlined className="text-purple-500" />
-          <span>{field}</span>
-        </div>
+      title: "Kodi",
+      dataIndex: "code",
+      key: "code",
+      render: (code: string) => (
+        <Tag color="geekblue">{code}</Tag>
       ),
     },
     {
-      title: "Tavsif",
-      dataIndex: "description",
-      key: "description",
-      render: (description: string) => description && (
-        <Text ellipsis={{ tooltip: description }} className="max-w-xs">
-          {description}
-        </Text>
+      title: "Arizalar",
+      dataIndex: "applications_count",
+      key: "applications_count",
+      render: (count: number) => (
+        <Tag color={count > 0 ? "green" : "default"}>
+          {count}
+        </Tag>
+      ),
+    },
+    {
+      title: "Imtihonchilar",
+      dataIndex: "examiners_count",
+      key: "examiners_count",
+      render: (count: number) => (
+        <Tag color={count > 0 ? "blue" : "default"}>
+          {count}
+        </Tag>
       ),
     },
     {
@@ -194,46 +187,46 @@ export default function SpecialitiesPage() {
       ),
     },
     {
-      title: "Yaratilgan",
+      title: "Yaratilgan sana",
       dataIndex: "created_at",
       key: "created_at",
-      render: (date: string) => formatDate(date),
+      render: (date: string) =>
+        new Date(date).toLocaleDateString("uz-UZ"),
     },
     {
       title: "Amallar",
       key: "actions",
-      render: (_: unknown, record: Speciality) => (
+      width: 100,
+      render: (_: unknown, record:Speciality) => (
         <Space size="small">
           <Button
             type="primary"
             size="small"
-            icon={<EditOutlined />}
+          
             onClick={() => handleEdit(record)}
           >
-            Tahrirlash
+            <EditOutlined />
           </Button>
+  
           <Popconfirm
-            title="Mutaxassislikni o'chirish"
-            description="Haqiqatan ham bu mutaxassislikni o'chirmoqchimisiz?"
+            title="O‘chirish"
+            description="Haqiqatan ham o‘chirmoqchimisiz?"
             onConfirm={() => handleDelete(record.id)}
             okText="Ha"
-            cancelText="Yo'q"
+            cancelText="Yo‘q"
           >
-            <Button
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-            >
-              O&apos;chirish
+            <Button danger size="small" >
+            <DeleteOutlined />
             </Button>
           </Popconfirm>
         </Space>
       ),
     },
   ];
+  
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-screen ">
       {/* Header */}
       <div className="mb-6">
         <Breadcrumb
@@ -259,36 +252,14 @@ export default function SpecialitiesPage() {
             size="large"
             icon={<PlusOutlined />}
             onClick={handleCreate}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 border-0"
+            className=" from-blue-500 to-purple-600 border-0"
           >
             Yangi Mutaxassislik
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-blue-600 mb-2">
-            {specialitiesData?.count || 0}
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">Jami Mutaxassisliklar</div>
-        </Card>
-
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-green-600 mb-2">
-            {specialities.filter(s => s.is_active).length}
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">Faol Mutaxassisliklar</div>
-        </Card>
-
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-purple-600 mb-2">
-            {new Set(specialities.map(s => s.field_of_science)).size}
-          </div>
-          <div className="text-gray-600 dark:text-gray-400">Fan Sohalari</div>
-        </Card>
-      </div>
+    
 
       {/* Search and Table */}
       <Card>
@@ -306,8 +277,7 @@ export default function SpecialitiesPage() {
           columns={columns}
           dataSource={specialities.filter(speciality =>
             speciality.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            speciality.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            speciality.field_of_science.toLowerCase().includes(searchTerm.toLowerCase())
+            speciality.code.toLowerCase().includes(searchTerm.toLowerCase()) 
           )}
           loading={isLoading}
           rowKey="id"
@@ -342,10 +312,10 @@ export default function SpecialitiesPage() {
             label="Kod"
             rules={[
               { required: true, message: "Kodni kiriting" },
-              { pattern: /^\d{2}\.\d{2}\.\d{2}$/, message: "Kod format: 00.00.00" }
+             
             ]}
           >
-            <Input placeholder="03.00.01" />
+            <Input placeholder="Masalan: 03.00.01" />
           </Form.Item>
 
           <Form.Item
@@ -356,22 +326,6 @@ export default function SpecialitiesPage() {
             <Input placeholder="Biokimyo" />
           </Form.Item>
 
-          <Form.Item
-            name="field_of_science"
-            label="Fan sohasi"
-            rules={[{ required: true, message: "Fan sohasini kiriting" }]}
-          >
-            <Select placeholder="Fan sohasini tanlang">
-              <Option value="Tabiiy fanlar">Tabiiy fanlar</Option>
-              <Option value="Texnik fanlar">Texnik fanlar</Option>
-              <Option value="Ijtimoiy-gumanitar fanlar">Ijtimoiy-gumanitar fanlar</Option>
-              <Option value="Tibbiyot fanlari">Tibbiyot fanlari</Option>
-              <Option value="Qishloq xo&apos;jaligi fanlari">Qishloq xo&apos;jaligi fanlari</Option>
-              <Option value="Iqtisodiyot fanlari">Iqtisodiyot fanlari</Option>
-              <Option value="Huquq fanlari">Huquq fanlari</Option>
-              <Option value="Pedagogika fanlari">Pedagogika fanlari</Option>
-            </Select>
-          </Form.Item>
 
           <Form.Item name="description" label="Tavsif">
             <Input.TextArea

@@ -170,6 +170,7 @@ export default function LoginPage() {
 
         <Form name="login" onFinish={onFinish} layout="vertical" size="large">
           <Form.Item
+          
             name="phone_number"
             label={<span style={{ fontWeight: 600 }}>Telefon raqam</span>}
             rules={[
@@ -178,7 +179,7 @@ export default function LoginPage() {
             ]}
           >
             <Input 
-              prefix={<PhoneOutlined style={{ color: "#667eea" }} />} 
+              prefix={<PhoneOutlined style={{ color: "#667eea" }} className="bg-transparent!" />} 
               placeholder="+998901234567"
               style={{ borderRadius: "8px" }}
             />

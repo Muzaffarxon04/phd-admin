@@ -21,10 +21,26 @@ export interface SpecialityListResponse {
   results: Speciality[];
 }
 
+export interface SpecialityDetail {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+  field_of_science: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  applications_count: string;
+  examiners_count: string;
+  submissions_count: string;
+  statistics: string;
+  applications: string;
+}
+
 // Speciality API Service
 export const specialityApi = {
   /**
-   * GET /examiner/
+   * GET /speciality/list/
    * Get list of all specialities
    */
   getSpecialities: async (
@@ -39,7 +55,7 @@ export const specialityApi = {
     if (search) params.append("search", search);
 
     return apiRequest<SpecialityListResponse>(
-      `/examiner/?${params.toString()}`,
+      `/speciality/list/?${params.toString()}`,
       {
         method: "GET",
       }
@@ -47,46 +63,46 @@ export const specialityApi = {
   },
 
   /**
-   * GET /examiner/{id}/
+   * GET /speciality/specialities/{id}/
    * Get speciality details by ID
    */
-  getSpeciality: async (id: string): Promise<Speciality> => {
-    return apiRequest<Speciality>(`/examiner/${id}/`, {
+  getSpeciality: async (id: string): Promise<SpecialityDetail> => {
+    return apiRequest<SpecialityDetail>(`/speciality/specialities/${id}/`, {
       method: "GET",
     });
   },
 
   /**
-   * POST /examiner/create/
+   * POST /speciality/create/
    * Create a new speciality
    */
-  createSpeciality: async (data: SpecialityCreate): Promise<Speciality> => {
-    return apiRequest<Speciality>("/examiner/create/", {
+  createSpeciality: async (data: SpecialityCreate): Promise<SpecialityCreate> => {
+    return apiRequest<SpecialityCreate>("/speciality/create/", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   /**
-   * PUT /examiner/{id}/update/
+   * POST /speciality/update/
    * Update a speciality
    */
   updateSpeciality: async (
     id: string,
     data: SpecialityUpdate
-  ): Promise<Speciality> => {
-    return apiRequest<Speciality>(`/examiner/${id}/update/`, {
-      method: "PUT",
+  ): Promise<SpecialityUpdate> => {
+    return apiRequest<SpecialityUpdate>("/speciality/update/", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   /**
-   * DELETE /examiner/{id}/delete/
+   * DELETE /speciality/delete/
    * Delete a speciality
    */
-  deleteSpeciality: async (id: string): Promise<{ message: string }> => {
-    return apiRequest<{ message: string }>(`/examiner/${id}/delete/`, {
+  deleteSpeciality: async (): Promise<{ message: string }> => {
+    return apiRequest<{ message: string }>("/speciality/delete/", {
       method: "DELETE",
     });
   },

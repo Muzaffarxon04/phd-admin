@@ -116,7 +116,8 @@ async function apiRequest<T>(
         // Refresh failed, throw original error
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = 
-          ((errorData as { message?: string })?.message) || 
+          ((errorData as { error?: string; message?: string })?.error) ||
+          ((errorData as { error?: string; message?: string })?.message) || 
           response.statusText;
         throw new ApiError(
           response.status,
@@ -129,7 +130,8 @@ async function apiRequest<T>(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = 
-        ((errorData as { message?: string })?.message) || 
+        ((errorData as { error?: string; message?: string })?.error) ||
+        ((errorData as { error?: string; message?: string })?.message) || 
         response.statusText;
       throw new ApiError(
         response.status,
@@ -197,7 +199,8 @@ async function apiUpload(
         // Refresh failed, throw original error
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = 
-          ((errorData as { message?: string })?.message) || 
+          ((errorData as { error?: string; message?: string })?.error) ||
+          ((errorData as { error?: string; message?: string })?.message) || 
           response.statusText;
         throw new ApiError(
           response.status,
@@ -210,7 +213,8 @@ async function apiUpload(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = 
-        ((errorData as { message?: string })?.message) || 
+        ((errorData as { error?: string; message?: string })?.error) ||
+        ((errorData as { error?: string; message?: string })?.message) || 
         response.statusText;
       throw new ApiError(
         response.status,

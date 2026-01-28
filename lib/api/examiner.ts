@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
-import type { Examiner, Speciality } from "@/types";
+import type { Examiner } from "@/types";
 
 // Examiner Types
 export interface ExaminerCreate {
@@ -24,10 +24,36 @@ export interface ExaminerListResponse {
   results: Examiner[];
 }
 
+export interface ExaminerDetail {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  degree: string;
+  position: string;
+  organization: string;
+  specialization?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  specialization_id: string;
+  title: string;
+  department: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  specialities: string;
+  statistics: string;
+  recent_assignments: string;
+}
+
 // Examiner API Service
 export const examinerApi = {
   /**
-   * GET /admin/examiners/
+   * GET /examiner/list/
    * Get list of all examiners
    */
   getExaminers: async (
@@ -42,7 +68,7 @@ export const examinerApi = {
     if (search) params.append("search", search);
 
     return apiRequest<ExaminerListResponse>(
-      `/admin/examiners/?${params.toString()}`,
+      `/examiner/list/?${params.toString()}`,
       {
         method: "GET",
       }
@@ -50,57 +76,48 @@ export const examinerApi = {
   },
 
   /**
-   * GET /admin/examiners/{id}/
+   * GET /examiner/{id}/
    * Get examiner details by ID
    */
-  getExaminer: async (id: string): Promise<Examiner> => {
-    return apiRequest<Examiner>(`/admin/examiners/${id}/`, {
+  getExaminer: async (id: string): Promise<ExaminerDetail> => {
+    return apiRequest<ExaminerDetail>(`/examiner/${id}/`, {
       method: "GET",
     });
   },
 
   /**
-   * POST /admin/examiners/create/
+   * POST /examiner/create/
    * Create a new examiner
    */
-  createExaminer: async (data: ExaminerCreate): Promise<Examiner> => {
-    return apiRequest<Examiner>("/admin/examiners/create/", {
+  createExaminer: async (data: ExaminerCreate): Promise<ExaminerDetail> => {
+    return apiRequest<ExaminerDetail>("/examiner/create/", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   /**
-   * PUT /admin/examiners/{id}/update/
+   * POST /examiner/{id}/update/
    * Update an examiner
    */
   updateExaminer: async (
     id: string,
     data: ExaminerUpdate
-  ): Promise<Examiner> => {
-    return apiRequest<Examiner>(`/admin/examiners/${id}/update/`, {
-      method: "PUT",
+  ): Promise<ExaminerDetail> => {
+    return apiRequest<ExaminerDetail>(`/examiner/${id}/update/`, {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   /**
-   * DELETE /admin/examiners/{id}/delete/
+   * DELETE /examiner/{id}/delete/
    * Delete an examiner
    */
   deleteExaminer: async (id: string): Promise<{ message: string }> => {
-    return apiRequest<{ message: string }>(`/admin/examiners/${id}/delete/`, {
+    return apiRequest<{ message: string }>(`/examiner/${id}/delete/`, {
       method: "DELETE",
     });
   },
 
-  /**
-   * GET /examiner/
-   * Get list of all specialities for dropdown
-   */
-  getSpecialities: async (): Promise<Speciality[]> => {
-    return apiRequest<Speciality[]>("/examiner/", {
-      method: "GET",
-    });
-  },
 };

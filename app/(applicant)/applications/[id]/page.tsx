@@ -36,7 +36,7 @@ import {
   CalendarOutlined,
   TrophyOutlined,
   InfoCircleOutlined,
-  SaveOutlined,
+  // SaveOutlined,
   SendOutlined
 } from "@ant-design/icons";
 import { formatDate, parseMoneyAmount } from "@/lib/utils";
@@ -327,7 +327,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const canApply = application.can_apply.can_apply;
+  const canApply = application?.can_apply?.can_apply;
 
   return (
     <div className="min-h-screen ">
@@ -359,7 +359,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       <div className="max-w-7xl mx-auto px-4 py-8">
         {!canApply && (
           <Alert
-            message={application.can_apply.reason}
+            message={application?.can_apply?.reason}
             type="warning"
             showIcon
             className="mb-8"

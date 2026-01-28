@@ -535,9 +535,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                     <div className="space-y-6">
                       {application.fields
                         .sort((a, b) => (a.order || 0) - (b.order || 0))
-                        .map((field) => (
+                        .map((field, index) => (
                           <Card
-                            key={field.id}
+                            key={field.id + "-" + index}
                             className="border border-gray-200"
                             extra={
                           <Space>

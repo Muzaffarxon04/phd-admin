@@ -202,7 +202,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-8!">
+    <div className="min-h-screen  py-8!">
       <Breadcrumb
         className="mb-6!"
         items={[
@@ -219,7 +219,7 @@ export default function DashboardPage() {
       />
 
       {/* HEADER */}
-      <Card className="mb-8! rounded-2xl">
+      <Card className="mb-8! rounded-2xl bg-transparent! backdrop-blur-sm">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
       <Row gutter={[24, 24]} className="mb-8">
         {stats.map((stat) => (
           <Col xs={24} md={12} lg={6} key={stat.title}>
-            <Card>
+            <Card className="bg-transparent! backdrop-blur-sm rounded-lg p-4 text-center">
               <Statistic
                 title={stat.title}
                 value={stat.value}

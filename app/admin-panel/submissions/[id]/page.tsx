@@ -1,13 +1,13 @@
 "use client";
 
 import { use } from "react";
-import { Card, Spin, Tag, Button, Descriptions, Alert, Space } from "antd";
+import { Card, Spin, Tag, Button, Descriptions, Alert, Space, Table, Typography, Tabs } from "antd";
 import { useGet, usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 interface SubmissionDetail {
   id: number;
   submission_number: string;
@@ -22,12 +22,81 @@ interface SubmissionDetail {
   reviewed_by?: number | null;
   reviewed_by_name?: string;
   reviewed_at?: string | null;
-  answers: unknown[];
+  answers: DataObject[];
   documents: unknown[];
   created_at: string;
   updated_at: string;
   submitted_at?: string | null;
 }
+
+interface DataObject {
+  id: number;
+  field_label: string;
+  field_type: string;
+  answer: string | null;
+}
+
+const { Text, Title } = Typography;
+
+
+const formatAnswer = (item: DataObject) => {
+  if (item.field_type === "FILE" && item.answer) {
+    return (
+      <a href={API_BASE_URL + item.answer || ""} target="_blank" rel="noopener noreferrer">
+        📎 Faylni ochish
+      </a>
+    );
+  }
+
+  return item.answer || "—";
+};
+
+
+const CardView = ({ answers }: { answers: DataObject[] }) => (
+  <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    {answers.map((item: DataObject) => (
+      <Card key={item.id}>
+        <Text type="secondary">Savol</Text>
+        <Title level={5}>{item.field_label}</Title>
+
+        <Text type="secondary">Javob</Text>
+        <div>{formatAnswer(item)}</div>
+      </Card>
+    ))}
+  </Space>
+);
+
+const TableView = ({ answers }: { answers: DataObject[] }) => {
+  const columns = [
+    {
+      title: "№",
+      dataIndex: "id",
+      key: "id",
+      render: (text: string, record: DataObject, index: number) => <Text strong>{index + 1}</Text>,
+    },
+    {
+      title: "Savol",
+      dataIndex: "field_label",
+      key: "field_label",
+      render: (text: string) => <Text strong>{text}</Text>,
+    },
+    {
+      title: "Javob",
+      key: "answer",
+      render: (_item: string, record: DataObject) => formatAnswer(record),
+    },
+  
+  ];
+
+  return (
+    <Table
+      rowKey="id"
+      columns={columns}
+      dataSource={answers}
+      pagination={false}
+    />
+  );
+};
 
 export default function AdminSubmissionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -58,6 +127,8 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
     rejectSubmission({ notes: "Hujjatlar notog'ri" });
   };
 
+  
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -76,6 +147,8 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
     );
   }
 
+
+  
   return (
     <div>
       <div className="mb-6">
@@ -128,11 +201,26 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
       </Card>
 
       <Card>
-        <h2 className="text-xl font-semibold mb-4">Javoblar</h2>
-        <pre className="bg-gray-50 p-4 rounded">
-          {JSON.stringify(submission.answers, null, 2)}
-        </pre>
-      </Card>
+  <h2 className="text-xl font-semibold mb-4">Javoblar</h2>
+
+  <Tabs
+  defaultActiveKey="card"
+  items={[
+    {
+      key: "card",
+      label: "Card ko‘rinishi",
+      children: <CardView answers={submission.answers as unknown as DataObject[]} />,
+    },
+    {
+      key: "table",
+      label: "Table ko‘rinishi",
+      children: <TableView answers={submission.answers as unknown as DataObject[]} />,
+    },
+  ]}
+/>
+
+</Card>
+
 
       <Card className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Hujjatlar</h2>

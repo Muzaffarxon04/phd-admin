@@ -5,8 +5,13 @@ import {
   DashboardOutlined,
   FileTextOutlined,
   UserOutlined,
-  // TeamOutlined,
-  // BookOutlined,
+  TeamOutlined,
+  BookOutlined,
+  DollarOutlined,
+  StarOutlined,
+  FilePdfOutlined,
+  BarChartOutlined,
+  LinkOutlined,
   // SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -34,17 +39,42 @@ const menuItems = [
     icon: <FileTextOutlined />,
     label: "Topshirilgan Arizalar",
   },
-  // {
-  //   key: "/admin-panel/examiners",
-  //   icon: <TeamOutlined />,
-  //   label: "Imtihonchilar",
-  // },
-  // {
-  //   key: "/admin-panel/specialities",
-  //   icon: <BookOutlined />,
-  //   label: "Mutaxassisliklar",
-  // },
 
+  {
+    key: "/admin-panel/examiners",
+    icon: <TeamOutlined />,
+    label: "Imtihonchilar",
+  },
+  {
+    key: "/admin-panel/specialities",
+    icon: <BookOutlined />,
+    label: "Mutaxassisliklar",
+  },
+  // {
+  //   key: "/admin-panel/application-specialities",
+  //   icon: <LinkOutlined />,
+  //   label: "Ariza-Mutaxassislik",
+  // },
+  // {
+  //   key: "/admin-panel/marks",
+  //   icon: <StarOutlined />,
+  //   label: "Baholar",
+  // },
+  // {
+  //   key: "/admin-panel/payments",
+  //   icon: <DollarOutlined />,
+  //   label: "To'lovlar",
+  // },
+  // {
+  //   key: "/admin-panel/documents",
+  //   icon: <FilePdfOutlined />,
+  //   label: "Hujjatlar",
+  // },
+  // {
+  //   key: "/admin-panel/reports",
+  //   icon: <BarChartOutlined />,
+  //   label: "Hisobotlar",
+  // },
 ];
 
 export default function Sidebar() {
