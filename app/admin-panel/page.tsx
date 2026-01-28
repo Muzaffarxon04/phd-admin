@@ -122,7 +122,8 @@ console.log(applications, submissions);
   return (
     <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
       {/* Key Metrics Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      Dashboard
+      {/* <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -247,10 +248,10 @@ console.log(applications, submissions);
             </div>
           </Card>
         </Col>
-      </Row>
+      </Row> */}
 
       {/* Charts Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      {/* <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={12}>
           <Card 
             style={cardStyle}
@@ -371,10 +372,10 @@ console.log(applications, submissions);
             </ResponsiveContainer>
           </Card>
         </Col>
-      </Row>
+      </Row> */}
 
       {/* Bottom Row */}
-      <Row gutter={[16, 16]}>
+      {/* <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
           <Card 
             style={cardStyle}
@@ -504,7 +505,7 @@ console.log(applications, submissions);
             </div>
           </Card>
         </Col>
-      </Row>
+      </Row> */}
     </div>
   );
 }
