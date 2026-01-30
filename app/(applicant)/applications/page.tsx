@@ -25,8 +25,8 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
-  TrophyOutlined,
-  EyeOutlined,
+  // TrophyOutlined,
+  // EyeOutlined,
   // PlusOutlined,
   // FilterOutlined,
   SearchOutlined
@@ -37,9 +37,10 @@ import { CardSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
 import { useState } from "react";
+// import router from "next/router";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -77,7 +78,7 @@ interface ApplicationsResponse {
 }
 
 function ApplicationsPage() {
-  // const router = useRouter();
+  const router = useRouter();
   const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
   const [searchTerm, setSearchTerm] = useState("");
@@ -228,7 +229,7 @@ function ApplicationsPage() {
         ) : (
           <Row gutter={[24, 24]}>
             {filteredApplications.map((app) => (
-              <Col xs={24} sm={12} lg={8} xl={6} key={app.id}>
+              <Col className="cursor-pointer" onClick={() => router.push(`/applications/${app.id}`)} xs={24} sm={12} lg={8} xl={6} key={app.id}>
                 <Card
                   className="h-full transform hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer"
                   hoverable
@@ -239,17 +240,7 @@ function ApplicationsPage() {
                     background: theme === "dark" ? "#1a1d29" : "#ffffff",
                     color: theme === "dark" ? "#ffffff" : "#333333"
                   }}
-                  actions={[
-                    <Link href={`/applications/${app.id}`} key="view" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        type="primary"
-                        icon={<EyeOutlined />}
-                        className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
-                      >
-                        Ko&apos;rish
-                      </Button>
-                    </Link>
-                  ]}
+                 
                 >
                   {/* Header */}
                   <div className="p-6 pb-4">
@@ -340,10 +331,7 @@ function ApplicationsPage() {
                     {/* Footer */}
                     <Divider className="my-4" />
                     <div className="flex items-center justify-between">
-                      <Text type="secondary" className="text-sm">
-                        <TrophyOutlined className="mr-1" />
-                        Shu yo&apos;nalish
-                      </Text>
+                  
                       <Link href={`/applications/${app.id}`}>
                         <Button 
                           type="primary"

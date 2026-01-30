@@ -1,6 +1,7 @@
 "use client";
 
 import { Layout, Menu } from "antd";
+import Image from "next/image";
 import {
   HomeOutlined,
   FileTextOutlined,
@@ -68,28 +69,7 @@ export default function ApplicantSidebar() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
-              fontSize: "24px",
-              transition: "transform 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            💡
-          </div>
+        <Image src="/logo.png" alt="Logo" width={48} height={48}/>
           <div>
             <div
               style={{

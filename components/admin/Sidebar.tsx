@@ -7,14 +7,15 @@ import {
   UserOutlined,
   TeamOutlined,
   BookOutlined,
-  DollarOutlined,
-  StarOutlined,
-  FilePdfOutlined,
-  BarChartOutlined,
-  LinkOutlined,
+  // DollarOutlined,
+  // StarOutlined,
+  // FilePdfOutlined,
+  // BarChartOutlined,
+  // LinkOutlined,
   // SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
@@ -159,23 +160,8 @@ const [role, setRole] = useState<string>("Admin");
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#ffffff",
-              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-            }}
-          >
-         👨‍🎓
-          </div>
+        <Image src="/logo.png" alt="Logo" width={48} height={48}/>
+
           <div
             style={{
               fontWeight: 700,
