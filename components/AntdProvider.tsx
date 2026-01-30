@@ -40,6 +40,7 @@ export default function AntdProvider({
           Input: {
             borderRadius: 8,
             controlHeight: 40,
+            colorTextPlaceholder: currentTheme === "dark" ? "#ccc" : "#666",
           },
           Table: {
             borderRadius: 8,

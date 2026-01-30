@@ -1,274 +1,205 @@
 "use client";
 
-import { Form, Input, Button, Card, App } from "antd";
-import { PhoneOutlined, LockOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Card, App, ConfigProvider, Switch } from "antd";
+import { MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { tokenStorage } from "@/lib/utils";
 import Link from "next/link";
+import { useState } from "react";
+import { User } from "@/lib/api/auth";
+import Image from "next/image";
 
-interface LoginData {
-  phone_number: string;
-  password: string;
-}
 
-interface User {
-  id: number;
-  phone_number: string;
-  email?: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  full_name: string;
-  role: string;
-  is_verified: boolean;
-  photo?: string | null;
-  profile_completion: number;
-  date_joined: string;
-  last_login: string;
-}
 
 interface LoginResponse {
   data: {
-    user: User;
     tokens: {
-      refresh: string;
       access: string;
+      refresh: string;
     };
+    user: User;
   };
-  message: string;
-  status: number;
 }
-
-function getRedirectPath(role: string): string {
-  const roleUpper = role.toUpperCase();
-  
-  if (roleUpper === "ADMIN" || roleUpper === "SUPER_ADMIN" || roleUpper === "SUPERADMIN") {
-    return "/admin-panel";
-  }
-  
-  return "/dashboard";
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
-  
-  const { mutate: login, isPending } = usePost<LoginResponse, LoginData>("/auth/login/", {
-    onSuccess: (response) => {
-      // Save tokens
-      tokenStorage.setTokens(response.data.tokens.access, response.data.tokens.refresh);
-      
-      // Save user data to localStorage if needed
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-      }
-      
-      // Invalidate queries
+  const [dark, setDark] = useState(true); // default dark (rasmdagidek)
+
+  const { mutate: login, isPending } = usePost("/auth/login/", {
+    onSuccess: (response: LoginResponse) => {
+      tokenStorage.setTokens(
+        response.data.tokens.access,
+        response.data.tokens.refresh
+      );
+      localStorage.setItem("user", JSON.stringify(response.data.user));
       queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
-      
-      // Get redirect path based on user role
-      const redirectPath = getRedirectPath(response.data.user.role);
-      
-      message.success(response.message || "Muvaffaqiyatli kirildi!");
-      router.push(redirectPath);
+      message.success("Muvaffaqiyatli kirildi!");
+      router.push("/dashboard");
     },
-    onError: (error) => {
-      // Handle array error format from backend
-      let errorMessage = error.message || "Login xatosi";
-      
-      // Agar backenddan array formatida error kelgan bo'lsa
-      const errorData = (error as { data?: unknown }).data;
-      if (Array.isArray(errorData)) {
-        errorMessage = errorData.join(", ");
-      }
-      
-      message.error(errorMessage);
+    onError: (error: Error) => {
+      message.error(error.message || "Login xatosi");
     },
   });
 
-  const onFinish = (values: LoginData) => {
-    login(values);
-  };
-
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 fade-in"
-      style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        position: "relative",
-        overflow: "hidden",
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#5B5BEA",
+          borderRadius: 14,
+          controlHeight: 48,
+          colorText: dark ? "#E5E7EB" : "#111827",
+          colorTextSecondary: dark ? "#9CA3AF" : "#6B7280",
+          colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+        },
+        components: {
+          Card: {
+            colorBgContainer: dark ? "#16161A" : "#FFFFFF",
+          },
+          Input: {
+            colorBgContainer: dark ? "#1F1F23" : "#F9FAFB",
+            colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+            activeBorderColor: "#5B5BEA",
+            hoverBorderColor: "#5B5BEA",
+          },
+        },
       }}
     >
-      {/* Animated Background Elements */}
+      {/* BACKGROUND */}
       <div
+        className="min-h-screen flex items-center justify-center px-4 relative transition-all"
         style={{
-          position: "absolute",
-          top: "-50%",
-          right: "-50%",
-          width: "100%",
-          height: "100%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-          animation: "pulse 4s ease-in-out infinite",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-50%",
-          left: "-50%",
-          width: "100%",
-          height: "100%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-          animation: "pulse 4s ease-in-out infinite 2s",
-        }}
-      />
-
-      <Card 
-        className="w-full max-w-md shadow-2xl fade-in"
-        style={{
-          background: "rgba(255, 255, 255, 0.98)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          borderRadius: "20px",
-          position: "relative",
-          zIndex: 1,
+          background: dark ? "#0B0B0E" : "#F5F6FA",
         }}
       >
-        <div className="text-center mb-8">
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              margin: "0 auto 16px",
-              borderRadius: "16px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "32px",
-              boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4)",
-            }}
-          >
-            🎓
-          </div>
-          <h1 
-            className="text-3xl font-bold mb-2"
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            PhD Imtihonlar Tizimi
-          </h1>
-          <p className="text-gray-600" style={{ fontSize: "15px" }}>Hisobingizga kiring</p>
+        {/* TOGGLE */}
+        <div className="absolute top-6 right-6 flex items-center gap-2">
+          <SunOutlined style={{ color: dark ? "#6B7280" : "#5B5BEA" }} />
+          <Switch checked={dark} onChange={setDark} />
+          <MoonOutlined style={{ color: dark ? "#5B5BEA" : "#6B7280" }} />
         </div>
 
-        <Form name="login" onFinish={onFinish} layout="vertical" size="large">
-          <Form.Item
-          
-            name="phone_number"
-            label={<span style={{ fontWeight: 600 }}>Telefon raqam</span>}
-            rules={[
-              { required: true, message: "Telefon raqamni kiriting!" },
-              { pattern: /^\+998\d{9}$/, message: "Telefon raqam formati: +998901234567" },
-            ]}
-          >
-            <Input 
-              prefix={<PhoneOutlined style={{ color: "#667eea" }} className="bg-transparent!" />} 
-              placeholder="+998901234567"
-              style={{ borderRadius: "8px" }}
-            />
-          </Form.Item>
+        {/* CARD */}
+        <Card
+          className="w-full max-w-md transition-all"
+          style={{
+            borderRadius: 24,
+            border: dark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
+            boxShadow: dark
+              ? "0 30px 80px rgba(0,0,0,0.7)"
+              : "0 20px 60px rgba(0,0,0,0.18)",
+          }}
+        >
+          {/* LOGO */}
+          <div className="flex justify-center mb-4">
+       <Image src="/logo.png" alt="logo" width={64} height={64} />
+          </div>
 
-          <Form.Item
-            name="password"
-            label={<span style={{ fontWeight: 600 }}>Parol</span>}
-            rules={[{ required: true, message: "Parolni kiriting!" }]}
+          {/* TITLES */}
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              color: "#5B5BEA",
+              marginBottom: 4,
+            }}
           >
-            <Input.Password 
-              prefix={<LockOutlined style={{ color: "#667eea" }} />} 
-              placeholder="Parolingizni kiriting"
-              style={{ borderRadius: "8px" }}
-            />
-          </Form.Item>
+            ILM.TASHMEDUNI.UZ
+          </h2>
 
-          <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              loading={isPending} 
-              block 
-              className="h-12"
+          <h1
+            style={{
+              textAlign: "center",
+              fontSize: 22,
+              fontWeight: 700,
+              marginBottom: 2,
+            }}
+          >
+            Tizimga kirish
+          </h1>
+
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: 14,
+              marginBottom: 28,
+              color: dark ? "#9CA3AF" : "#6B7280",
+            }}
+          >
+            PhD Qabul Tizimi
+          </p>
+
+          {/* FORM */}
+          <Form layout="vertical" onFinish={login}>
+            <Form.Item
+              name="phone_number"
+              rules={[
+                { required: true, message: "Telefon raqamni kiriting" },
+              ]}
+            >
+              <Input
+              //  addonBefore="+998" 
+               placeholder="Telefon raqamni kiriting" />
+            </Form.Item>
+
+            <Form.Item
+            style={{ marginBottom: 4}}
+              name="password"
+              rules={[{ required: true, message: "Parolni kiriting" }]}
+            >
+              <Input.Password placeholder="Parol" />
+            </Form.Item>
+
+            <div style={{ textAlign: "right", marginBottom: 18 }}>
+              <Link
+                href="/forgot-password"
+                style={{
+                  fontSize: 13,
+                  color: "#5B5BEA",
+                  fontWeight: 500,
+                }}
+              >
+                Parolni unutdingizmi?
+              </Link>
+            </div>
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isPending}
+              block
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                border: "none",
-                borderRadius: "8px",
+                height: 48,
+                borderRadius: 14,
+                fontSize: 16,
                 fontWeight: 600,
-                fontSize: "16px",
-                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
               }}
             >
               Kirish
             </Button>
-          </Form.Item>
-        </Form>
+          </Form>
 
-        <div className="text-center mt-6">
-          <p className="text-gray-600" style={{ fontSize: "14px" }}>
-            Hisobingiz yo&apos;qmi?{" "}
-            <Link 
-              href="/register" 
-              style={{
-                color: "#667eea",
-                fontWeight: 600,
-                textDecoration: "none",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#764ba2";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#667eea";
-              }}
-            >
-              Ro&apos;yxatdan o&apos;tish
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: 24,
+              fontSize: 14,
+              color: dark ? "#9CA3AF" : "#6B7280",
+            }}
+            className="w-full text-indigo-500 dark:text-indigo-400 text-sm py-2 hover:underline"
+          >
+            Hisobingiz yo‘qmi?{" "}
+            <Link href="/register" className="w-full text-indigo-500 dark:text-indigo-400 text-sm py-2 hover:underline">
+              Ro‘yxatdan o‘ting
             </Link>
-          </p>
-          <p className="text-gray-600" style={{ fontSize: "14px", marginTop: "12px" }}>
-            <Link 
-              href="/forgot-password" 
-              style={{
-                color: "#667eea",
-                fontWeight: 600,
-                textDecoration: "none",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#764ba2";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#667eea";
-              }}
-            >
-              Parolni unutdingizmi?
-            </Link>
-          </p>
-        </div>
-      </Card>
-    </div>
+          </div>
+        </Card>
+      </div>
+    </ConfigProvider>
   );
 }

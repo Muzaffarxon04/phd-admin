@@ -1,633 +1,281 @@
 "use client";
 
 import { useState } from "react";
-import { Form, Input, Button, Card, Steps, App } from "antd";
-import { PhoneOutlined, LockOutlined, UserOutlined, MailOutlined, SafetyOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Steps,
+  App,
+  ConfigProvider,
+  Switch,
+} from "antd";
+import {
+  PhoneOutlined,
+  LockOutlined,
+  UserOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  MoonOutlined,
+  SunOutlined,
+} from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { tokenStorage } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 import Link from "next/link";
-
-// const { Step } = Steps;
-
-interface RegisterData {
-  phone_number: string;
-}
-
-interface VerifyOTPData {
-  phone_number: string;
-  otp_code: string;
-  purpose?: "REGISTRATION" | "LOGIN" | "PASSWORD_RESET" | "PHONE_VERIFICATION";
-}
-
-interface CompleteRegistrationData {
-  phone_number: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  email?: string;
-  password: string;
-  confirm_password: string;
-}
-
-interface User {
-  id: number;
-  phone_number: string;
-  email?: string;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  full_name: string;
-  role: string;
-  is_verified: boolean;
-  photo?: string | null;
-  profile_completion: number;
-  date_joined: string;
-  last_login: string;
-}
-
-interface RegisterResponse {
-  user: User;
-  tokens: {
-    refresh: string;
-    access: string;
-  };
-  message: string;
-  status: number;
-}
-
-function getRedirectPath(role: string): string {
-  const roleUpper = role.toUpperCase();
-  
-  if (roleUpper === "ADMIN" || roleUpper === "SUPER_ADMIN" || roleUpper === "SUPERADMIN") {
-    return "/admin-panel";
-  }
-  
-  return "/dashboard";
-}
+import { User } from "@/lib/api/auth";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [dark, setDark] = useState(true);
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const { resendOTP } = useAuthStore();
 
-  // Step 1: Register
-  const { mutate: register, isPending: isRegistering } = usePost<unknown, RegisterData>("/auth/register/", {
-    onSuccess: () => {
-      setCurrentStep(1);
-      message.success("OTP kod telefon raqamingizga yuborildi!");
-    },
-    onError: (error) => {
-      // Handle array error format from backend
-      let errorMessage = error.message || "Xatolik yuz berdi";
-      
-      // Agar backenddan array formatida error kelgan bo'lsa
-      if (Array.isArray((error).data)) {
-        errorMessage = (error).data.join(", ");
-      }
-      
-      message.error(errorMessage);
-    },
-  });
-
-  // Step 2: Verify OTP
-  const { mutate: verifyOTP, isPending: isVerifying } = usePost<unknown, VerifyOTPData>("/auth/register/verify/", {
-    onSuccess: () => {
-      setCurrentStep(2);
-      message.success("OTP tasdiqlandi!");
-    },
-    onError: (error) => {
-      message.error(error.message || "OTP xato yoki muddati o&apos;tgan");
-    },
-  });
-
-  // Step 3: Complete registration
-  const { mutate: completeRegistration, isPending: isCompleting } = usePost<RegisterResponse, CompleteRegistrationData>("/auth/register/complete/", {
-    onSuccess: (response) => {
-      // Save tokens
-      tokenStorage.setTokens(response.tokens.access, response.tokens.refresh);
-      
-      // Save user data to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(response.user));
-      }
-      
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
-      
-      // Get redirect path based on user role
-      const redirectPath = getRedirectPath(response.user.role);
-      
-      message.success(response.message || "Muvaffaqiyatli ro&apos;yxatdan o&apos;tdingiz!");
-      router.push(redirectPath);
-    },
-    onError: (error) => {
-      message.error(error.message || "Ro&apos;yxatdan o&apos;tishda xatolik");
-    },
-  });
-
-  const onPhoneSubmit = (values: RegisterData) => {
-    setPhoneNumber(values.phone_number);
-    register(values);
-  };
-
-  const onOTPSubmit = (values: { otp_code: string }) => {
-    verifyOTP({
-      phone_number: phoneNumber,
-      otp_code: values.otp_code,
-      purpose: "REGISTRATION",
-    });
-  };
-
-  const onCompleteSubmit = (values: CompleteRegistrationData) => {
-    if (values.password !== values.confirm_password) {
-      message.error("Parollar mos kelmadi!");
-      return;
+  const { mutate: register, isPending: isRegistering } = usePost(
+    "/auth/register/",
+    {
+      onSuccess: () => {
+        setCurrentStep(1);
+        message.success("OTP kod yuborildi");
+      },
     }
-    completeRegistration(values);
-  };
+  );
+
+  const { mutate: verifyOTP, isPending: isVerifying } = usePost(
+    "/auth/register/verify/",
+    {
+      onSuccess: () => {
+        setCurrentStep(2);
+        message.success("OTP tasdiqlandi");
+      },
+    }
+  );
+
+  const { mutate: completeRegistration, isPending: isCompleting } = usePost(
+    "/auth/register/complete/",
+    {
+      onSuccess: (res: { tokens: { access: string; refresh: string }; user: User }) => {
+        tokenStorage.setTokens(res.tokens.access, res.tokens.refresh);
+        localStorage.setItem("user", JSON.stringify(res.user));
+        queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
+        message.success("Ro‘yxatdan o‘tildi");
+        router.push("/dashboard");
+      },
+    }
+  );
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 fade-in"
-      style={{
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        position: "relative",
-        overflow: "hidden",
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#5B5BEA",
+          borderRadius: 14,
+          controlHeight: 48,
+          colorText: dark ? "#E5E7EB" : "#111827",
+          colorTextSecondary: dark ? "#9CA3AF" : "#6B7280",
+          colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+        },
+        components: {
+          Card: {
+            colorBgContainer: dark ? "#16161A" : "#FFFFFF",
+          },
+          Input: {
+            colorBgContainer: dark ? "#1F1F23" : "#F9FAFB",
+          },
+        },
       }}
     >
-      {/* Animated Background Elements */}
       <div
-        style={{
-          position: "absolute",
-          top: "-50%",
-          right: "-50%",
-          width: "100%",
-          height: "100%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-          animation: "pulse 4s ease-in-out infinite",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-50%",
-          left: "-50%",
-          width: "100%",
-          height: "100%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-          animation: "pulse 4s ease-in-out infinite 2s",
-        }}
-      />
-
-      <Card 
-        className="w-full max-w-md shadow-2xl fade-in"
-        style={{
-          background: "rgba(255, 255, 255, 0.98)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          borderRadius: "20px",
-          position: "relative",
-          zIndex: 1,
-        }}
+        className="min-h-screen flex items-center justify-center px-4 relative"
+        style={{ background: dark ? "#0B0B0E" : "#F5F6FA" }}
       >
-        <div className="text-center mb-8">
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              margin: "0 auto 16px",
-              borderRadius: "16px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "32px",
-              boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4)",
-            }}
-          >
-            ✨
-          </div>
-          <h1 
-            className="text-3xl font-bold mb-2"
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            Ro&apos;yxatdan o&apos;tish
-          </h1>
-          <p className="text-gray-600" style={{ fontSize: "15px" }}>Yangi hisob yarating</p>
+        {/* THEME TOGGLE */}
+        <div className="absolute top-6 right-6 flex items-center gap-2">
+          <SunOutlined style={{ color: dark ? "#6B7280" : "#5B5BEA" }} />
+          <Switch checked={dark} onChange={setDark} />
+          <MoonOutlined style={{ color: dark ? "#5B5BEA" : "#6B7280" }} />
         </div>
 
-        <Steps 
-          current={currentStep} 
-          className="mb-8"
-          style={{ marginBottom: "32px" }}
-          items={[
-            { title: "Telefon", icon: <PhoneOutlined /> },
-            { title: "Tasdiqlash", icon: <SafetyOutlined /> },
-            { title: "Ma'lumotlar", icon: <UserOutlined /> },
-          ]}
-        />
+        <Card
+          className="w-full max-w-md"
+          style={{
+            borderRadius: 24,
+            border: dark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
+            boxShadow: dark
+              ? "0 30px 80px rgba(0,0,0,0.7)"
+              : "0 20px 60px rgba(0,0,0,0.18)",
+          }}
+        >
+              {/* LOGO */}
+              <div className="flex justify-center mb-4">
+       <Image src="/logo.png" alt="logo" width={64} height={64} />
+          </div>
 
-        {currentStep === 0 && (
-          <Form name="register_phone" onFinish={onPhoneSubmit} layout="vertical" size="large">
-            <Form.Item
+          {/* TITLES */}
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              color: "#5B5BEA",
+              marginBottom: 4,
+            }}
+          >
+            ILM.TASHMEDUNI.UZ
+          </h2>
+
+          {/* HEADER */}
+          <h1 className="text-center text-xl font-bold mb-1">
+            Ro‘yxatdan o‘tish
+          </h1>
+          <p
+            className="text-center mb-6"
+            style={{ color: dark ? "#9CA3AF" : "#6B7280" }}
+          >
+            Yangi hisob yarating
+          </p>
+
+          <Steps
+            current={currentStep}
+            className="mb-8"
+            items={[
+              { title: "Telefon", icon: <PhoneOutlined /> },
+              { title: "OTP", icon: <SafetyOutlined /> },
+              { title: "Ma’lumotlar", icon: <UserOutlined /> },
+            ]}
+          />
+
+          {/* STEP CONTENT */}
+          {currentStep === 0 && (
+            <Form
+              layout="vertical"
+              onFinish={(v) => {
+                setPhoneNumber(v.phone_number);
+                register(v);
+              }}
+            >
+              <Form.Item
               name="phone_number"
-              label={<span style={{ fontWeight: 600 }}>Telefon raqam</span>}
               rules={[
-                { required: true, message: "Telefon raqamni kiriting!" },
-                { pattern: /^\+998\d{9}$/, message: "Telefon raqam formati: +998901234567" },
+                { required: true, message: "Telefon raqamni kiriting" },
               ]}
             >
               <Input 
-                prefix={<PhoneOutlined style={{ color: "#667eea" }} />} 
-                placeholder="+998901234567"
-                style={{ borderRadius: "8px" }}
-              />
+              // addonBefore="+998" 
+              placeholder="Telefon raqamni kiriting" />
             </Form.Item>
 
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isRegistering} 
-                block 
-                className="h-12"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                }}
+
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isRegistering}
+                block
               >
                 Davom etish
               </Button>
-            </Form.Item>
+            </Form>
+          )}
 
-            <div className="text-center mt-6">
-              <Button 
-                type="link" 
-                onClick={() => {
-                  setCurrentStep(0);
-                  // Agar register jarayon bo'lsa, login sahifasiga o'ting
-                  if (!isRegistering) {
-                    router.push('/login');
-                  }
-                }}
-                style={{ color: "#667eea", fontWeight: 500 }}
-              >
-                ← Orqaga
-              </Button>
-            </div>
-          </Form>
-        )}
-
-        {currentStep === 1 && (
-          <Form name="verify_otp" onFinish={onOTPSubmit} layout="vertical" size="large">
-            <div 
-              className="mb-6 p-4 rounded-lg"
-              style={{
-                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                border: "1px solid rgba(102, 126, 234, 0.2)",
-              }}
+          {currentStep === 1 && (
+            <Form
+              layout="vertical"
+              onFinish={(v) =>
+                verifyOTP({
+                  phone_number: phoneNumber,
+                  otp_code: v.otp_code,
+                  purpose: "REGISTRATION",
+                })
+              }
             >
-              <p className="text-sm" style={{ color: "#667eea", fontWeight: 500 }}>
-                OTP kod <strong style={{ color: "#764ba2" }}>{phoneNumber}</strong> raqamiga yuborildi.
-              </p>
-            </div>
+              <Form.Item name="otp_code" rules={[{ len: 6 }]}>
+                <Input
+                  placeholder="123456"
+                  maxLength={6}
+                  style={{ textAlign: "center", letterSpacing: 4 }}
+                />
+              </Form.Item>
 
-            <Form.Item
-              name="otp_code"
-              label={<span style={{ fontWeight: 600 }}>OTP kod</span>}
-              rules={[
-                { required: true, message: "OTP kodni kiriting!" },
-                { len: 6, message: "OTP kod 6 raqamdan iborat bo'lishi kerak!" },
-              ]}
-            >
-              <Input 
-                prefix={<SafetyOutlined style={{ color: "#667eea" }} />} 
-                placeholder="123456" 
-                maxLength={6}
-                style={{ borderRadius: "8px", fontSize: "18px", letterSpacing: "4px", textAlign: "center" }}
-              />
-            </Form.Item>
-
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isVerifying} 
-                block 
-                className="h-12"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                }}
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isVerifying}
+                block
               >
                 Tasdiqlash
               </Button>
-            </Form.Item>
 
-            <div className="text-center mt-4">
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Button 
-                  type="link" 
-                  onClick={() => setCurrentStep(0)}
-                  style={{ color: "#667eea", fontWeight: 500 }}
-                >
-                  ← Orqaga
-                </Button>
-                <Button 
-                  type="link" 
-                  onClick={() => resendOTP({ phone: phoneNumber })}
-                  style={{ color: "#667eea", fontWeight: 500 }}
-                >
+              <div className="text-center mt-4">
+                <Button type="link" onClick={() => resendOTP({ phone: phoneNumber })}>
                   OTP qayta yuborish
                 </Button>
               </div>
-            </div>
-          </Form>
-        )}
+            </Form>
+          )}
 
-        {currentStep === 2 && (
-          <Form name="complete_registration" onFinish={onCompleteSubmit} layout="vertical" size="large">
-            <div className="text-center mt-6">
-              <p className="text-gray-600" style={{ fontSize: "14px" }}>
-                Allaqachon hisobingiz bormi?{" "}
-                <Link 
-                  href="/login" 
-                  style={{
-                    color: "#667eea",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#764ba2";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#667eea";
-                  }}
-                >
-                  Kirish
-                </Link>
-              </p>
-              <p className="text-gray-600" style={{ fontSize: "14px", marginTop: "8px" }}>
-                <Link 
-                  href="/forgot-password" 
-                  style={{
-                    color: "#667eea",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#764ba2";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#667eea";
-                  }}
-                >
-                  Parolni unutdingizmi?
-                </Link>
-              </p>
-            </div>
-          </Form>
-        )}
-
-        {currentStep === 1 && (
-          <Form name="verify_otp" onFinish={onOTPSubmit} layout="vertical" size="large">
-            <div 
-              className="mb-6 p-4 rounded-lg"
-              style={{
-                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                border: "1px solid rgba(102, 126, 234, 0.2)",
-              }}
+          {currentStep === 2 && (
+            <Form
+              layout="vertical"
+              onFinish={completeRegistration}
             >
-              <p className="text-sm" style={{ color: "#667eea", fontWeight: 500 }}>
-                OTP kod <strong style={{ color: "#764ba2" }}>{phoneNumber}</strong> raqamiga yuborildi.
-              </p>
-            </div>
+              <Form.Item name="phone_number" initialValue={phoneNumber} hidden>
+                <Input />
+              </Form.Item>
 
-            <Form.Item
-              name="otp_code"
-              label={<span style={{ fontWeight: 600 }}>OTP kod</span>}
-              rules={[
-                { required: true, message: "OTP kodni kiriting!" },
-                { len: 6, message: "OTP kod 6 raqamdan iborat bo'lishi kerak!" },
-              ]}
-            >
-              <Input 
-                prefix={<SafetyOutlined style={{ color: "#667eea" }} />} 
-                placeholder="123456" 
-                maxLength={6}
-                style={{ borderRadius: "8px", fontSize: "18px", letterSpacing: "4px", textAlign: "center" }}
-              />
-            </Form.Item>
+              <Form.Item name="first_name" rules={[{ required: true }]}>
+                <Input prefix={<UserOutlined />} placeholder="Ism" />
+              </Form.Item>
 
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isVerifying} 
-                block 
-                className="h-12"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                }}
+              <Form.Item name="last_name" rules={[{ required: true }]}>
+                <Input prefix={<UserOutlined />} placeholder="Familiya" />
+              </Form.Item>
+
+              <Form.Item name="email">
+                <Input prefix={<MailOutlined />} placeholder="Email" />
+              </Form.Item>
+
+              <Form.Item name="password" rules={[{ min: 8 }]}>
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Parol"
+                />
+              </Form.Item>
+
+              <Form.Item name="confirm_password" rules={[{ required: true }]}>
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Parolni tasdiqlang"
+                />
+              </Form.Item>
+
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isCompleting}
+                block
               >
-                Tasdiqlash
+                Ro‘yxatdan o‘tish
               </Button>
-            </Form.Item>
+            </Form>
+          )}
 
-            <div className="text-center mt-4">
-              <Button 
-                type="link" 
-                onClick={() => setCurrentStep(0)}
-                style={{ color: "#667eea", fontWeight: 500 }}
-              >
-                ← Orqaga
-              </Button>
-            </div>
-          </Form>
-        )}
-
-        {currentStep === 2 && (
-          <Form name="complete_registration" onFinish={onCompleteSubmit} layout="vertical" size="large">
-            <Form.Item name="phone_number" initialValue={phoneNumber} hidden>
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              name="first_name"
-              label={<span style={{ fontWeight: 600 }}>Ism</span>}
-              rules={[{ required: true, message: "Ismingizni kiriting!" }]}
-            >
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Ismingiz"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="last_name"
-              label={<span style={{ fontWeight: 600 }}>Familiya</span>}
-              rules={[{ required: true, message: "Familiyangizni kiriting!" }]}
-            >
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Familiyangiz"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item name="middle_name" label={<span style={{ fontWeight: 600 }}>Otasining ismi</span>}>
-              <Input 
-                prefix={<UserOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Otasining ismi"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label={<span style={{ fontWeight: 600 }}>Email</span>}
-              rules={[{ type: "email", message: "Email formati noto'g'ri!" }]}
-            >
-              <Input 
-                prefix={<MailOutlined style={{ color: "#667eea" }} />} 
-                placeholder="email@example.com"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              label={<span style={{ fontWeight: 600 }}>Parol</span>}
-              rules={[
-                { required: true, message: "Parolni kiriting!" },
-                { min: 8, message: "Parol kamida 8 belgidan iborat bo'lishi kerak!" },
-              ]}
-            >
-              <Input.Password 
-                prefix={<LockOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Parol"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="confirm_password"
-              label={<span style={{ fontWeight: 600 }}>Parolni tasdiqlang</span>}
-              dependencies={["password"]}
-              rules={[
-                { required: true, message: "Parolni tasdiqlang!" },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("password") === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error("Parollar mos kelmadi!"));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password 
-                prefix={<LockOutlined style={{ color: "#667eea" }} />} 
-                placeholder="Parolni qayta kiriting"
-                style={{ borderRadius: "8px" }}
-              />
-            </Form.Item>
-
-            <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={isCompleting} 
-                block 
-                className="h-12"
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  fontSize: "16px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                }}
-              >
-                Ro&apos;yxatdan o&apos;tish
-              </Button>
-            </Form.Item>
-
-            <div className="text-center mt-4">
-              <Button 
-                type="link" 
-                onClick={() => setCurrentStep(1)}
-                style={{ color: "#667eea", fontWeight: 500 }}
-              >
-                ← Orqaga
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Card>
-    </div>
+          <div className="text-center mt-6 text-sm">
+            Hisobingiz bormi?{" "}
+            <Link href="/login" style={{ color: "#5B5BEA" }}>
+              Kirish
+            </Link>
+          </div>
+        </Card>
+      </div>
+    </ConfigProvider>
   );
 }
