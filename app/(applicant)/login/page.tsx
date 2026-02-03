@@ -5,7 +5,9 @@ import { MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGet, usePatch } from "@/lib/hooks";
 import { tokenStorage } from "@/lib/utils";
+import { useThemeStore } from "@/lib/stores/themeStore";
 import Link from "next/link";
 import { useState } from "react";
 import { User } from "@/lib/api/auth";
@@ -26,7 +28,8 @@ export default function LoginPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
-  const [dark, setDark] = useState(true); // default dark (rasmdagidek)
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === "dark";
 
   const { mutate: login, isPending } = usePost("/auth/login/", {
     onSuccess: (response: LoginResponse) => {
@@ -51,17 +54,17 @@ export default function LoginPage() {
           colorPrimary: "#5B5BEA",
           borderRadius: 14,
           controlHeight: 48,
-          colorText: dark ? "#E5E7EB" : "#111827",
-          colorTextSecondary: dark ? "#9CA3AF" : "#6B7280",
-          colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+          colorText: isDark ? "#E5E7EB" : "#111827",
+          colorTextSecondary: isDark ? "#9CA3AF" : "#6B7280",
+          colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
         },
         components: {
           Card: {
-            colorBgContainer: dark ? "#16161A" : "#FFFFFF",
+            colorBgContainer: isDark ? "#16161A" : "#FFFFFF",
           },
           Input: {
-            colorBgContainer: dark ? "#1F1F23" : "#F9FAFB",
-            colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+            colorBgContainer: isDark ? "#1F1F23" : "#F9FAFB",
+            colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
             activeBorderColor: "#5B5BEA",
             hoverBorderColor: "#5B5BEA",
           },
@@ -72,14 +75,14 @@ export default function LoginPage() {
       <div
         className="min-h-screen flex items-center justify-center px-4 relative transition-all"
         style={{
-          background: dark ? "#0B0B0E" : "#F5F6FA",
+          background: isDark ? "#0B0B0E" : "#F5F6FA",
         }}
       >
         {/* TOGGLE */}
         <div className="absolute top-6 right-6 flex items-center gap-2">
-          <SunOutlined style={{ color: dark ? "#6B7280" : "#5B5BEA" }} />
-          <Switch checked={dark} onChange={setDark} />
-          <MoonOutlined style={{ color: dark ? "#5B5BEA" : "#6B7280" }} />
+          <SunOutlined style={{ color: isDark ? "#6B7280" : "#5B5BEA" }} />
+          <Switch checked={isDark} onChange={toggleTheme} />
+          <MoonOutlined style={{ color: isDark ? "#5B5BEA" : "#6B7280" }} />
         </div>
 
         {/* CARD */}
@@ -87,15 +90,15 @@ export default function LoginPage() {
           className="w-full max-w-md transition-all"
           style={{
             borderRadius: 24,
-            border: dark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
-            boxShadow: dark
+            border: isDark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
+            boxShadow: isDark
               ? "0 30px 80px rgba(0,0,0,0.7)"
               : "0 20px 60px rgba(0,0,0,0.18)",
           }}
         >
           {/* LOGO */}
           <div className="flex justify-center mb-4">
-       <Image src="/logo.png" alt="logo" width={64} height={64} />
+            <Image src="/logo.png" alt="logo" width={64} height={64} />
           </div>
 
           {/* TITLES */}
@@ -128,7 +131,7 @@ export default function LoginPage() {
               textAlign: "center",
               fontSize: 14,
               marginBottom: 28,
-              color: dark ? "#9CA3AF" : "#6B7280",
+              color: isDark ? "#9CA3AF" : "#6B7280",
             }}
           >
             PhD Qabul Tizimi
@@ -143,12 +146,12 @@ export default function LoginPage() {
               ]}
             >
               <Input
-              //  addonBefore="+998" 
-               placeholder="Telefon raqamni kiriting" />
+                //  addonBefore="+998" 
+                placeholder="Telefon raqamni kiriting" />
             </Form.Item>
 
             <Form.Item
-            style={{ marginBottom: 4}}
+              style={{ marginBottom: 4 }}
               name="password"
               rules={[{ required: true, message: "Parolni kiriting" }]}
             >
@@ -189,7 +192,7 @@ export default function LoginPage() {
               textAlign: "center",
               marginTop: 24,
               fontSize: 14,
-              color: dark ? "#9CA3AF" : "#6B7280",
+              color: isDark ? "#9CA3AF" : "#6B7280",
             }}
             className="w-full text-indigo-500 dark:text-indigo-400 text-sm py-2 hover:underline"
           >

@@ -83,16 +83,18 @@ export default function Sidebar() {
   const router = useRouter();
   const { theme } = useThemeStore();
   const [userName, setUserName] = useState<string>("Admin");
-const [role, setRole] = useState<string>("Admin");
+  const [role, setRole] = useState<string>("Admin");
 
   useEffect(() => {
     const loadUser = () => {
       const user = tokenStorage.getUser() as { full_name?: string, role?: string } | null;
       const fullName = user?.full_name;
-      setRole(user?.role || "Admin");
-      if (fullName) {
-        setUserName(fullName);
-      }
+      setTimeout(() => {
+        setRole(user?.role || "Admin");
+        if (fullName) {
+          setUserName(fullName);
+        }
+      }, 0);
     };
     loadUser();
   }, []);
@@ -142,37 +144,34 @@ const [role, setRole] = useState<string>("Admin");
         left: 0,
         top: 0,
         bottom: 0,
-        background: theme === "dark" 
-          ? "#1a1d29" 
-          : "#ffffff",
-        borderRight: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"}`,
-        boxShadow: theme === "dark" 
-          ? "4px 0 20px rgba(0, 0, 0, 0.3)" 
-          : "2px 0 8px rgba(0, 0, 0, 0.05)",
+        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+        borderRight: "none",
+        boxShadow: "none",
         transition: "all 0.3s ease",
       }}
     >
       {/* Logo Section */}
       <div
         style={{
-          padding: "24px",
-          borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+          padding: "20px 24px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Image src="/logo.png" alt="Logo" width={48} height={48}/>
-
-          <div
-            style={{
-              fontWeight: 700,
-              color: theme === "dark" ? "#ffffff" : "#1a1a1a",
-              fontSize: "18px",
-              letterSpacing: "-0.5px",
-            }}
-          >
-             Admin Panel
-          </div>
+        <div style={{ position: "relative", width: 38, height: 38 }}>
+          <Image src="/logo.png" alt="Logo" width={38} height={38} />
         </div>
+
+        <span
+          style={{
+            fontSize: "18px",
+            fontWeight: 700,
+            color: "#7367f0"
+          }}
+        >
+          Admin Panel
+        </span>
       </div>
 
       {/* Menu */}
@@ -184,10 +183,9 @@ const [role, setRole] = useState<string>("Admin");
         style={{
           borderRight: 0,
           background: "transparent",
-          padding: "8px",
+          padding: "8px 12px",
         }}
-        theme={theme === "dark" ? "dark" : "light"}
-        className="custom-menu-admin"
+        className="custom-menu-admin-new"
       />
 
       {/* User Profile Section */}
@@ -199,10 +197,10 @@ const [role, setRole] = useState<string>("Admin");
           right: 0,
           padding: "16px 24px",
           borderTop: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
-          background: theme === "dark" ? "#1a1d29" : "#ffffff",
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
         }}
       >
-        <Dropdown 
+        <Dropdown
           menu={{ items: userMenuItems }}
           trigger={["click"]}
           placement="topLeft"
@@ -251,68 +249,58 @@ const [role, setRole] = useState<string>("Admin");
                   marginTop: 2,
                 }}
               >
-             {role}
+                {role}
               </div>
             </div>
           </div>
         </Dropdown>
       </div>
       <style jsx global>{`
-        .custom-menu-admin .ant-menu-item {
-          margin: 6px 8px !important;
-          border-radius: 12px !important;
-          height: 52px !important;
-          line-height: 52px !important;
-          color: ${theme === "dark" ? "#ffffff" : "#333"} !important;
-          padding: 0 16px !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        .custom-menu-admin-new {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .custom-menu-admin-new .ant-menu-item {
+          margin: 1px 0 !important;
+          border-radius: 4px !important;
+          height: 42px !important;
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
+          padding: 10px 15px !important;
+          transition: all 0.2s ease !important;
           font-weight: 500 !important;
+          font-size: 15px !important;
           display: flex !important;
           align-items: center !important;
         }
-        .custom-menu-admin .ant-menu-item-selected {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        .custom-menu-admin-new .ant-menu-item-selected {
+          background: linear-gradient(118deg,#7367f0,rgba(115,103,240,.7) )!important;
           color: white !important;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
-          transform: translateX(4px) !important;
+          box-shadow: 0 0 10px 1px rgba(115,103,240,.7) !important;
         }
-        .custom-menu-admin .ant-menu-item-selected::before {
-          display: none !important;
+        .custom-menu-admin-new .ant-menu-item-selected .anticon {
+          color: #ffffff !important;
         }
-        .custom-menu-admin .ant-menu-item-selected .anticon {
-          color: white !important;
-          transform: scale(1.1) !important;
+        .custom-menu-admin-new .ant-menu-item:hover:not(.ant-menu-item-selected) {
+          background: rgba(129, 140, 248, 0.08) !important;
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
         }
-        .custom-menu-admin .ant-menu-item:hover:not(.ant-menu-item-selected) {
-          background: ${theme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.08)"} !important;
-          transform: translateX(4px) !important;
+        .custom-menu-admin-new .ant-menu-item .anticon {
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
+          font-size: 20px !important;
         }
-        .custom-menu-admin .ant-menu-item .anticon {
-          color: ${theme === "dark" ? "#a0a0a0" : "#666"} !important;
-          font-size: 18px !important;
-          margin-right: 12px !important;
-          transition: all 0.3s ease !important;
-        }
-        .custom-menu-admin .ant-menu-item:hover .anticon {
+        .custom-menu-admin-new .ant-menu-item:hover .anticon {
           color: ${theme === "dark" ? "#ffffff" : "#667eea"} !important;
-          transform: scale(1.1) !important;
-        }
-        .custom-menu-admin .ant-menu-item-selected .anticon {
-          color: white !important;
         }
         /* Custom scrollbar */
-        .custom-menu-admin::-webkit-scrollbar {
+        .ant-layout-sider-children::-webkit-scrollbar {
           width: 6px;
         }
-        .custom-menu-admin::-webkit-scrollbar-track {
-          background: ${theme === "dark" ? "#1a1d29" : "#f5f5f5"};
+        .ant-layout-sider-children::-webkit-scrollbar-track {
+          background: transparent;
         }
-        .custom-menu-admin::-webkit-scrollbar-thumb {
-          background: ${theme === "dark" ? "#252836" : "#d9d9d9"};
+        .ant-layout-sider-children::-webkit-scrollbar-thumb {
+          background: ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};
           border-radius: 3px;
-        }
-        .custom-menu-admin::-webkit-scrollbar-thumb:hover {
-          background: ${theme === "dark" ? "#667eea" : "#667eea"};
         }
       `}</style>
     </Sider>

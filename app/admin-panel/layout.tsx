@@ -25,12 +25,12 @@ export default function AdminPanelLayout({
     const checkAuth = () => {
       // Check if user is authenticated
       const accessToken = tokenStorage.getAccessToken();
-      
+
       if (!accessToken) {
         router.push("/login");
         return;
       }
-      
+
       setIsChecking(false);
     };
 
@@ -39,13 +39,13 @@ export default function AdminPanelLayout({
 
   if (isChecking) {
     return (
-      <div 
-        style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           minHeight: "100vh",
-          background: theme === "dark" ? "#1a1d29" : "#f5f7fa"
+          background: theme === "dark" ? "rgb(22, 29, 49)" : "rgb(246, 246, 246)"
         }}
       >
         <Spin size="large" />
@@ -54,17 +54,20 @@ export default function AdminPanelLayout({
   }
 
   return (
-    <Layout 
-      style={{ 
-        minHeight: "100vh", 
-        background: theme === "dark" ? "#1a1d29" : "#f5f7fa",
+    <Layout
+      style={{
+        minHeight: "100vh",
+        background: theme === "dark"
+          ? "rgb(22, 29, 49)"
+          : "rgb(246, 246, 246)",
         transition: "background 0.3s ease"
       }}
     >
       <Sidebar />
-      <Layout 
-        style={{ 
-          marginLeft: 280, 
+      <Layout
+        style={{
+          marginLeft: 280,
+          marginRight: 20,
           background: "transparent",
           transition: "margin-left 0.3s ease"
         }}
@@ -72,10 +75,17 @@ export default function AdminPanelLayout({
         <Header />
         <Content
           style={{
-            margin: "24px",
-            padding: 0,
+            marginTop: "20px",
+            padding: 22,
             minHeight: 280,
-            background: "transparent",
+            background: theme === "dark"
+              ? "rgb(40, 48, 70)"
+              : "rgba(255, 255, 255, 0.98)",
+            borderRadius: 6,
+            color: theme === "dark" ? "#ffffff" : "#000000",
+            boxShadow: theme === "dark"
+              ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+              : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
             transition: "all 0.3s ease",
           }}
         >

@@ -297,8 +297,6 @@ export default function MySubmissionsPage() {
             <Title className="text-4xl font-bold mb-4">Mening Arizalarim</Title>
             <Text className="text-xl text-purple-100">Ozingiz topshirgan arizalarni kuzating</Text>
           </div>
-
-          ]
         </div>
       </div>
 
@@ -335,7 +333,7 @@ export default function MySubmissionsPage() {
         </div>
 
         {/* Stats Summary */}
-        <Row gutter={[24, 24]} className="mb-8">
+        {/* <Row gutter={[24, 24]} className="mb-8">
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
@@ -413,7 +411,7 @@ export default function MySubmissionsPage() {
               </div>
             </Card>
           </Col>
-        </Row>
+        </Row> */}
 
         {/* Table */}
         <Card

@@ -11,6 +11,7 @@ import {
   ConfigProvider,
   Switch,
 } from "antd";
+import { useThemeStore } from "@/lib/stores/themeStore";
 import {
   PhoneOutlined,
   LockOutlined,
@@ -32,7 +33,8 @@ import Image from "next/image";
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [dark, setDark] = useState(true);
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === "dark";
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -79,44 +81,44 @@ export default function RegisterPage() {
           colorPrimary: "#5B5BEA",
           borderRadius: 14,
           controlHeight: 48,
-          colorText: dark ? "#E5E7EB" : "#111827",
-          colorTextSecondary: dark ? "#9CA3AF" : "#6B7280",
-          colorBorder: dark ? "#2A2A2E" : "#E5E7EB",
+          colorText: isDark ? "#E5E7EB" : "#111827",
+          colorTextSecondary: isDark ? "#9CA3AF" : "#6B7280",
+          colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
         },
         components: {
           Card: {
-            colorBgContainer: dark ? "#16161A" : "#FFFFFF",
+            colorBgContainer: isDark ? "#16161A" : "#FFFFFF",
           },
           Input: {
-            colorBgContainer: dark ? "#1F1F23" : "#F9FAFB",
+            colorBgContainer: isDark ? "#1F1F23" : "#F9FAFB",
           },
         },
       }}
     >
       <div
         className="min-h-screen flex items-center justify-center px-4 relative"
-        style={{ background: dark ? "#0B0B0E" : "#F5F6FA" }}
+        style={{ background: isDark ? "#0B0B0E" : "#F5F6FA" }}
       >
         {/* THEME TOGGLE */}
         <div className="absolute top-6 right-6 flex items-center gap-2">
-          <SunOutlined style={{ color: dark ? "#6B7280" : "#5B5BEA" }} />
-          <Switch checked={dark} onChange={setDark} />
-          <MoonOutlined style={{ color: dark ? "#5B5BEA" : "#6B7280" }} />
+          <SunOutlined style={{ color: isDark ? "#6B7280" : "#5B5BEA" }} />
+          <Switch checked={isDark} onChange={toggleTheme} />
+          <MoonOutlined style={{ color: isDark ? "#5B5BEA" : "#6B7280" }} />
         </div>
 
         <Card
           className="w-full max-w-md"
           style={{
             borderRadius: 24,
-            border: dark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
-            boxShadow: dark
+            border: isDark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
+            boxShadow: isDark
               ? "0 30px 80px rgba(0,0,0,0.7)"
               : "0 20px 60px rgba(0,0,0,0.18)",
           }}
         >
-              {/* LOGO */}
-              <div className="flex justify-center mb-4">
-       <Image src="/logo.png" alt="logo" width={64} height={64} />
+          {/* LOGO */}
+          <div className="flex justify-center mb-4">
+            <Image src="/logo.png" alt="logo" width={64} height={64} />
           </div>
 
           {/* TITLES */}
@@ -139,7 +141,7 @@ export default function RegisterPage() {
           </h1>
           <p
             className="text-center mb-6"
-            style={{ color: dark ? "#9CA3AF" : "#6B7280" }}
+            style={{ color: isDark ? "#9CA3AF" : "#6B7280" }}
           >
             Yangi hisob yarating
           </p>
@@ -164,15 +166,15 @@ export default function RegisterPage() {
               }}
             >
               <Form.Item
-              name="phone_number"
-              rules={[
-                { required: true, message: "Telefon raqamni kiriting" },
-              ]}
-            >
-              <Input 
-              // addonBefore="+998" 
-              placeholder="Telefon raqamni kiriting" />
-            </Form.Item>
+                name="phone_number"
+                rules={[
+                  { required: true, message: "Telefon raqamni kiriting" },
+                ]}
+              >
+                <Input
+                  // addonBefore="+998" 
+                  placeholder="Telefon raqamni kiriting" />
+              </Form.Item>
 
 
               <Button
