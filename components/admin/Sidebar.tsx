@@ -136,7 +136,7 @@ export default function Sidebar() {
 
   return (
     <Sider
-      width={280}
+      width={260}
       style={{
         overflow: "auto",
         height: "100vh",
