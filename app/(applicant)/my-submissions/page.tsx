@@ -14,7 +14,9 @@ import {
   Row,
   Col,
   Alert,
-  Tooltip
+  Tooltip,
+  Input,
+  Breadcrumb
 } from "antd";
 import {
   EyeOutlined,
@@ -22,12 +24,15 @@ import {
   // CheckCircleOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
-  ReloadOutlined,
   DollarOutlined,
   CalendarOutlined,
   DownloadOutlined,
-  EyeInvisibleOutlined,
-  PlusOutlined
+  PlusOutlined,
+  SearchOutlined,
+  HomeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  InfoCircleOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -119,20 +124,20 @@ export default function MySubmissionsPage() {
   const columns = [
     {
       title: (
-        <div className="flex items-center gap-2">
-          <FileTextOutlined />
-          <span>Ariza raqami</span>
+        <div className="flex items-center gap-2 py-3 px-4">
+          <FileTextOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza raqami</span>
         </div>
       ),
       dataIndex: "submission_number",
       key: "submission_number",
       render: (text: string, record: Submission) => (
-        <div>
-          <div className="font-semibold text-blue-600 dark:text-blue-400">
+        <div className="px-4 py-2">
+          <div className="font-bold text-base" style={{ color: "#7367f0" }}>
             #{text}
           </div>
-          <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-[#484650]"}`}>
-            Yaratilgan: {formatDate(record.created_at)}
+          <div className="text-xs font-medium text-gray-400 mt-0.5">
+            {formatDate(record.created_at)}
           </div>
         </div>
       ),
@@ -140,119 +145,119 @@ export default function MySubmissionsPage() {
     },
     {
       title: (
-        <div className="flex items-center gap-2">
-          <TrophyOutlined />
-          <span>Ariza nomi</span>
+        <div className="flex items-center gap-2 py-3">
+          <TrophyOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza nomi</span>
         </div>
       ),
       dataIndex: "application_title",
       key: "application_title",
       render: (text: string, record: Submission) => (
-        <div className="max-w-xs">
+        <div className="max-w-xs py-2">
           <Tooltip title={text}>
-            <div className={`font-medium truncate ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`} title={text}>
+            <div className={`font-bold text-sm truncate ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
               {text}
             </div>
           </Tooltip>
-          <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-[#484650]"}`}>
-            {record.submitted_at && "Topshirilgan: " + formatDate(record.submitted_at)}
-          </div>
+          {record.submitted_at && (
+            <div className="text-xs text-gray-400 mt-0.5">
+              Topshirilgan: {formatDate(record.submitted_at)}
+            </div>
+          )}
         </div>
       ),
-      width: 250,
+      width: 280,
     },
     {
       title: (
-        <div className="flex items-center gap-2">
-          <ClockCircleOutlined />
-          <span>Ariza holati</span>
+        <div className="flex items-center gap-2 py-3">
+          <ClockCircleOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holat</span>
         </div>
       ),
       dataIndex: "status",
       key: "status",
-      render: (status: string) => (
-        <Badge
-          status={status === "APPROVED" ? "success" : status === "REJECTED" ? "error" : "processing"}
-          text={<span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{getApplicationStatusLabel(status)}</span>}
-        />
-      ),
-      width: 150,
+      render: (status: string) => {
+        const label = getApplicationStatusLabel(status);
+        const color = getApplicationStatusColor(status);
+        return (
+          <div className="py-2">
+            <span
+              className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                  status === "DRAFT" ? "bg-gray-500/10 text-gray-500 border-gray-500/20" :
+                    "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                }`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+      width: 160,
     },
     {
       title: (
-        <div className="flex items-center gap-2">
-          <DollarOutlined />
-          <span>Tolov holati</span>
+        <div className="flex items-center gap-2 py-3">
+          <DollarOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">To&apos;lov</span>
         </div>
       ),
       dataIndex: "payment_status",
       key: "payment_status",
       render: (status: string) => {
-        const colors: Record<string, string> = {
-          PENDING: "orange",
-          PAID: "green",
-          FAILED: "red",
-          REFUNDED: "gray",
-        };
         const labels: Record<string, string> = {
           PENDING: "Kutilmoqda",
           PAID: "To'langan",
           FAILED: "Xatolik",
           REFUNDED: "Qaytarilgan",
         };
+        const colorClass =
+          status === "PAID" ? "text-green-500 bg-green-500/10 border-green-500/20" :
+            status === "FAILED" ? "text-red-500 bg-red-500/10 border-red-500/20" :
+              status === "PENDING" ? "text-orange-500 bg-orange-500/10 border-orange-500/20" :
+                "text-gray-500 bg-gray-500/10 border-gray-500/20";
+
         return (
-          <Tag color={colors[status]}>
-            {labels[status] || status}
-          </Tag>
+          <div className="py-2">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}>
+              {labels[status] || status}
+            </span>
+          </div>
         );
       },
-      width: 120,
+      width: 130,
     },
     {
       title: (
-        <div className="flex items-center gap-2">
-          <CalendarOutlined />
-          <span>Amallar</span>
+        <div className="flex items-center justify-center py-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Amallar</span>
         </div>
       ),
       key: "actions",
       render: (_: unknown, record: Submission) => (
-        <Space size="small">
+        <div className="flex justify-center items-center gap-2 py-2">
           <Link href={`/my-submissions/${record.id}`}>
             <Tooltip title="Ko'rish">
-              <Button
-                type="primary"
-                size="small"
-                icon={<EyeOutlined />}
-                className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
-              />
+              <button
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+              >
+                <EyeOutlined style={{ fontSize: "18px" }} />
+              </button>
             </Tooltip>
           </Link>
 
-          {record.status === "DRAFT" && (
-            <Link href={`/my-submissions/${record.id}`}>
-              <Tooltip title="Tahrirlash">
-                <Button
-                  size="small"
-                  icon={<EyeInvisibleOutlined />}
-                />
-              </Tooltip>
-            </Link>
-          )}
-
           {record.documents_uploaded && record.total_required_documents && (
             <Tooltip title={`${record.documents_uploaded}/${record.total_required_documents} hujjat yuklandi`}>
-              <Button
-                size="small"
-                icon={<DownloadOutlined />}
-              >
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/10 text-blue-500 text-xs font-bold border border-blue-500/20">
+                <DownloadOutlined style={{ fontSize: "14px" }} />
                 {record.documents_uploaded}
-              </Button>
+              </div>
             </Tooltip>
           )}
-        </Space>
+        </div>
       ),
-      width: 120,
+      width: 150,
     },
   ];
 
@@ -289,159 +294,162 @@ export default function MySubmissionsPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header Section */}
-      <div className={`text-white`}>
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <Title className="text-4xl font-bold mb-4">Mening Arizalarim</Title>
-            <Text className="text-xl text-purple-100">Ozingiz topshirgan arizalarni kuzating</Text>
-          </div>
+    <div style={{ minHeight: "100vh" }}>
+      <div className="mx-auto">
+        {/* Page Title & Breadcrumb */}
+        <div className="mb-8 flex items-center gap-4">
+          <Title level={4} className="!text-[24px] mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Mening Arizalarim
+          </Title>
+          <Breadcrumb
+            items={[
+              {
+                href: "/dashboard",
+                title: (
+                  <div className="flex items-center gap-1">
+                    <HomeOutlined />
+                    <span>Bosh sahifa</span>
+                  </div>
+                ),
+              },
+              {
+                title: "Mening Arizalarim",
+              },
+            ]}
+          />
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 ">
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <Title level={2} className="mb-0">Arizalar royxati</Title>
+        {/* Premium Filters & Search */}
+     
+        {/* Premium Stats Grid
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[
+            {
+              label: "Jami arizalar",
+              value: submissions.length,
+              icon: <TrophyOutlined style={{ fontSize: "24px" }} />,
+              color: "blue",
+              bg: "bg-blue-500/10",
+              textColor: "text-blue-500"
+            },
+            {
+              label: "Ko'rib chiqilmoqda",
+              value: submissions.filter(s => s.status === "UNDER_REVIEW" || s.status === "SUBMITTED").length,
+              icon: <ClockCircleOutlined style={{ fontSize: "24px" }} />,
+              color: "purple",
+              bg: "bg-purple-500/10",
+              textColor: "text-purple-500"
+            },
+            {
+              label: "Tasdiqlangan",
+              value: submissions.filter(s => s.status === "APPROVED").length,
+              icon: <CheckCircleOutlined style={{ fontSize: "24px" }} />,
+              color: "green",
+              bg: "bg-green-500/10",
+              textColor: "text-green-500"
+            },
+            {
+              label: "Rad etilgan",
+              value: submissions.filter(s => s.status === "REJECTED").length,
+              icon: <CloseCircleOutlined style={{ fontSize: "24px" }} />,
+              color: "red",
+              bg: "bg-red-500/10",
+              textColor: "text-red-500"
+            }
+          ].map((stat, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl p-6 transition-all duration-300 hover:shadow-lg"
+              style={{
+                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg} ${stat.textColor}`}>
+                  {stat.icon}
+                </div>
+                <div>
+                  <div className="text-gray-500 text-sm font-medium">{stat.label}</div>
+                  <div className="text-2xl font-bold mt-1" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                    {stat.value}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div> */}
 
-          <div className="flex items-center gap-4">
+        {/* Table Section */}
+        <div
+          className="rounded-xl overflow-hidden transition-all duration-300 mb-8"
+          style={{
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          <div className="p-6">
+            <div className="flex justify-between items-center ">
+              <Title level={4} className="mb-0!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                Arizalar jadvali
+              </Title>
+                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      
+          <div className="flex items-center gap-3">
             <div className="relative">
-              <input
-                type="text"
-                placeholder="Ariza nomi raqamini qidirish..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70" />
+              <Input
+                placeholder="Arizani izlang..."
+                className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"
+                style={{
+                  background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                  border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  color: theme === "dark" ? "#ffffff" : "#484650",
+                }}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FileTextOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
 
             <select
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7367f0]/50 transition-all duration-300 cursor-pointer text-sm"
+              style={{
+                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                color: theme === "dark" ? "#ffffff" : "#484650",
+              }}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">Barchasi</option>
+              <option value="all">Saralash</option>
               <option value="DRAFT">Tayyorlanmoqda</option>
               <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Korib chiqilmoqda</option>
+              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
               <option value="APPROVED">Tasdiqlangan</option>
               <option value="REJECTED">Rad etilgan</option>
             </select>
           </div>
         </div>
 
-        {/* Stats Summary */}
-        {/* <Row gutter={[24, 24]} className="mb-8">
-          <Col xs={24} lg={12}>
-            <Card className="transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">Holatlar boyicha taqsimot</Title>
-                <ReloadOutlined className="text-gray-400 cursor-pointer" />
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Topshirilgan", value: stats.submitted, color: "blue" },
-                  { label: "Ko'rib chiqilmoqda", value: stats.underReview, color: "processing" },
-                  { label: "Tasdiqlangan", value: stats.approved, color: "success" },
-                  { label: "Rad etilgan", value: stats.rejected, color: "error" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full bg-${item.color}-500`}></div>
-                      <span>{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        percent={stats.total > 0 ? (item.value / stats.total) * 100 : 0}
-                        size="small"
-                        showInfo={false}
-                        strokeColor={{
-                          '0%': item.color === "blue" ? "#1890ff" :
-                            item.color === "processing" ? "#1890ff" :
-                              item.color === "success" ? "#52c41a" : "#ff4d4f",
-                          '100%': item.color === "blue" ? "#1890ff" :
-                            item.color === "processing" ? "#1890ff" :
-                              item.color === "success" ? "#52c41a" : "#ff4d4f",
-                        }}
-                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
-                        style={{ width: "80px" }}
-                      />
-                      <span className="text-sm font-medium w-8 text-right">{item.value}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={12}>
-            <Card className="transform hover:scale-105 transition-all duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <Title level={4} className="mb-0">Tolov holati</Title>
-                <DollarOutlined className="text-green-500" />
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Tolangan", value: stats.paid, color: "green" },
-                  { label: "Kutilmoqda", value: stats.pendingPayment, color: "orange" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full bg-${item.color}-500`}></div>
-                      <span>{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        percent={stats.total > 0 ? (item.value / stats.total) * 100 : 0}
-                        size="small"
-                        showInfo={false}
-                        strokeColor={{
-                          '0%': item.color === "green" ? "#52c41a" : "#faad14",
-                          '100%': item.color === "green" ? "#52c41a" : "#faad14",
-                        }}
-                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
-                        style={{ width: "80px" }}
-                      />
-                      <span className="text-sm font-medium w-8 text-right">{item.value}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Col>
-        </Row> */}
-
-        {/* Table */}
-        <Card
-          className="transform hover:scale-[1.01] transition-all duration-300"
-          bodyStyle={{
-            padding: "0",
-            borderRadius: "16px",
-            overflow: "hidden",
-            background: theme === "dark" ? "#1a1d29" : "#ffffff"
-          }}
-        >
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <Title level={3} className="mb-0">Arizalar jadvali</Title>
-              <Space>
-                <Badge count={filteredSubmissions.length} overflowCount={999} />
-                <Link href="/applications">
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    className=" from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
-                  >
-                    Yangi ariza
-                  </Button>
-                </Link>
-              </Space>
+              <Link href="/applications">
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  className="rounded-xl h-[42px] px-6 border-0 shadow-lg"
+                  style={{
+                    background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                    boxShadow: "0 8px 25px -8px #7367f0"
+                  }}
+                >
+                  Yangi ariza
+                </Button>
+              </Link>
             </div>
 
             {filteredSubmissions.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-6">
                 <EmptyState
                   description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
                   action={
@@ -469,37 +477,55 @@ export default function MySubmissionsPage() {
               />
             )}
           </div>
-        </Card>
+        </div>
 
-        {/* Recent Activities */}
-        <div className="mt-8">
+        {/* Recent Activities Section */}
+        <div className="mt-12 bg-transparent">
+          <Title level={4} className="mb-8" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            So&apos;nggi faolliklar
+          </Title>
           <Timeline
             items={timelineData.map(item => ({
-              color: item.color,
-              dot: <ClockCircleOutlined />,
+              color: item.color === "success" ? "#52c41a" : item.color === "error" ? "#ff4d4f" : "#7367f0",
+              dot: <div className="p-1 rounded-full bg-white dark:bg-[#283046] border-2 border-current"><ClockCircleOutlined style={{ fontSize: "14px" }} /></div>,
               children: (
-                <Card
-                  size="small"
-                  className="mb-4 border-l-4 border-l-blue-500"
+                <div
+                  className="mb-8 p-6 rounded-xl transition-all duration-300 hover:translate-x-1"
+                  style={{
+                    background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                    borderLeft: `4px solid ${item.color === "success" ? "#52c41a" : item.color === "error" ? "#ff4d4f" : "#7367f0"}`,
+                    boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                  }}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold">{item.title}</h4>
-                    <Tag color={item.color}>{getApplicationStatusLabel(item.status)}</Tag>
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    #{item.submissionNumber} • {formatDate(item.date)}
-                    {item.reviewNotes && (
-                      <div className="mt-2">
-                        <Alert
-                          message="Izoh"
-                          description={item.reviewNotes}
-                          type="info"
-                          showIcon
-                        />
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-bold text-base mb-1" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>{item.title}</h4>
+                      <div className="text-xs font-medium text-gray-400">
+                        #{item.submissionNumber} • {formatDate(item.date)}
                       </div>
-                    )}
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${item.status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                        item.status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                          "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                        }`}
+                    >
+                      {getApplicationStatusLabel(item.status)}
+                    </span>
                   </div>
-                </Card>
+                  {item.reviewNotes && (
+                    <div className="mt-4 p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                      <div className="flex gap-2 items-start text-sm">
+                        <InfoCircleOutlined className="text-blue-500 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-blue-500 block mb-1 text-xs uppercase">Komissiya izohi:</span>
+                          <span className="text-gray-600 dark:text-gray-300 italic text-sm">{item.reviewNotes}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )
             }))}
           />

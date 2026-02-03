@@ -1,37 +1,34 @@
 "use client";
 
 import { use } from "react";
-import { 
-  Card, 
-  Button, 
-  Form, 
-  Input, 
-  InputNumber, 
-  Select, 
-  Radio, 
-  Checkbox, 
-  DatePicker, 
-  Upload, 
-
+import {
+  Card,
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Radio,
+  Checkbox,
+  DatePicker,
+  Upload,
+  Breadcrumb,
   Typography,
-
   message,
   Alert,
 } from "antd";
-import { 
-  useGet, 
-  usePost 
+import {
+  useGet,
+  usePost
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowLeftOutlined, 
-  UploadOutlined, 
-  CheckCircleOutlined, 
+import {
+  UploadOutlined,
+  CheckCircleOutlined,
   // ClockCircleOutlined,
   ExclamationCircleOutlined,
-  FileTextOutlined,
   DollarOutlined,
   CalendarOutlined,
   TrophyOutlined,
@@ -99,8 +96,13 @@ interface SubmissionData {
   }>;
 }
 
-const renderFieldInput = (field: ApplicationField) => {
+const renderFieldInput = (field: ApplicationField, theme: string) => {
   const options = field.options || [];
+  const inputStyle = {
+    background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+    color: theme === "dark" ? "#ffffff" : "#484650",
+  };
 
   switch (field.field_type) {
     case "TEXT":
@@ -110,7 +112,8 @@ const renderFieldInput = (field: ApplicationField) => {
           minLength={field.min_length || undefined}
           maxLength={field.max_length || undefined}
           size="large"
-          className="w-full"
+          className="w-full rounded-xl"
+          style={inputStyle}
         />
       );
 
@@ -122,44 +125,54 @@ const renderFieldInput = (field: ApplicationField) => {
           minLength={field.min_length || undefined}
           maxLength={field.max_length || undefined}
           size="large"
-          className="w-full"
+          className="w-full rounded-xl"
+          style={inputStyle}
         />
       );
 
     case "EMAIL":
-      return <Input type="email" placeholder={field.placeholder || "email@example.com"} size="large" />;
+      return <Input type="email" placeholder={field.placeholder || "email@example.com"} size="large" className="rounded-xl" style={inputStyle} />;
 
     case "PHONE":
-      return <Input type="tel" placeholder={field.placeholder || "+998901234567"} size="large" />;
+      return <Input type="tel" placeholder={field.placeholder || "+998901234567"} size="large" className="rounded-xl" style={inputStyle} />;
 
     case "NUMBER":
       return (
         <InputNumber
-          className="w-full"
+          className="w-full rounded-xl"
           placeholder={field.placeholder}
           min={field.min_value ? parseFloat(field.min_value) : undefined}
           max={field.max_value ? parseFloat(field.max_value) : undefined}
           size="large"
-          style={{ width: "100%" }}
+          style={{ ...inputStyle, width: "100%" }}
         />
       );
 
     case "DATE":
       return (
-        <DatePicker 
-          className="w-full" 
-          format="YYYY-MM-DD" 
-          placeholder={field.placeholder} 
+        <DatePicker
+          className="w-full rounded-xl"
+          format="YYYY-MM-DD"
+          placeholder={field.placeholder}
           size="large"
+          style={inputStyle}
         />
       );
 
     case "SELECT":
       return (
-        <Select placeholder={field.placeholder || "Tanlang"} size="large" className="w-full">
+        <Select
+          placeholder={field.placeholder || "Tanlang"}
+          size="large"
+          className="w-full custom-select-premium"
+          dropdownStyle={{
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+          }}
+        >
           {options.map((opt, index) => (
             <Select.Option key={index} value={opt}>
-              {opt}
+              <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.8)" : "inherit" }}>{opt}</span>
             </Select.Option>
           ))}
         </Select>
@@ -168,22 +181,26 @@ const renderFieldInput = (field: ApplicationField) => {
     case "RADIO":
       return (
         <Radio.Group className="w-full">
-          {options.map((opt, index) => (
-            <Radio key={index} value={opt} className="mb-2">
-              {opt}
-            </Radio>
-          ))}
+          <div className="flex flex-col gap-2">
+            {options.map((opt, index) => (
+              <Radio key={index} value={opt} className="premium-radio">
+                <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.8)" : "inherit" }}>{opt}</span>
+              </Radio>
+            ))}
+          </div>
         </Radio.Group>
       );
 
     case "CHECKBOX":
       return (
         <Checkbox.Group className="w-full">
-          {options.map((opt, index) => (
-            <Checkbox key={index} value={opt} className="mb-2">
-              {opt}
-            </Checkbox>
-          ))}
+          <div className="flex flex-col gap-2">
+            {options.map((opt, index) => (
+              <Checkbox key={index} value={opt} className="premium-checkbox">
+                <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.8)" : "inherit" }}>{opt}</span>
+              </Checkbox>
+            ))}
+          </div>
         </Checkbox.Group>
       );
 
@@ -193,9 +210,9 @@ const renderFieldInput = (field: ApplicationField) => {
           beforeUpload={() => false}
           accept={field.allowed_file_types?.map((type) => `.${type}`).join(",")}
           maxCount={1}
-          className="w-full"
+          className="w-full premium-upload"
         >
-          <Button icon={<UploadOutlined />} size="large" block>
+          <Button icon={<UploadOutlined />} size="large" block className="rounded-xl" style={inputStyle}>
             Fayl tanlash
           </Button>
         </Upload>
@@ -203,15 +220,17 @@ const renderFieldInput = (field: ApplicationField) => {
 
     case "URL":
       return (
-        <Input 
-          type="url" 
-          placeholder={field.placeholder || "https://example.com"} 
+        <Input
+          type="url"
+          placeholder={field.placeholder || "https://example.com"}
           size="large"
+          className="rounded-xl"
+          style={inputStyle}
         />
       );
 
     default:
-      return <Input placeholder={field.placeholder} size="large" className="w-full" />;
+      return <Input placeholder={field.placeholder} size="large" className="w-full rounded-xl" style={inputStyle} />;
   }
 };
 
@@ -251,7 +270,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
     application.fields.forEach((field) => {
       const value = values[`field_${field.id}`];
-      
+
       if (field.field_type === "FILE") {
         // File upload will be handled separately in submission detail page
         // For now, we'll skip file fields in initial submission
@@ -331,196 +350,276 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="min-h-screen ">
-      {/* Header */}
-      <div className={`text-white ${
-        theme === "dark" 
-          ? " from-blue-700 to-purple-700" 
-          : " from-blue-600 to-purple-600"
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 ">
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/applications">
-              <Button 
-                type="primary" 
-                icon={<ArrowLeftOutlined />}
-                className="bg-white/20 hover:bg-white/30 border-white/20"
-              >
-                Orqaga
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <Title className="text-3xl font-bold">{application.title}</Title>
-              <Text className="text-blue-100">Ariza topshirish</Text>
-            </div>
-          </div>
-        </div>
+      {/* Page Title & Breadcrumb */}
+      <div className="mb-4 flex items-center gap-4">
+        <Title level={4} className="!text-[24px] mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          Ariza topshirish
+        </Title>
+
+        <Breadcrumb
+          items={[
+            {
+              href: "/dashboard",
+              title: (
+                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "rgb(115, 103, 240)" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="align-text-top feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </span>
+              ),
+            },
+            {
+              href: "/applications",
+              title: <span style={{ color: "rgb(115, 103, 240)" }}>Mavjud Arizalar</span>
+            },
+            { title: <span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{application.title}</span> },
+          ]}
+        />
       </div>
-
+     
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {!canApply && (
-          <Alert
-            message={application?.can_apply?.reason}
-            type="warning"
-            showIcon
-            className="mb-8"
-            action={
-              <Button size="small" type="link">
-                Koproq malumot
-              </Button>
-            }
-          />
-        )}
-
+        {/* {!canApply && (
+          <div
+            className="mb-8 p-4 rounded-xl border flex items-center justify-between"
+            style={{
+              background: theme === "dark" ? "rgba(255, 159, 67, 0.1)" : "rgba(255, 159, 67, 0.05)",
+              borderColor: "rgba(255, 159, 67, 0.3)"
+            }}
+          >
+            <div className="flex gap-3">
+              <ExclamationCircleOutlined style={{ color: "#ff9f43", fontSize: "18px" }} />
+              <div>
+                <Text style={{ display: "block", color: theme === "dark" ? "#ff9f43" : "#ff9f43", fontWeight: 600 }}>
+                  Arizani topshirish imkoni yo&apos;q
+                </Text>
+                <Text style={{ fontSize: "14px", color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)" }}>
+                  {application?.can_apply?.reason}
+                </Text>
+              </div>
+            </div>
+           
+          </div>
+        )} */}
+ <Title level={3} className="!text-[24px]  border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+        {application.title}
+      </Title>
         {/* Application Info */}
-        <Card className="mb-8" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <CalendarOutlined className="text-blue-500" />
+        <div
+          className="rounded-lg transition-all duration-300 p-6 mb-8"
+          style={{
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "rgba(255, 255, 255, 0.98)",
+            border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            boxShadow: theme === "dark"
+              ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+              : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-500/10 text-blue-500">
+                  <CalendarOutlined style={{ fontSize: "20px" }} />
+                </div>
                 <div>
-                  <Text className="text-gray-500">Boshlanish sanasi</Text>
-                  <div className="font-semibold">{formatDate(application.start_date)}</div>
+                  <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Boshlanish sanasi</Text>
+                  <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                    {formatDate(application.start_date)}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <CalendarOutlined className="text-purple-500" />
+
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-purple-500/10 text-purple-500">
+                  <CalendarOutlined style={{ fontSize: "20px" }} />
+                </div>
                 <div>
-                  <Text className="text-gray-500">Tugash sanasi</Text>
-                  <div className="font-semibold">{formatDate(application.end_date)}</div>
+                  <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Tugash sanasi</Text>
+                  <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                    {formatDate(application.end_date)}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-              <DollarOutlined className="text-purple-500" />
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-500/10 text-green-500">
+                  <DollarOutlined style={{ fontSize: "20px" }} />
+                </div>
                 <div>
-                  <Text className="text-gray-500">Tolov miqdori</Text>
-                  <div className="font-semibold">{parseMoneyAmount(application.application_fee)}</div>
+                  <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Tolov miqdori</Text>
+                  <div className="font-black text-base" style={{ color: "#7367f0" }}>
+                    {parseMoneyAmount(application.application_fee)}
+                  </div>
                 </div>
               </div>
-         
+
               {application.exam_date && (
-                <div className="flex items-center gap-3">
-                  <CalendarOutlined className="text-green-500" />
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-500/10 text-orange-500">
+                    <CalendarOutlined style={{ fontSize: "20px" }} />
+                  </div>
                   <div>
-                    <Text className="text-gray-500">Imtihon sanasi</Text>
-                    <div className="font-semibold">{formatDate(application.exam_date)}</div>
+                    <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Imtihon sanasi</Text>
+                    <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                      {formatDate(application.exam_date)}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <FileTextOutlined className="text-blue-500" />
-                <div>
-                  <Text className="text-gray-500">Imtihon turi</Text>
-                  <div className="font-semibold">Fanlararo PhD</div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-500/10 text-blue-500">
+                  <TrophyOutlined style={{ fontSize: "20px" }} />
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <TrophyOutlined className="text-purple-500" />
                 <div>
-                  <Text className="text-gray-500">Arizalar soni</Text>
-                  <div className="font-semibold">
-                    {application.user_submission_count || 0}/{application.max_submissions || "Cheksiz"}
+                  <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Arizalar soni</Text>
+                  <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                    {application.user_submission_count || 0} / {application.max_submissions || "Cheksiz"}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                {application.requires_oneid_verification ? (
-                  <ExclamationCircleOutlined className="text-orange-500" />
-                ) : (
-                  <CheckCircleOutlined className="text-green-500" />
-                )}
+
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${application.requires_oneid_verification ? 'bg-orange-500/10 text-orange-500' : 'bg-green-500/10 text-green-500'}`}>
+                  {application.requires_oneid_verification ? (
+                    <ExclamationCircleOutlined style={{ fontSize: "20px" }} />
+                  ) : (
+                    <CheckCircleOutlined style={{ fontSize: "20px" }} />
+                  )}
+                </div>
                 <div>
-                  <Text className="text-gray-500">Tekshirish</Text>
-                  <div className="font-semibold">
-                    {application.requires_oneid_verification ? "Talab qilinadi" : "Zarur emas"}
+                  <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Tasdiqlash</Text>
+                  <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+                    {application.requires_oneid_verification ? "OneID" : "Zarur emas"}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Description */}
-        <Card className="my-8!" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
-          <Title level={4} className="mb-4">Ariza tavsifi</Title>
-          <Paragraph className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+        <div
+          className="rounded-lg transition-all duration-300 p-6 mb-8"
+          style={{
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "rgba(255, 255, 255, 0.98)",
+            border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            boxShadow: theme === "dark"
+              ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+              : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <Title level={4} className="mb-4" style={{ color: "#7367f0" }}>Ariza tavsifi</Title>
+          <Paragraph
+            className="text-sm leading-relaxed"
+            style={{ color: theme === "dark" ? "rgb(180, 183, 189)" : "#484650", whiteSpace: "pre-line" }}
+          >
             {application.description}
           </Paragraph>
-        </Card>
+        </div>
 
         {/* Instructions */}
         {application.instructions && (
-          <Card className="mb-8 border-l-4 border-l-blue-500" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
-            <Title level={4} className="mb-4 flex items-center gap-2">
-              <InfoCircleOutlined className="text-blue-500" />
-              Korsatmalar
+          <div
+            className="rounded-lg transition-all duration-300 p-6 mb-8 border-l-[4px]"
+            style={{
+              background: theme === "dark" ? "rgb(40, 48, 70)" : "rgba(255, 255, 255, 0.98)",
+              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+              borderLeftColor: "#7367f0",
+              boxShadow: theme === "dark"
+                ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+                : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <Title level={4} className="mb-4 flex items-center gap-2" style={{ color: "#7367f0" }}>
+              <InfoCircleOutlined />
+              Ko&apos;rsatmalar
             </Title>
-            <Paragraph className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+            <Paragraph
+              className="text-sm leading-relaxed"
+              style={{ color: theme === "dark" ? "rgb(180, 183, 189)" : "#484650", whiteSpace: "pre-line" }}
+            >
               {application.instructions}
             </Paragraph>
-          </Card>
+          </div>
         )}
 
         {/* Application Form */}
         {canApply && (
-          <Card className="mb-8" style={{ background: theme === "dark" ? "#1a1d29" : "#ffffff", color: theme === "dark" ? "#ffffff" : "#333333" }}>
-            <Title level={4} className="mb-6">Ariza toldirish</Title>
-            
+          <div
+            className="rounded-lg transition-all duration-300 p-8 mb-12"
+            style={{
+              background: theme === "dark" ? "rgb(40, 48, 70)" : "rgba(255, 255, 255, 0.98)",
+              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+              boxShadow: theme === "dark"
+                ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+                : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <Title level={4} className="mb-8" style={{ color: "#7367f0" }}>Ariza to&apos;ldirish</Title>
+
             <Form
               form={form}
               layout="vertical"
               onFinish={handleSubmit}
               autoComplete="off"
-              className="space-y-6"
+              className="premium-form"
             >
-              {application.fields
-                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((field) => (
-                  <div key={field.id} className="relative">
-                    <Form.Item
-                      name={`field_${field.id}`}
-                      label={
-                        <div className="flex items-center gap-2">
-                          <span>
-                            {field.label}
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
-                          </span>
-                          {completedFields.has(field.id) && (
-                            <CheckCircleOutlined className="text-green-500" />
-                          )}
-                        </div>
-                      }
-                      help={field.help_text}
-                      rules={[
-                        {
-                          required: field.required,
-                          message: `${field.label} maydonini toldirish majburiy!`,
-                        },
-                      ]}
-                      valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
-                      getValueFromEvent={field.field_type === "FILE" ? (e) => (Array.isArray(e) ? e : e?.fileList) : undefined}
-                    >
-                      {renderFieldInput(field)}
-                    </Form.Item>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                {application.fields
+                  .sort((a, b) => (a.order || 0) - (b.order || 0))
+                  .map((field) => (
+                    <div key={field.id} className="relative">
+                      <Form.Item
+                        name={`field_${field.id}`}
+                        label={
+                          <div className="flex items-center gap-2">
+                            <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "inherit", fontWeight: 500 }}>
+                              {field.label}
+                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                            </span>
+                            {completedFields.has(field.id) && (
+                              <CheckCircleOutlined className="text-green-500" />
+                            )}
+                          </div>
+                        }
+                        help={<span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.45)" : "inherit", fontSize: "12px" }}>{field.help_text}</span>}
+                        rules={[
+                          {
+                            required: field.required,
+                            message: `${field.label} maydonini to&apos;ldirish majburiy!`,
+                          },
+                        ]}
+                        valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
+                        getValueFromEvent={field.field_type === "FILE" ? (e) => (Array.isArray(e) ? e : e?.fileList) : undefined}
+                      >
+                        {renderFieldInput(field, theme)}
+                      </Form.Item>
+                    </div>
+                  ))}
 
-              <div className="flex gap-4 pt-6 border-t">
+              </div>
+
+              <div className="flex gap-4 pt-8 border-t" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
                 <Button
                   size="large"
                   type="primary"
                   htmlType="submit"
                   loading={isCreating}
                   icon={<SendOutlined />}
-                  className="flex-1  from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+                  className="h-[50px] text-lg font-bold rounded-xl border-0 shadow-lg"
+                  style={{
+                    flex: 1,
+                    background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                    boxShadow: "0 8px 25px -8px #7367f0"
+                  }}
                 >
                   Arizani topshirish
                 </Button>
               </div>
             </Form>
-          </Card>
+          </div>
         )}
       </div>
     </div>
