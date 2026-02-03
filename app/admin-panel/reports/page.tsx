@@ -2,23 +2,22 @@
 
 import { useState } from "react";
 import {
-  Card,
   Row,
   Col,
   Typography,
-  Statistic,
   Progress,
   Table,
   Select,
   DatePicker,
   Button,
   Space,
-  Breadcrumb,
   Tabs,
   List,
   Avatar,
-  Tag,
 } from "antd";
+const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
+import { useThemeStore } from "@/lib/stores/themeStore";
 import {
   BarChartOutlined,
   // PieChartOutlined,
@@ -33,9 +32,6 @@ import {
   DownloadOutlined,
 } from "@ant-design/icons";
 
-const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
-const { TabPane } = Tabs;
 const { Option } = Select;
 
 interface ReportData {
@@ -52,9 +48,7 @@ interface ReportData {
 }
 
 export default function ReportsPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [, setDateRange] = useState<any>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("month");
+  // Mock data for demonstration
 
   // Mock data for demonstration
   const reportData: ReportData = {
@@ -103,27 +97,26 @@ export default function ReportsPage() {
     ARCHIVED: "gray",
   };
 
-  return (
-    <div className="p-6">
-      <Breadcrumb
-        items={[
-          { href: "/", title: "Bosh sahifa" },
-          { href: "/admin-panel", title: "Admin Panel" },
-          { title: "Hisobotlar" },
-        ]}
-        className="mb-4"
-      />
+  const [, _setDateRange] = useState<unknown>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("month");
+  const { theme } = useThemeStore();
 
-      <div className="flex justify-between items-center mb-6">
+  return (
+    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Title level={2} className="mb-2">Hisobotlar va Statistika</Title>
-          <p className="text-gray-600">Tizim faoliyati boyicha toliq malumotlar</p>
+          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Hisobotlar va Statistika
+          </Title>
+          <div className="text-gray-400 text-sm font-medium">Tizim faoliyati bo&apos;yicha to&apos;liq ma&apos;lumotlar</div>
         </div>
-        <Space>
+
+        <div className="flex flex-wrap items-center gap-3">
           <Select
             value={selectedPeriod}
             onChange={setSelectedPeriod}
-            style={{ width: 120 }}
+            className="premium-select w-[140px]"
           >
             <Option value="week">Haftalik</Option>
             <Option value="month">Oylik</Option>
@@ -131,315 +124,446 @@ export default function ReportsPage() {
             <Option value="year">Yillik</Option>
           </Select>
           <RangePicker
-            onChange={setDateRange}
+            onChange={(val) => _setDateRange(val)}
             placeholder={["Boshlanish", "Tugash"]}
+            className="premium-datepicker"
           />
-          <Button icon={<DownloadOutlined />} onClick={() => handleExportReport("pdf")}>
-            PDF
-          </Button>
-          <Button icon={<DownloadOutlined />} onClick={() => handleExportReport("excel")}>
-            Excel
-          </Button>
-        </Space>
+          <div className="flex gap-2">
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => handleExportReport("pdf")}
+              className="h-[42px] px-4 rounded-xl border-0 shadow-md font-bold text-white"
+              style={{ background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))" }}
+            >
+              PDF
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => handleExportReport("excel")}
+              className="h-[42px] px-4 rounded-xl border-0 shadow-md font-bold text-white"
+              style={{ background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))" }}
+            >
+              Excel
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultActiveKey="overview" type="card">
-        {/* Overview Tab */}
-        <TabPane
-          tab={
-            <Space>
-              <BarChartOutlined />
-              Umumiy
-            </Space>
-          }
-          key="overview"
-        >
-          <Row gutter={[16, 16]} className="mb-6">
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Jami Arizalar"
-                  value={reportData.total_applications}
-                  prefix={<BookOutlined />}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Jami Arizachilar"
-                  value={reportData.total_submissions}
-                  prefix={<UserOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Jami To'lovlar"
-                  value={reportData.total_payments.toLocaleString()}
-                  prefix={<DollarOutlined />}
-                  suffix="UZS"
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="O'rtacha Ball"
-                  value={reportData.average_score}
-                  prefix={<TrophyOutlined />}
-                  suffix="/100"
-                  valueStyle={{ color: '#722ed1' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Card title="Ariza Statuslari">
-                <div className="space-y-3">
-                  {Object.entries(reportData.applications_by_status).map(([status, count]) => (
-                    <div key={status} className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Tag color={statusColors[status as keyof typeof statusColors]}>
-                          {status}
-                        </Tag>
-                        <span>{count} ta</span>
+      <Tabs
+        defaultActiveKey="overview"
+        className="premium-tabs"
+        items={[
+          {
+            key: "overview",
+            label: (
+              <Space>
+                <BarChartOutlined />
+                Umumiy
+              </Space>
+            ),
+            children: (
+              <div className="space-y-6 pt-2">
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[
+                    { title: "Jami Arizalar", value: reportData.total_applications, icon: <BookOutlined />, color: "#7367f0" },
+                    { title: "Jami Arizachilar", value: reportData.total_submissions, icon: <UserOutlined />, color: "#28c76f" },
+                    { title: "Jami To&apos;lovlar", value: reportData.total_payments.toLocaleString(), icon: <DollarOutlined />, color: "#ff9f43", suffix: " UZS" },
+                    { title: "O&apos;rtacha Ball", value: reportData.average_score, icon: <TrophyOutlined />, color: "#ea5455", suffix: "/100" },
+                  ].map((stat, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl p-6 transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                        boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                          style={{ background: `${stat.color}15`, color: stat.color }}
+                        >
+                          {stat.icon}
+                        </div>
+                        <div>
+                          <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
+                          <div className="flex items-baseline gap-1">
+                            <span className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</span>
+                            {stat.suffix && <span className="text-xs text-gray-400 font-bold">{stat.suffix}</span>}
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Row gutter={24}>
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl p-6 h-full transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Ariza Statuslari</Title>
+                      <div className="space-y-6">
+                        {Object.entries(reportData.applications_by_status).map(([status, count]) => (
+                          <div key={status} className="space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full`} style={{ background: status === 'PUBLISHED' ? '#28c76f' : status === 'DRAFT' ? '#ff9f43' : '#ea5455' }} />
+                                <span className="font-bold" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>{status}</span>
+                              </div>
+                              <span className="text-gray-400">{count} ta ({Math.round((count / reportData.total_applications) * 100)}%)</span>
+                            </div>
+                            <Progress
+                              percent={(count / reportData.total_applications) * 100}
+                              size="small"
+                              showInfo={false}
+                              strokeColor={status === 'PUBLISHED' ? '#28c76f' : status === 'DRAFT' ? '#ff9f43' : '#ea5455'}
+                              trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl p-6 h-full transition-all duration-300 flex flex-col items-center justify-center text-center"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <Title level={5} className="!mb-2" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>O&apos;tish Foizi</Title>
+                      <div className="text-xs text-gray-400 mb-6">Jami abituriyentlarning muvaffaqiyat ko&apos;rsatkichi</div>
+
                       <Progress
-                        percent={(count / reportData.total_applications) * 100}
-                        size="small"
-                        showInfo={false}
+                        type="circle"
+                        percent={reportData.pass_rate}
+                        strokeWidth={10}
+                        size={180}
+                        strokeColor={{
+                          '0%': '#28c76f',
+                          '100%': '#1dd1a1',
+                        }}
+                        trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
+                        format={(percent) => (
+                          <div className="flex flex-col">
+                            <span className="text-3xl font-bold" style={{ color: '#28c76f' }}>{percent}%</span>
+                            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Muvaffaqiyat</span>
+                          </div>
+                        )}
                       />
                     </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={12}>
-              <Card title="O'tish Foizi">
-                <div className="text-center">
-                  <Progress
-                    type="circle"
-                    percent={reportData.pass_rate}
-                    format={(percent) => `${percent}%`}
-                    strokeColor="#52c41a"
-                    size={120}
-                  />
-                  <div className="mt-4">
-                    <Text strong>Abituriyentlar otish foizi</Text>
-                    <br />
-                    <Text type="secondary">
-                      Jami abituriyentlarning {reportData.pass_rate}% imtihondan otdi
-                    </Text>
+                  </Col>
+                </Row>
+              </div>
+            )
+          },
+          {
+            key: "submissions",
+            label: (
+              <Space>
+                <UserOutlined />
+                Arizachilar
+              </Space>
+            ),
+            children: (
+              <div className="space-y-6 pt-2">
+                <div
+                  className="rounded-xl p-6 transition-all duration-300"
+                  style={{
+                    background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Oylik Arizalar Statistikasi</Title>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {reportData.submissions_by_month.map((item) => (
+                      <div
+                        key={item.month}
+                        className="p-4 rounded-xl text-center space-y-1 transition-all hover:bg-[#7367f0]/5"
+                        style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "#f8f9fa" }}
+                      >
+                        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">{item.month}</div>
+                        <div className={`text-xl font-bold ${theme === "dark" ? "text-white" : "#484650"}`}>{item.count}</div>
+                        <div className="text-[10px] text-green-500 font-bold flex items-center justify-center gap-1">
+                          <CheckCircleOutlined style={{ fontSize: '10px' }} /> +{Math.round(item.count * 0.1)}%
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
 
-        {/* Submissions Tab */}
-        <TabPane
-          tab={
-            <Space>
-              <UserOutlined />
-              Arizachilar
-            </Space>
-          }
-          key="submissions"
-        >
-          <Row gutter={[16, 16]} className="mb-6">
-            <Col span={24}>
-              <Card title="Oylik Arizalar Statistikas">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {reportData.submissions_by_month.map((item) => (
-                    <Card key={item.month} size="small" className="text-center">
-                      <Statistic
-                        title={item.month}
-                        value={item.count}
-                        valueStyle={{ fontSize: '18px' }}
+                <div
+                  className="rounded-xl p-6 transition-all duration-300"
+                  style={{
+                    background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Top Mutaxassisliklar</Title>
+                  <List
+                    dataSource={reportData.top_specialities}
+                    renderItem={(item, index: number) => (
+                      <List.Item className="border-b last:border-0" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
+                        <List.Item.Meta
+                          avatar={
+                            <Avatar
+                              className="rounded-xl font-bold"
+                              style={{ backgroundColor: index === 0 ? "#ff9f4315" : "#7367f015", color: index === 0 ? "#ff9f43" : "#7367f0" }}
+                            >
+                              {index + 1}
+                            </Avatar>
+                          }
+                          title={<span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>{item.name}</span>}
+                          description={<span className="text-xs text-gray-500 font-medium">{item.count} ta ariza</span>}
+                        />
+                        <div className="min-w-[150px] md:min-w-[300px]">
+                          <Progress
+                            percent={(item.count / Math.max(...reportData.top_specialities.map(s => s.count))) * 100}
+                            size="small"
+                            strokeColor={index === 0 ? "#ff9f43" : "#7367f0"}
+                            showInfo={false}
+                            trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
+                          />
+                        </div>
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              </div>
+            )
+          },
+          {
+            key: "payments",
+            label: (
+              <Space>
+                <DollarOutlined />
+                To&apos;lovlar
+              </Space>
+            ),
+            children: (
+              <div className="space-y-6 pt-2">
+                <Row gutter={24}>
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl p-6 h-full transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>To&apos;lov Statuslari</Title>
+                      <div className="space-y-6">
+                        {[
+                          { label: "To&apos;langan", count: reportData.payments_by_status.PAID, icon: <CheckCircleOutlined />, color: "#28c76f" },
+                          { label: "Kutilmoqda", count: reportData.payments_by_status.PENDING, icon: <ClockCircleOutlined />, color: "#ff9f43" },
+                          { label: "Xatolik", count: reportData.payments_by_status.FAILED, icon: <CloseCircleOutlined />, color: "#ea5455" },
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-4 rounded-xl" style={{ background: `${item.color}05` }}>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: `${item.color}15`, color: item.color }}>
+                                {item.icon}
+                              </div>
+                              <span className="font-bold" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }} dangerouslySetInnerHTML={{ __html: item.label }} />
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xl font-bold" style={{ color: item.color }}>{item.count}</div>
+                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                {((item.count / reportData.total_submissions) * 100).toFixed(1)}% Ulushi
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl p-6 h-full transition-all duration-300 flex flex-col items-center justify-center text-center space-y-4"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center text-3xl text-blue-500 mb-2">
+                        <LineChartOutlined />
+                      </div>
+                      <Title level={5} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>To&apos;lovlar Dinamikasi</Title>
+                      <Text type="secondary" className="max-w-[300px]">To&apos;lovlar hajmi va o&apos;sish sur&apos;atlarini tahlil qilish uchun interaktiv grafik bo&apos;limi.</Text>
+                      <Button className="rounded-xl h-[42px] px-8 font-bold" style={{ background: theme === "dark" ? "rgb(48, 56, 78)" : "#ffffff", color: theme === "dark" ? "#ffffff" : "inherit" }}>Grafikni ochish</Button>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )
+          },
+          {
+            key: "performance",
+            label: (
+              <Space>
+                <TrophyOutlined />
+                Natijalar
+              </Space>
+            ),
+            children: (
+              <div className="space-y-6 pt-2">
+                <Row gutter={24}>
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl p-6 h-full transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Imtihon Natijalari</Title>
+                      <div className="space-y-8">
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#cbd5e1" : "#484650" }}>O&apos;rtacha ball</span>
+                            <span className="font-bold text-[#7367f0]">{reportData.average_score}/100</span>
+                          </div>
+                          <Progress percent={reportData.average_score} strokeColor="#7367f0" strokeWidth={10} trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"} />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#cbd5e1" : "#484650" }}>O&apos;tish ko&apos;rsatkichi</span>
+                            <span className="font-bold text-[#28c76f]">{reportData.pass_rate}%</span>
+                          </div>
+                          <Progress percent={reportData.pass_rate} strokeColor="#28c76f" strokeWidth={10} trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"} />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#cbd5e1" : "#484650" }}>Qoniqarsiz natija</span>
+                            <span className="font-bold text-[#ea5455]">{(100 - reportData.pass_rate).toFixed(1)}%</span>
+                          </div>
+                          <Progress percent={100 - reportData.pass_rate} strokeColor="#ea5455" strokeWidth={10} trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"} />
+                        </div>
+                      </div>
+                    </div>
+                  </Col>
+
+                  <Col xs={24} lg={12}>
+                    <div
+                      className="rounded-xl overflow-hidden transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      }}
+                    >
+                      <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
+                        <Title level={5} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Reyting Jadvali</Title>
+                      </div>
+                      <Table
+                        dataSource={reportData.top_specialities.slice(0, 5)}
+                        columns={[
+                          {
+                            title: "O'rin",
+                            key: "rank",
+                            render: (_: unknown, __: unknown, index: number) => (
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#ff9f43]/10 text-[#ff9f43] font-bold">
+                                {index + 1}
+                              </div>
+                            ),
+                            width: 80,
+                          },
+                          {
+                            title: "Mutaxassislik",
+                            dataIndex: "name",
+                            render: (name: string) => <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>{name}</span>
+                          },
+                          {
+                            title: "Arizalar",
+                            dataIndex: "count",
+                            render: (count: number) => (
+                              <div className="flex flex-col">
+                                <span className="font-bold text-[#7367f0]">{count} ta</span>
+                                <span className="text-[10px] text-gray-400 font-medium tracking-tighter uppercase">Raqobat</span>
+                              </div>
+                            ),
+                            width: 120,
+                          },
+                        ]}
+                        pagination={false}
+                        className="custom-admin-table"
                       />
-                    </Card>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-          </Row>
-
-          <Card title="Top Mutaxassisliklar">
-            <List
-              dataSource={reportData.top_specialities}
-              renderItem={(item, index) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar style={{ backgroundColor: '#1890ff' }}>
-                        {index + 1}
-                      </Avatar>
-                    }
-                    title={item.name}
-                    description={`${item.count} ta ariza`}
-                  />
-                  <div className="ml-4">
-                    <Progress percent={(item.count / Math.max(...reportData.top_specialities.map(s => s.count))) * 100} size="small" />
-                  </div>
-                </List.Item>
-              )}
-            />
-          </Card>
-        </TabPane>
-
-        {/* Payments Tab */}
-        <TabPane
-          tab={
-            <Space>
-              <DollarOutlined />
-              Tolovlar
-            </Space>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )
           }
-          key="payments"
-        >
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Card title="Tolov Statuslari">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                      <span>Tolangan</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{reportData.payments_by_status.PAID}</div>
-                      <div className="text-sm text-gray-500">
-                        {((reportData.payments_by_status.PAID / reportData.total_submissions) * 100).toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
+        ]}
+      />
 
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <ClockCircleOutlined style={{ color: '#faad14' }} />
-                      <span>Kutilmoqda</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{reportData.payments_by_status.PENDING}</div>
-                      <div className="text-sm text-gray-500">
-                        {((reportData.payments_by_status.PENDING / reportData.total_submissions) * 100).toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
-                      <span>Muvaffaqiyatsiz</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{reportData.payments_by_status.FAILED}</div>
-                      <div className="text-sm text-gray-500">
-                        {((reportData.payments_by_status.FAILED / reportData.total_submissions) * 100).toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={12}>
-              <Card title="To'lovlar Taqvimi">
-                <div className="text-center py-8">
-                  <LineChartOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
-                  <div className="mt-4">
-                    <Text strong>Grafik korinish</Text>
-                    <br />
-                    <Text type="secondary">
-                      Tolovlar dinamikasini korish uchun grafik
-                    </Text>
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
-
-        {/* Performance Tab */}
-        <TabPane
-          tab={
-            <Space>
-              <TrophyOutlined />
-              Natijalar
-            </Space>
-          }
-          key="performance"
-        >
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Card title="Imtihon Natijalari">
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Ortacha ball</span>
-                      <span className="font-bold">{reportData.average_score}/100</span>
-                    </div>
-                    <Progress percent={reportData.average_score} strokeColor="#722ed1" />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Otish foizi</span>
-                      <span className="font-bold">{reportData.pass_rate}%</span>
-                    </div>
-                    <Progress percent={reportData.pass_rate} strokeColor="#52c41a" />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Yiqilish foizi</span>
-                      <span className="font-bold">{(100 - reportData.pass_rate).toFixed(1)}%</span>
-                    </div>
-                    <Progress percent={100 - reportData.pass_rate} strokeColor="#ff4d4f" />
-                  </div>
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={12}>
-              <Card title="Reyting Jadvali">
-                <Table
-                  dataSource={reportData.top_specialities.slice(0, 5)}
-                  columns={[
-                    {
-                      title: "O'rin",
-                      dataIndex: "index",
-                      render: (_, __, index) => (
-                        <Tag color="gold">{index + 1}</Tag>
-                      ),
-                    },
-                    {
-                      title: "Mutaxassislik",
-                      dataIndex: "name",
-                    },
-                    {
-                      title: "Arizalar",
-                      dataIndex: "count",
-                      render: (count) => <Text strong>{count}</Text>,
-                    },
-                  ]}
-                  pagination={false}
-                  size="small"
-                />
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
-      </Tabs>
+      <style jsx global>{`
+        .premium-select .ant-select-selector, .premium-datepicker {
+          background: ${theme === "dark" ? "rgb(48, 56, 78)" : "#ffffff"} !important;
+          border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+          color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+          border-radius: 12px !important;
+          height: 42px !important;
+          display: flex !important;
+          align-items: center !important;
+        }
+        .premium-tabs .ant-tabs-nav {
+          margin-bottom: 24px !important;
+        }
+        .premium-tabs .ant-tabs-nav::before {
+          border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+        }
+        .premium-tabs .ant-tabs-tab {
+          background: transparent !important;
+          border: none !important;
+          padding: 12px 20px !important;
+        }
+        .premium-tabs .ant-tabs-tab-active {
+          background: #7367f010 !important;
+          border-radius: 10px 10px 0 0 !important;
+        }
+        .premium-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #7367f0 !important;
+          font-weight: 700 !important;
+        }
+        .premium-tabs .ant-tabs-tab:hover {
+          color: #7367f0 !important;
+        }
+        .premium-tabs .ant-tabs-ink-bar {
+          background: #7367f0 !important;
+          height: 3px !important;
+        }
+        
+        .custom-admin-table .ant-table {
+          background: transparent !important;
+          color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
+        }
+        .custom-admin-table .ant-table-thead > tr > th {
+          background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
+          border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+          color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+          font-weight: 700 !important;
+          font-size: 11px !important;
+          text-transform: uppercase !important;
+        }
+        .custom-admin-table .ant-table-tbody > tr > td {
+          border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
+          padding: 12px 16px !important;
+        }
+        .custom-admin-table .ant-table-tbody > tr:hover > td {
+          background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
+        }
+      `}</style>
     </div>
   );
 }

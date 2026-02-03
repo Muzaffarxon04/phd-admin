@@ -38,12 +38,14 @@ export interface Examiner {
   specialization_ids?: number[];
   specialization_id: string;
   specialization?: Specialization[];
-  department:string
-  title:string
+  department: string
+  title: string
   degree: string; // Masalan: "PhD", "DSc"
   position: string; // Lavozimi
   organization: string; // Ish joyi
   is_active: boolean;
+  reviews_count?: number;
+  pending_reviews?: number;
   created_at: string;
   updated_at: string;
 }

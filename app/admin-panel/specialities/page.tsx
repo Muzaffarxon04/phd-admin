@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useThemeStore } from "@/lib/stores/themeStore";
 import {
-  Card,
   Table,
   Button,
   Input,
-  Space,
-  Tag,
   Modal,
   Form,
   message,
   Popconfirm,
-  Breadcrumb,
   Typography,
 } from "antd";
 import {
@@ -20,7 +17,11 @@ import {
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-
+  BookOutlined,
+  CodeOutlined,
+  TeamOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined
 } from "@ant-design/icons";
 import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
 import type { Speciality } from "@/types";
@@ -29,6 +30,7 @@ import type { Speciality } from "@/types";
 const { Title } = Typography;
 
 export default function SpecialitiesPage() {
+  const { theme } = useThemeStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSpeciality, setEditingSpeciality] = useState<Speciality | null>(null);
@@ -139,157 +141,258 @@ export default function SpecialitiesPage() {
 
   const columns = [
     {
-      title: "Mutaxassislik nomi",
+      title: (
+        <div className="flex items-center gap-2 py-3 px-4">
+          <BookOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Mutaxassislik nomi</span>
+        </div>
+      ),
       dataIndex: "name",
       key: "name",
       render: (name: string) => (
-        <div className="flex items-center gap-3">
-          <span className="font-medium">{name}</span>
+        <div className="px-4 py-2 font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+          {name}
         </div>
       ),
+      width: 300,
     },
     {
-      title: "Kodi",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <CodeOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Kodi</span>
+        </div>
+      ),
       dataIndex: "code",
       key: "code",
       render: (code: string) => (
-        <Tag color="geekblue">{code}</Tag>
+        <span className="px-2 py-1 rounded-lg bg-[#7367f0]/10 text-[#7367f0] text-xs font-bold border border-[#7367f0]/20">
+          {code}
+        </span>
       ),
+      width: 150,
     },
     {
-      title: "Arizalar",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <FileTextOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Arizalar</span>
+        </div>
+      ),
       dataIndex: "applications_count",
       key: "applications_count",
       render: (count: number) => (
-        <Tag color={count > 0 ? "green" : "default"}>
-          {count}
-        </Tag>
+        <div className="py-2">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${count > 0 ? "text-green-500 bg-green-500/10 border-green-500/20" : "text-gray-400 bg-gray-500/5 border-gray-500/10"
+            }`}>
+            {count} ta
+          </span>
+        </div>
       ),
+      width: 120,
     },
     {
-      title: "Imtihonchilar",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <TeamOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Imtihonchilar</span>
+        </div>
+      ),
       dataIndex: "examiners_count",
       key: "examiners_count",
       render: (count: number) => (
-        <Tag color={count > 0 ? "blue" : "default"}>
-          {count}
-        </Tag>
+        <div className="py-2">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${count > 0 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" : "text-gray-400 bg-gray-500/5 border-gray-500/10"
+            }`}>
+            {count} ta
+          </span>
+        </div>
       ),
+      width: 150,
     },
     {
-      title: "Holati",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <CheckCircleOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holati</span>
+        </div>
+      ),
       dataIndex: "is_active",
       key: "is_active",
       render: (isActive: boolean) => (
-        <Tag color={isActive ? "green" : "red"}>
-          {isActive ? "Faol" : "Nofaol"}
-        </Tag>
+        <div className="py-2">
+          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+            }`}>
+            {isActive ? "Faol" : "Nofaol"}
+          </span>
+        </div>
       ),
+      width: 120,
     },
     {
-      title: "Yaratilgan sana",
-      dataIndex: "created_at",
-      key: "created_at",
-      render: (date: string) =>
-        new Date(date).toLocaleDateString("uz-UZ"),
-    },
-    {
-      title: "Amallar",
+      title: (
+        <div className="flex items-center justify-center py-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Amallar</span>
+        </div>
+      ),
       key: "actions",
-      width: 100,
-      render: (_: unknown, record:Speciality) => (
-        <Space size="small">
+      width: 120,
+      render: (_: unknown, record: Speciality) => (
+        <div className="flex items-center justify-center gap-2 py-2">
           <Button
-            type="primary"
-            size="small"
-          
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+            icon={<EditOutlined style={{ fontSize: "18px" }} />}
             onClick={() => handleEdit(record)}
-          >
-            <EditOutlined />
-          </Button>
-  
+          />
           <Popconfirm
-            title="O‘chirish"
-            description="Haqiqatan ham o‘chirmoqchimisiz?"
+            title="O&apos;chirish"
+            description="Haqiqatan ham o&apos;chirmoqchimisiz?"
             onConfirm={() => handleDelete(record.id)}
             okText="Ha"
-            cancelText="Yo‘q"
+            cancelText="Yo&apos;q"
+            overlayClassName="premium-popconfirm"
           >
-            <Button danger size="small" >
-            <DeleteOutlined />
-            </Button>
+            <Button
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 text-red-500 border-0 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm"
+              icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
+            />
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ];
-  
+
 
   return (
-    <div className="min-h-screen ">
-      {/* Header */}
-      <div className="mb-6">
-        <Breadcrumb
-          items={[
-            { href: "/admin-panel", title: "Admin Panel" },
-            { title: "Mutaxassisliklar" },
-          ]}
-          className="mb-4"
-        />
+    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Mutaxassisliklar Boshqaruvi
+          </Title>
+          <div className="text-gray-400 text-sm font-medium">PhD dasturlari uchun mutaxassisliklar ro&apos;yxati va ularni boshqarish</div>
+        </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <Title level={2} className="mb-2">
-              Mutaxassisliklar Boshqaruvi
-            </Title>
-            <p className="text-gray-600 dark:text-gray-400">
-              PhD dasturlari uchun mutaxassisliklarni boshqaring
-            </p>
-          </div>
-
+        <div className="flex items-center gap-3">
           <Button
             type="primary"
-            size="large"
             icon={<PlusOutlined />}
             onClick={handleCreate}
-            className=" from-blue-500 to-purple-600 border-0"
+            className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+            style={{
+              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+              boxShadow: "0 8px 25px -8px #7367f0",
+            }}
           >
-            Yangi Mutaxassislik
+            Yangi mutaxassislik
           </Button>
         </div>
       </div>
 
-    
-
-      {/* Search and Table */}
-      <Card>
-        <div className="mb-4">
-          <Input
-            placeholder="Mutaxassislik nomini qidiring..."
-            prefix={<SearchOutlined />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
-          />
+      <div
+        className="rounded-xl overflow-hidden transition-all duration-300"
+        style={{
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
+          <div className="relative max-w-md">
+            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70 z-10" />
+            <Input
+              placeholder="Mutaxassislik nomini qidiring..."
+              className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
+              style={{
+                background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
+                border: "none",
+                color: theme === "dark" ? "#ffffff" : "#484650",
+              }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         <Table
           columns={columns}
           dataSource={specialities.filter(speciality =>
             speciality.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            speciality.code.toLowerCase().includes(searchTerm.toLowerCase()) 
+            speciality.code.toLowerCase().includes(searchTerm.toLowerCase())
           )}
           loading={isLoading}
           rowKey="id"
+          className="custom-admin-table"
           pagination={{
             total: specialitiesData?.count || 0,
             pageSize: 20,
-            showSizeChanger: false,
+            showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
+            className: "px-6 py-4",
           }}
         />
-      </Card>
+        <style jsx global>{`
+          .custom-admin-table .ant-table {
+            background: transparent !important;
+            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
+          }
+          .custom-admin-table .ant-table-thead > tr > th {
+            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+            font-weight: 700 !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr > td {
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
+            padding: 12px 16px !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr:hover > td {
+            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
+          }
+          .custom-admin-table .ant-pagination-item-active {
+            border-color: #7367f0 !important;
+            background: #7367f0 !important;
+          }
+          .custom-admin-table .ant-pagination-item-active a {
+            color: #fff !important;
+          }
 
-      {/* Create/Edit Modal */}
+          .premium-modal .ant-modal-content {
+            background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "none"} !important;
+            border-radius: 16px !important;
+          }
+          .premium-modal .ant-modal-header {
+            background: transparent !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+          }
+          .premium-modal .ant-modal-title {
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .premium-modal .ant-modal-close {
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+          }
+          .premium-modal .ant-form-item-label > label {
+            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+          }
+          .premium-modal .ant-input, .premium-modal .ant-input-textarea {
+            background: ${theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
+            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+            border-radius: 12px !important;
+          }
+          .premium-popconfirm .ant-popover-inner {
+            background: ${theme === "dark" ? "rgb(50, 58, 80)" : "#ffffff"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            border: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.1)" : "none"} !important;
+          }
+          .premium-popconfirm .ant-popover-message, .premium-popconfirm .ant-popover-description {
+            color: ${theme === "dark" ? "#e2e8f0" : "inherit"} !important;
+          }
+        `}</style>
+      </div>
+
       <Modal
         title={editingSpeciality ? "Mutaxassislikni tahrirlash" : "Yangi mutaxassislik qo'shish"}
         open={isModalOpen}
@@ -300,6 +403,7 @@ export default function SpecialitiesPage() {
         }}
         footer={null}
         width={600}
+        className="premium-modal"
       >
         <Form
           form={form}
@@ -312,7 +416,6 @@ export default function SpecialitiesPage() {
             label="Kod"
             rules={[
               { required: true, message: "Kodni kiriting" },
-             
             ]}
           >
             <Input placeholder="Masalan: 03.00.01" />
@@ -326,7 +429,6 @@ export default function SpecialitiesPage() {
             <Input placeholder="Biokimyo" />
           </Form.Item>
 
-
           <Form.Item name="description" label="Tavsif">
             <Input.TextArea
               placeholder="Mutaxassislik haqida qisqacha ma'lumot"
@@ -334,12 +436,9 @@ export default function SpecialitiesPage() {
             />
           </Form.Item>
 
-          <Form.Item name="is_active" label="Faollik" valuePropName="checked">
-            <input type="checkbox" className="rounded" />
-          </Form.Item>
-
           <div className="flex justify-end gap-3 mt-6">
             <Button
+              className="rounded-xl"
               onClick={() => {
                 setIsModalOpen(false);
                 setEditingSpeciality(null);
@@ -351,7 +450,12 @@ export default function SpecialitiesPage() {
             <Button
               type="primary"
               htmlType="submit"
+              className="rounded-xl flex items-center gap-2"
               loading={createSpeciality.isPending || updateSpeciality.isPending}
+              style={{
+                background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                border: "none"
+              }}
             >
               {editingSpeciality ? "Yangilash" : "Yaratish"}
             </Button>

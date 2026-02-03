@@ -2,32 +2,27 @@
 
 import { useState } from "react";
 import {
-  Card,
   Button,
   Table,
-  Tag,
-  Space,
-  Statistic,
-  Row,
-  Col,
-  Breadcrumb,
   Select,
   DatePicker,
   message,
   Alert,
 } from "antd";
 import {
+  SyncOutlined,
+  EyeOutlined,
+  BookOutlined,
+  FileTextOutlined,
   DollarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined,
-  EyeOutlined,
 } from "@ant-design/icons";
-// import { useGet } from "@/lib/hooks";
+import { Typography } from "antd";
+const { Title } = Typography;
+import { useThemeStore } from "@/lib/stores/themeStore";
 import { formatDate } from "@/lib/utils";
-
-const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
@@ -143,204 +138,299 @@ export default function PaymentsPage() {
   const handleCheckStatus = async (paymentId: number) => {
     try {
       console.log(paymentId);
-      
+
       // This would call the actual API
       message.info("To'lov statusini tekshirish funksiyasi tez orada qo'shiladi");
-    } catch  {
+    } catch {
       message.error("Xatolik yuz berdi");
     }
   };
 
+  const { theme } = useThemeStore();
+
   const columns = [
     {
-      title: "Ariza raqami",
-      dataIndex: "submission_number",
-      key: "submission_number",
-      render: (text: string) => (
-        <Text strong className="font-mono">{text}</Text>
+      title: (
+        <div className="flex items-center gap-2 py-3 px-4">
+          <FileTextOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza ma&apos;lumotlari</span>
+        </div>
       ),
+      key: "submission_info",
+      render: (_: unknown, record: PaymentRecord) => (
+        <div className="px-4 py-2">
+          <div className="font-bold text-sm text-[#7367f0] mb-1 font-mono">
+            {record.submission_number}
+          </div>
+          <div className={`text-xs font-medium ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+            {record.applicant_name}
+          </div>
+        </div>
+      ),
+      width: 250,
     },
     {
-      title: "Abituriyent",
-      dataIndex: "applicant_name",
-      key: "applicant_name",
-    },
-    {
-      title: "Ariza",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <BookOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza nomi</span>
+        </div>
+      ),
       dataIndex: "application_title",
       key: "application_title",
-      ellipsis: true,
+      render: (text: string) => (
+        <div className="text-xs font-bold truncate max-w-[200px]" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+          {text}
+        </div>
+      ),
+      width: 200,
     },
     {
-      title: "Summa",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <DollarOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Summa</span>
+        </div>
+      ),
       dataIndex: "amount",
       key: "amount",
       render: (amount: string) => (
-        <Text strong className="text-green-600">
-          {parseFloat(amount).toLocaleString()} UZS
-        </Text>
+        <div className="py-2">
+          <span className="text-sm font-bold text-green-500">
+            {parseFloat(amount).toLocaleString()} UZS
+          </span>
+        </div>
       ),
+      width: 150,
     },
     {
-      title: "Status",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <CheckCircleOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Status</span>
+        </div>
+      ),
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Tag color={getStatusColor(status)} icon={getStatusIcon(status)}>
-          {getStatusText(status)}
-        </Tag>
+        <div className="py-2">
+          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 w-fit ${status === "PAID" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+            status === "PENDING" ? "bg-orange-500/10 text-orange-500 border-orange-500/20" :
+              "bg-red-500/10 text-red-500 border-red-500/20"
+            }`}>
+            {getStatusIcon(status)}
+            {getStatusText(status)}
+          </span>
+        </div>
       ),
+      width: 150,
     },
     {
-      title: "Sana",
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <ClockCircleOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Sana</span>
+        </div>
+      ),
       dataIndex: "created_at",
       key: "created_at",
-      render: (date: string) => formatDate(date),
+      render: (date: string) => (
+        <div className="text-xs font-medium text-gray-400">
+          {formatDate(date)}
+        </div>
+      ),
+      width: 150,
     },
     {
-      title: "Amallar",
+      title: (
+        <div className="flex items-center justify-center py-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Amallar</span>
+        </div>
+      ),
       key: "actions",
-      render: (_item: string, record: PaymentRecord) => (
-        <Space>
+      width: 120,
+      render: (_: unknown, record: PaymentRecord) => (
+        <div className="flex items-center justify-center gap-2 py-2">
           <Button
-            type="text"
-            icon={<EyeOutlined />}
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+            icon={<EyeOutlined style={{ fontSize: "18px" }} />}
             onClick={() => message.info("Tafsilotlarni ko'rish funksiyasi tez orada qo'shiladi")}
-            title="Tafsilotlarni ko'rish"
           />
           {record.status === "PENDING" && (
             <Button
-              type="text"
-              icon={<SyncOutlined />}
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+              icon={<SyncOutlined style={{ fontSize: "18px" }} />}
               onClick={() => handleCheckStatus(record.id)}
-              title="Statusni tekshirish"
             />
           )}
-        </Space>
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="p-6">
-      <Breadcrumb
-        items={[
-          { href: "/", title: "Bosh sahifa" },
-          { href: "/admin-panel", title: "Admin Panel" },
-          { title: "To'lovlar" },
-        ]}
-        className="mb-4"
-      />
-
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Title level={2} className="mb-2">Tolovlar Boshqaruvi</Title>
-          <p className="text-gray-600">Abituriyentlar tolovlarini kuzatib boring</p>
+          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            To&apos;lovlar Boshqaruvi
+          </Title>
+          <div className="text-gray-400 text-sm font-medium">Abituriyentlar to&apos;lovlarini kuzatib boring va tekshiring</div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            className="h-[42px] px-6 rounded-xl border font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+            style={{
+              background: theme === "dark" ? "rgb(48, 56, 78)" : "#ffffff",
+              color: theme === "dark" ? "#ffffff" : "#484650",
+              borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "rgb(235, 233, 241)",
+            }}
+            icon={<SyncOutlined />}
+            onClick={() => window.location.reload()}
+          >
+            Yangilash
+          </Button>
         </div>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} className="mb-6">
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Jami to'lovlar"
-              value={paymentsData.count}
-              prefix={<DollarOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Muvaffaqiyatli"
-              value={statusCounts.PAID}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Kutilmoqda"
-              value={statusCounts.PENDING}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Jami summa"
-              value={totalAmount.toLocaleString()}
-              prefix={<DollarOutlined />}
-              suffix="UZS"
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: "Jami to'lovlar", value: paymentsData.count, icon: <DollarOutlined />, color: "#7367f0" },
+          { title: "Muvaffaqiyatli", value: statusCounts.PAID, icon: <CheckCircleOutlined />, color: "#28c76f" },
+          { title: "Kutilmoqda", value: statusCounts.PENDING, icon: <ClockCircleOutlined />, color: "#ff9f43" },
+          { title: "Jami summa", value: `${totalAmount.toLocaleString()} UZS`, icon: <DollarOutlined />, color: "#00cfe8" },
+        ].map((stat, idx) => (
+          <div
+            key={idx}
+            className="rounded-xl p-6 transition-all duration-300"
+            style={{
+              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                style={{ background: `${stat.color}15`, color: stat.color }}
+              >
+                {stat.icon}
+              </div>
+              <div>
+                <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
+                <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <Row gutter={16} align="middle">
-          <Col span={6}>
-            <Select
-              placeholder="Status bo'yicha filtr"
-              style={{ width: '100%' }}
-              allowClear
-              value={statusFilter}
-              onChange={setStatusFilter}
-            >
-              <Option value="PAID">Tolangan</Option>
-              <Option value="PENDING">Kutilmoqda</Option>
-              <Option value="FAILED">Muvaffaqiyatsiz</Option>
-              <Option value="REFUNDED">Qaytarilgan</Option>
-            </Select>
-          </Col>
-          <Col span={6}>
-            <RangePicker
-              placeholder={["Boshlanish", "Tugash"]}
-              style={{ width: '100%' }}
-              onChange={setDateRange}
-            />
-          </Col>
-          <Col span={6}>
-            <Button type="primary" onClick={() => {
+      <div
+        className="rounded-xl overflow-hidden transition-all duration-300"
+        style={{
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        {/* Filters */}
+        <div className="p-6 border-b flex flex-wrap gap-4" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
+          <Select
+            placeholder="Status bo&apos;yicha"
+            className="w-full md:w-[200px] premium-select"
+            allowClear
+            value={statusFilter}
+            onChange={setStatusFilter}
+          >
+            <Option value="PAID">To&apos;langan</Option>
+            <Option value="PENDING">Kutilmoqda</Option>
+            <Option value="FAILED">Muvaffaqiyatsiz</Option>
+            <Option value="REFUNDED">Qaytarilgan</Option>
+          </Select>
+
+          <RangePicker
+            className="w-full md:w-[300px] premium-datepicker"
+            placeholder={["Boshlanish", "Tugash"]}
+            onChange={setDateRange}
+          />
+
+          <Button
+            className="rounded-xl transition-all duration-300"
+            onClick={() => {
               setStatusFilter("");
               setDateRange(null);
-            }}>
-              Filtrlarni tozalash
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+            }}
+          >
+            Tozalash
+          </Button>
+        </div>
 
-      {/* Payments Table */}
-      <Card>
-        <Alert
-          message="Diqqat"
-          description="To'lovlar API'si hali to'liq amalga oshirilmagan. Namuna ma'lumotlar ko'rsatilmoqda."
-          type="warning"
-          showIcon
-          className="mb-4"
-        />
+        <div className="px-6 py-4">
+          <Alert
+            message="E&apos;tibor bering"
+            description="To&apos;lovlar tizimi hozirda test rejimida ishlamoqda. Ko&apos;rsatilgan ma&apos;lumotlar namunaviy hisoblanadi."
+            type="info"
+            showIcon
+            className="rounded-xl mb-4 border-0"
+            style={{ background: theme === "dark" ? "rgba(0, 207, 232, 0.1)" : "#e0f7fa" }}
+          />
+        </div>
+
         <Table
           columns={columns}
           dataSource={filteredPayments}
           rowKey="id"
+          className="custom-admin-table"
           pagination={{
             total: paymentsData.count,
             pageSize: 20,
-            showSizeChanger: false,
+            showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
+            className: "px-6 py-4",
           }}
         />
-      </Card>
+        <style jsx global>{`
+          .custom-admin-table .ant-table {
+            background: transparent !important;
+            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
+          }
+          .custom-admin-table .ant-table-thead > tr > th {
+            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+            font-weight: 700 !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr > td {
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
+            padding: 12px 16px !important;
+          }
+          .custom-admin-table .ant-table-tbody > tr:hover > td {
+            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
+          }
+          .custom-admin-table .ant-pagination-item-active {
+            border-color: #7367f0 !important;
+            background: #7367f0 !important;
+          }
+          .custom-admin-table .ant-pagination-item-active a {
+            color: #fff !important;
+          }
+          
+          .premium-select .ant-select-selector, .premium-datepicker {
+            background: ${theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
+            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+            color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+            border-radius: 12px !important;
+          }
+          .premium-datepicker .ant-picker-input > input {
+            color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+          }
+          .premium-datepicker .ant-picker-suffix {
+            color: #7367f0 !important;
+          }
+        `}</style>
+      </div>
     </div>
   );
 }
-
-// Missing imports
-import { Typography } from "antd";

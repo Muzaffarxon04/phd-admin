@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Button, Tag, Space, Card } from "antd";
+import { Table, Button, Tag, Space, Typography, Input } from "antd";
+const { Title } = Typography;
 import type { ColumnsType } from "antd/es/table";
-import { EyeOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  EyeOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  UserOutlined,
+  TrophyOutlined
+} from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
@@ -30,78 +39,111 @@ interface Application {
 
 const columns: ColumnsType<Application> = [
   {
-    title: "ID",
-    dataIndex: "id",
-    key: "id",
+    title: (
+      <div className="flex items-center gap-2 py-3 px-4">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza nomi</span>
+      </div>
+    ),
+    key: "title_info",
+    render: (_, record) => (
+      <div className="px-4 py-2">
+        <div className="font-bold text-sm text-[#7367f0] mb-1">
+          #{record.id}
+        </div>
+        <div className={`font-bold text-sm ${useThemeStore.getState().theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+          {record.title}
+        </div>
+      </div>
+    ),
+    width: 280,
   },
   {
-    title: "Nomi",
-    dataIndex: "title",
-    key: "title",
+    title: (
+      <div className="flex items-center gap-2 py-3">
+        <CalendarOutlined className="text-[#7367f0]" />
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Muddati</span>
+      </div>
+    ),
+    key: "dates",
+    render: (_, record) => (
+      <div className="py-2">
+        <div className="text-xs font-bold text-green-500 mb-1 flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          {formatDate(record.start_date)}
+        </div>
+        <div className="text-xs font-bold text-red-500 flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          {formatDate(record.end_date)}
+        </div>
+      </div>
+    ),
+    width: 180,
   },
   {
-    title: "Boshlanish",
-    dataIndex: "start_date",
-    key: "start_date",
-    render: (date: string) => formatDate(date),
-  },
-  {
-    title: "Tugash",
-    dataIndex: "end_date",
-    key: "end_date",
-    render: (date: string) => formatDate(date),
-  },
-
-  {
-    title: "Arizalar soni",
+    title: (
+      <div className="flex items-center gap-2 py-3">
+        <TrophyOutlined className="text-[#7367f0]" />
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Arizalar</span>
+      </div>
+    ),
     dataIndex: "total_submissions",
     key: "total_submissions",
-    render: (total: number) => <span>{total}</span>,
+    render: (total: number) => (
+      <div className="py-2 font-bold text-sm text-[#7367f0]">
+        {total} ta
+      </div>
+    ),
+    width: 130,
   },
   {
-    title: "Holati",
+    title: (
+      <div className="flex items-center gap-2 py-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holati</span>
+      </div>
+    ),
     dataIndex: "status",
     key: "status",
     render: (status: string) => {
-      const colorMap: Record<string, string> = {
-        DRAFT: "default",
-        PUBLISHED: "green",
-        CLOSED: "orange",
-        ARCHIVED: "gray",
-      };
-      const labelMap: Record<string, string> = {
+      const labels: Record<string, string> = {
         DRAFT: "Qoralama",
         PUBLISHED: "E'lon qilingan",
         CLOSED: "Yopilgan",
         ARCHIVED: "Arxivlangan",
       };
-      return <Tag color={colorMap[status]}>{labelMap[status] || status}</Tag>;
-    },
-  },
-  {
-    title: "Yaratuvchi",
-    dataIndex: "created_by_name",
-    key: "created_by_name",
-  },
 
-  {
-    title: "Yaratilgan sana",
-    dataIndex: "created_at",
-    key: "created_at",
-    render: (date: string) => formatDate(date),
+      return (
+        <div className="py-2">
+          <span
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "PUBLISHED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+              status === "CLOSED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                "bg-gray-500/10 text-gray-500 border-gray-500/20"
+              }`}
+          >
+            {labels[status] || status}
+          </span>
+        </div>
+      );
+    },
+    width: 150,
   },
   {
-    title: "Amallar",
+    title: (
+      <div className="flex items-center justify-center py-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Amallar</span>
+      </div>
+    ),
     key: "actions",
     render: (_, record) => (
-      <Space>
+      <div className="flex justify-center py-2">
         <Link href={`/admin-panel/applications/${record.id}`}>
-          <Button icon={<EyeOutlined />} type="link">
-            Ko&apos;rish
-          </Button>
+          <Button
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+            icon={<EyeOutlined style={{ fontSize: "18px" }} />}
+          />
         </Link>
-      </Space>
+      </div>
     ),
+    width: 100,
   },
 ];
 
@@ -109,7 +151,7 @@ export default function AdminApplicationsPage() {
   const { theme } = useThemeStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  
+
   const { data: applicationsData, isLoading, error } = useGet<{
     next: string | null;
     previous: string | null;
@@ -124,7 +166,7 @@ export default function AdminApplicationsPage() {
     from: number;
     to: number;
   }>(`/admin/application/?page=${currentPage}&page_size=${pageSize}`);
-  
+
   // Extract applications from nested response structure
   const applications = applicationsData?.data?.data || [];
   const totalElements = applicationsData?.total_elements || 0;
@@ -132,21 +174,11 @@ export default function AdminApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          alignItems: "center", 
-          marginBottom: 24 
-        }}>
-          <h1 style={{ 
-            fontSize: "24px", 
-            fontWeight: 700,
-            margin: 0,
-            color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-          }}>
-            Arizalar
-          </h1>
+      <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+        <div className="flex justify-between items-center mb-6">
+          <Title level={4} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Arizalar tizimi
+          </Title>
         </div>
         <TableSkeleton />
       </div>
@@ -154,26 +186,18 @@ export default function AdminApplicationsPage() {
   }
 
   if (error) {
-    // Handle array error format from backend
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
-    
-    // Agar backenddan array formatida error kelgan bo'lsa
     const errorData = (error as { data?: unknown }).data;
     if (Array.isArray(errorData)) {
       errorMessage = errorData.join(", ");
     }
-    
+
     return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{ 
-          fontSize: "24px", 
-          fontWeight: 700,
-          marginBottom: 24,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Arizalar
-        </h1>
-        <ErrorState 
+      <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+        <Title level={4} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          Arizalar tizimi
+        </Title>
+        <ErrorState
           description={errorMessage}
           onRetry={() => window.location.reload()}
         />
@@ -181,55 +205,48 @@ export default function AdminApplicationsPage() {
     );
   }
 
-  const cardStyle = {
-    background: theme === "dark" ? "#252836" : "#ffffff",
-    border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
-    borderRadius: "12px",
-    padding: "24px",
-    boxShadow: theme === "dark" 
-      ? "0 4px 12px rgba(0, 0, 0, 0.2)" 
-      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-  };
-
   return (
-    <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        marginBottom: 24 
-      }}>
-        <h1 style={{ 
-          fontSize: "24px", 
-          fontWeight: 700,
-          margin: 0,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Arizalar
-        </h1>
-        <Link href="/admin-panel/applications/create">
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              border: "none",
-              borderRadius: "8px",
-              height: "40px",
-              fontWeight: 600,
-              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-            }}
-          >
-            Yangi ariza
-          </Button>
-        </Link>
+    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Arizalar tizimi
+          </Title>
+          <div className="text-gray-400 text-sm font-medium">Barcha e&apos;lon qilingan arizalar va loyihalar boshqaruvi</div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link href="/admin-panel/applications/create">
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+              style={{
+                background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                boxShadow: "0 8px 25px -8px #7367f0",
+              }}
+            >
+              Yangi ariza yaratish
+            </Button>
+          </Link>
+        </div>
       </div>
-      <Card style={cardStyle} bodyStyle={{ padding: 0 }}>
+
+      <div
+        className="rounded-xl overflow-hidden transition-all duration-300"
+        style={{
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+        }}
+      >
         <Table
           columns={columns}
           dataSource={applications || []}
           rowKey="id"
           locale={{ emptyText: "Hozircha arizalar mavjud emas" }}
+          className="custom-admin-table"
           pagination={{
             current: currentPage,
             pageSize: pageSize,
@@ -242,84 +259,36 @@ export default function AdminApplicationsPage() {
               setCurrentPage(page);
               setPageSize(size);
             },
-            onShowSizeChange: (current, size) => {
-              setCurrentPage(1);
-              setPageSize(size);
-            },
-            style: {
-              padding: "16px 24px",
-              background: theme === "dark" ? "#252836" : "#ffffff",
-            },
+            className: "px-6 py-4",
           }}
-          className="custom-admin-table"
         />
         <style jsx global>{`
           .custom-admin-table .ant-table {
-            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            background: transparent !important;
+            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
           }
           .custom-admin-table .ant-table-thead > tr > th {
-            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)"} !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#1a1a1a"} !important;
-            font-weight: 600 !important;
-            padding: 16px !important;
+            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+            font-weight: 700 !important;
           }
           .custom-admin-table .ant-table-tbody > tr > td {
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.04)"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-            padding: 16px !important;
+            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
+            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
-            background: ${theme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.05)"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr.ant-table-row-selected > td {
-            background: ${theme === "dark" ? "rgba(102, 126, 234, 0.15)" : "rgba(102, 126, 234, 0.08)"} !important;
-          }
-          .custom-admin-table .ant-pagination {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-          }
-          .custom-admin-table .ant-pagination-item {
-            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
-            border-color: ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"} !important;
-          }
-          .custom-admin-table .ant-pagination-item a {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
           }
           .custom-admin-table .ant-pagination-item-active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            border-color: transparent !important;
+            border-color: #7367f0 !important;
+            background: #7367f0 !important;
           }
           .custom-admin-table .ant-pagination-item-active a {
-            color: #ffffff !important;
-          }
-          .custom-admin-table .ant-pagination-prev,
-          .custom-admin-table .ant-pagination-next {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-          }
-          .custom-admin-table .ant-pagination-prev:hover,
-          .custom-admin-table .ant-pagination-next:hover {
-            color: #667eea !important;
-          }
-          .custom-admin-table .ant-select-selector {
-            background: ${theme === "dark" ? "#252836" : "#ffffff"} !important;
-            border-color: ${theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-          }
-          .custom-admin-table .ant-btn-link {
-            color: ${theme === "dark" ? "#667eea" : "#667eea"} !important;
-          }
-          .custom-admin-table .ant-btn-link:hover {
-            color: ${theme === "dark" ? "#764ba2" : "#764ba2"} !important;
-          }
-          .custom-admin-table .ant-tag {
-            border-radius: 6px !important;
-            padding: 4px 12px !important;
-            font-weight: 500 !important;
-            border: none !important;
+            color: #fff !important;
           }
         `}</style>
-      </Card>
+      </div>
     </div>
   );
 }

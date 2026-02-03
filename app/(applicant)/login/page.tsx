@@ -40,7 +40,11 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(response.data.user));
       queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
       message.success("Muvaffaqiyatli kirildi!");
-      router.push("/dashboard");
+      if (response.data.user.role === "SUPER_ADMIN") {
+        router.push("/admin-panel");
+      } else {
+        router.push("/dashboard");
+      }
     },
     onError: (error: Error) => {
       message.error(error.message || "Login xatosi");
