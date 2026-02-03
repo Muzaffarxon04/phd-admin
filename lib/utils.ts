@@ -80,17 +80,17 @@ export function getApplicationStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     DRAFT: "Qoralama",
     SUBMITTED: "Topshirilgan",
-    UNDER_REVIEW: "Korib chiqilmoqda",
+    UNDER_REVIEW: "Ko'rib chiqilmoqda",
     APPROVED: "Qabul qilingan",
     REJECTED: "Rad etilgan",
     WITHDRAWN: "Bekor qilingan",
     // Legacy statuses
     draft: "Qoralama",
     submitted: "Topshirilgan",
-    under_review: "Korib chiqilmoqda",
+    under_review: "Ko'rib chiqilmoqda",
     accepted: "Qabul qilingan",
     rejected: "Rad etilgan",
-    revision_required: "Qayta korib chiqish talab qilinadi",
+    revision_required: "Qayta ko'rib chiqish talab qilinadi",
   };
   return labels[status] || status;
 }

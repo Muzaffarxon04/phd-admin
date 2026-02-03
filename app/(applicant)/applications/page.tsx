@@ -2,44 +2,28 @@
 
 import dynamic from "next/dynamic";
 
-import { 
-  Card, 
-  Button, 
-  Row, 
-  Col, 
-  Tag, 
-  Badge, 
-  Typography, 
-  // Space, 
-  Divider, 
-  // Tooltip,
-  Progress,
-  // Statistic,
-  // Timeline
+import {
+  Button,
+  Row,
+  Col,
+  Tag,
+  Badge,
+  Typography,
 } from "antd";
-import { 
-  // FileTextOutlined, 
-  ArrowRightOutlined,
-  // ClockCircleOutlined,
-  CalendarOutlined,
-  DollarOutlined,
-  CheckCircleOutlined,
+import {
   ExclamationCircleOutlined,
-  // TrophyOutlined,
-  // EyeOutlined,
-  // PlusOutlined,
-  // FilterOutlined,
-  SearchOutlined
+  SearchOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
-import { useThemeStore } from "@/lib/stores/themeStore";
 import { CardSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
 import { useState } from "react";
+import { useThemeStore } from "@/lib/stores/themeStore";
 // import router from "next/router";
 
 const { Title, Text, Paragraph } = Typography;
@@ -79,11 +63,22 @@ interface ApplicationsResponse {
 
 function ApplicationsPage() {
   const router = useRouter();
-  const { theme } = useThemeStore();
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+
+  const toggleCard = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newExpanded = new Set(expandedCards);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedCards(newExpanded);
+  };
+
   // Handle different response formats
   let applications: AvailableApplication[] = [];
   if (applicationsData) {
@@ -99,7 +94,7 @@ function ApplicationsPage() {
   // Filter applications based on search and status
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.description.toLowerCase().includes(searchTerm.toLowerCase());
+      app.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -124,16 +119,16 @@ function ApplicationsPage() {
   if (error) {
     // Handle array error format from backend
     let errorMessage = error.message || "Ma&apos;lumotlarni yuklashda xatolik yuz berdi";
-    
+
     // Agar backenddan array formatida error kelgan bo&apos;lsa
-    if (Array.isArray((error ).data)) {
-      errorMessage = (error ).data.join(", ");
+    if (Array.isArray((error).data)) {
+      errorMessage = (error).data.join(", ");
     }
-    
+
     return (
       <div className="min-h-screen ">
         <div className=" text-center">
-          <ErrorState 
+          <ErrorState
             description={errorMessage}
             onRetry={() => window.location.reload()}
           />
@@ -146,7 +141,7 @@ function ApplicationsPage() {
 
   return (
     <div className="min-h-screen">
-  
+
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Controls */}
@@ -155,7 +150,7 @@ function ApplicationsPage() {
             <Title level={2} className="mb-0!">Mavjud Arizalar</Title>
             <Badge count={filteredApplications.length} overflowCount={999} />
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="relative">
               <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -167,7 +162,7 @@ function ApplicationsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <select
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg  focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={statusFilter}
@@ -183,25 +178,25 @@ function ApplicationsPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <Tag 
+          <Tag
             className={`cursor-pointer ${statusFilter === "all" ? "bg-blue-500 text-white" : ""}`}
             onClick={() => setStatusFilter("all")}
           >
             Barchasi ({filteredApplications.length})
           </Tag>
-          <Tag 
+          <Tag
             className={`cursor-pointer ${statusFilter === "DRAFT" ? "bg-blue-500 text-white" : ""}`}
             onClick={() => setStatusFilter("DRAFT")}
           >
             Tayyorlanmoqda ({filteredApplications.filter(a => a.status === "DRAFT").length})
           </Tag>
-          <Tag 
+          <Tag
             className={`cursor-pointer ${statusFilter === "SUBMITTED" ? "bg-blue-500 text-white" : ""}`}
             onClick={() => setStatusFilter("SUBMITTED")}
           >
             Topshirilgan ({filteredApplications.filter(a => a.status === "SUBMITTED").length})
           </Tag>
-          <Tag 
+          <Tag
             className={`cursor-pointer ${statusFilter === "UNDER_REVIEW" ? "bg-blue-500 text-white" : ""}`}
             onClick={() => setStatusFilter("UNDER_REVIEW")}
           >
@@ -212,12 +207,12 @@ function ApplicationsPage() {
         {/* Applications Grid */}
         {filteredApplications.length === 0 ? (
           <div className="text-center py-12">
-            <EmptyState 
+            <EmptyState
               description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha mavjud arizalar yo&apos;q"}
               action={
-                searchTerm ? 
+                searchTerm ?
                   <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>Barchalarini ko&apos;rish</Button>
-                  : 
+                  :
                   <Link href="/dashboard">
                     <Button type="primary">
                       Yangi ariza yaratish
@@ -228,125 +223,111 @@ function ApplicationsPage() {
           </div>
         ) : (
           <Row gutter={[24, 24]}>
-            {filteredApplications.map((app) => (
-              <Col className="cursor-pointer" onClick={() => router.push(`/applications/${app.id}`)} xs={24} sm={12} lg={8} xl={6} key={app.id}>
-                <Card
-                  className="h-full transform hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer"
-                  hoverable
-                  bodyStyle={{
-                    padding: "0",
-                    borderRadius: "16px",
-                    overflow: "hidden",
-                    background: theme === "dark" ? "#1a1d29" : "#ffffff",
-                    color: theme === "dark" ? "#ffffff" : "#333333"
-                  }}
-                 
-                >
-                  {/* Header */}
-                  <div className="p-6 pb-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-2 line-clamp-2" title={app.title}>
-                          {app.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <CalendarOutlined />
-                          <span>{formatDate(app.start_date)} - {formatDate(app.end_date)}</span>
-                        </div>
-                      </div>
-                      <Tag 
-                        color={getApplicationStatusColor(app.status || "DRAFT")}
-                        className="shrink-0"
-                      >
-                        {getApplicationStatusLabel(app.status || "DRAFT")}
-                      </Tag>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-6">
-                    <div className="mb-4">
-                      <Progress 
-                        percent={app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0}
-                        strokeColor={{
-                          '0%': '#1890ff',
-                          '100%': '#722ed1',
-                        }}
-                        showInfo={false}
-                        size="small"
-                        className="mb-2"
-                        trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
-                      />
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Arizalar</span>
-                        <span>{app.user_submission_count || 0}/{app.max_submissions || 1}</span>
-                      </div>
-                    </div>
-
-                    <Paragraph className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3" ellipsis={{ rows: 3 }}>
-                      {app.description}
-                    </Paragraph>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <DollarOutlined className="text-green-500" />
-                        <span className="font-semibold">{app.application_fee} UZS</span>
-                      </div>
-                    </div>
-
-                    {/* Application Info */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">Imtihon sanasi:</span>
-                        <span className="font-medium">
-                          {app.exam_date ? formatDate(app.exam_date) : "Aniqlanmagan"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">Tekshirish:</span>
-                        <div className="flex items-center gap-1">
-                          {app.requires_oneid_verification ? (
-                            <>
-                              <ExclamationCircleOutlined className="text-orange-500" />
-                              <span>Talab qilinadi</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircleOutlined className="text-green-500" />
-                              <span>Zarur emas</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {!app.can_apply && (
-                      <div className="mb-4 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-                        <Text type="warning" className="text-sm">
-                          {app.can_apply_message}
-                        </Text>
-                      </div>
-                    )}
-
-                    {/* Footer */}
-                    <Divider className="my-4" />
-                    <div className="flex items-center justify-between">
-                  
-                      <Link href={`/applications/${app.id}`}>
-                        <Button 
-                          type="primary"
-                          icon={<ArrowRightOutlined />}
-                          size="small"
-                          className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
+            {filteredApplications.map((app) => {
+              const isExpanded = expandedCards.has(app.id);
+              return (
+                <Col xs={24} sm={12} lg={8} key={app.id}>
+                  <div
+                    className="bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-xl hover:border-blue-500/30 dark:hover:border-blue-500/30 transition-all duration-500 cursor-pointer flex flex-col group"
+                    onClick={() => router.push(`/applications/${app.id}`)}
+                  >
+                    {/* Card Header */}
+                    <div className="p-6 flex justify-between items-center border-b border-gray-100 dark:border-gray-800/50">
+                      <h3 className="text-[#43A047] dark:text-[#66BB6A] font-bold text-lg truncate flex-1 group-hover:opacity-80 transition-opacity" title={app.title}>
+                        {app.title}
+                      </h3>
+                      <div className="flex items-center gap-2 ml-4">
+                        <div
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleCard(app.id, e);
+                          }}
                         >
-                          Batafsil
-                        </Button>
-                      </Link>
+                          <DownOutlined className={`text-[10px] duration-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /> Batafsil
+                        </div>
+                      </div>
+                    </div>
+                    {/* Card Content & Footer Container */}
+                    <div
+                      className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+                    >
+                      {/* Card Content */}
+                      <div className="p-6">
+                        <Tag
+                          color="blue"
+                          className="mb-4 border-0 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wider"
+                        >
+                          {getApplicationStatusLabel(app.status || "DRAFT")}
+                        </Tag>
+
+                        <Paragraph
+                          className="text-gray-600 dark:text-gray-400 text-sm mb-6 leading-relaxed line-clamp-3"
+                          ellipsis={{ rows: 3 }}
+                        >
+                          {app.description}
+                        </Paragraph>
+
+                        <div className="space-y-4 mb-6">
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800/30">
+                            <span className="text-gray-500 font-medium">Tolov:</span>
+                            <span className="text-gray-900 dark:text-gray-100 font-bold">{app.application_fee} UZS</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800/30">
+                            <span className="text-gray-500 font-medium">Imtihon sanasi:</span>
+                            <span className="text-gray-900 dark:text-gray-200">{app.exam_date ? formatDate(app.exam_date) : "Aniqlanmagan"}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800/30">
+                            <span className="text-gray-500 font-medium">Boshlanish:</span>
+                            <span className="text-gray-900 dark:text-gray-200">{formatDate(app.start_date)}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800/30">
+                            <span className="text-gray-500 font-medium">Tugash:</span>
+                            <span className="text-gray-900 dark:text-gray-200">{formatDate(app.end_date)}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm py-1">
+                            <span className="text-gray-500 font-medium">Max. arizalar:</span>
+                            <span className="text-gray-900 dark:text-gray-200">{app.max_submissions || 1}</span>
+                          </div>
+                        </div>
+
+                        {!app.can_apply && (
+                          <div className="mt-4 p-4 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30">
+                            <div className="flex gap-2">
+                              <ExclamationCircleOutlined className="text-orange-500 mt-0.5" />
+                              <Text className="text-sm text-orange-800 dark:text-orange-300 font-medium leading-relaxed">
+                                {app.can_apply_message}
+                              </Text>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer */}
+                      <div className="px-6 py-5 bg-gray-50/50 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-800/50">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Jarayon</span>
+                          <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                            {Math.round(app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </Card>
-              </Col>
-            ))}
+                </Col>
+              );
+            })}
           </Row>
         )}
       </div>

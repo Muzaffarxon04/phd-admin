@@ -3,43 +3,21 @@
 import {
   Breadcrumb,
   Card,
-  Row,
-  Col,
-  Statistic,
-  Progress,
-  Avatar,
-  Tag,
-  Button,
-  // Timeline,
-  Typography,
+  Table,
   Modal,
-  // Upload,
   Form,
   Input,
   message,
+  Typography,
 } from "antd";
 
-import {
-  HomeOutlined,
-  UserOutlined,
-  CheckCircleOutlined,
-  FileTextOutlined,
-  ClockCircleOutlined,
-  TrophyOutlined,
-  CalendarOutlined,
-  // DollarOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
-
 import { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { uz } from "date-fns/locale";
 
 import { useGet, usePatch } from "@/lib/hooks";
 import { tokenStorage } from "@/lib/utils";
-// import { useThemeStore } from "@/lib/stores/themeStore";
+import { useThemeStore } from "@/lib/stores/themeStore";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 /* ================= TYPES ================= */
 
@@ -57,16 +35,14 @@ interface User {
   profile_completion: number;
   date_joined: string;
   last_login: string;
+  birth_date?: string;
+  birth_place?: string;
+  citizenship?: string;
+  nationality?: string;
+  permanent_address?: string;
+  pinfl?: string;
+  organization?: string;
 }
-
-// interface RecentActivity {
-//   id: number;
-//   action: string;
-//   description: string;
-//   timestamp: string;
-//   status: "completed" | "pending" | "failed";
-//   icon: React.ReactNode;
-// }
 
 interface ProfileFormValues {
   first_name: string;
@@ -76,22 +52,13 @@ interface ProfileFormValues {
   phone_number: string;
 }
 
-/* ================= HELPERS ================= */
-
-const generateTimestamp = (hoursAgo: number) => {
-  const date = new Date();
-  date.setHours(date.getHours() - hoursAgo);
-  return date.toISOString();
-};
-
-
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
   const savedUser = tokenStorage.getUser() as User | null;
   const { data: userData, isLoading } = useGet<User>("/auth/me/");
   const patchProfile = usePatch("/auth/update-profile/");
-  // const { theme } = useThemeStore();
+  const { theme } = useThemeStore();
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [, setIsEditing] = useState(false);
@@ -104,83 +71,93 @@ export default function DashboardPage() {
     `${currentUser?.last_name ?? ""} ${currentUser?.first_name ?? ""} ${currentUser?.middle_name ?? ""}`.trim() ||
     "Foydalanuvchi";
 
-  // const recentActivities: RecentActivity[] = [
-  //   {
-  //     id: 1,
-  //     action: "Ariza yaratildi",
-  //     description: "Fanlararo PhD dasturi",
-  //     timestamp: currentUser?.last_login || generateTimestamp(3),
-  //     status: "completed",
-  //     icon: <FileTextOutlined />,
-  //   },
-  //   {
-  //     id: 2,
-  //     action: "To‘lov amalga oshirildi",
-  //     description: "100 000 UZS",
-  //     timestamp: generateTimestamp(2),
-  //     status: "completed",
-  //     icon: <DollarOutlined />,
-  //   },
-  //   {
-  //     id: 3,
-  //     action: "Hujjat yuklandi",
-  //     description: "Diplom nusxasi",
-  //     timestamp: generateTimestamp(5),
-  //     status: "completed",
-  //     icon: <CheckCircleOutlined />,
-  //   },
-  //   {
-  //     id: 4,
-  //     action: "Tekshiruvda",
-  //     description: "Nashrlar ro‘yxati",
-  //     timestamp: generateTimestamp(24),
-  //     status: "pending",
-  //     icon: <ClockCircleOutlined />,
-  //   },
-  // ];
+  /* ================= TABLE DATA ================= */
 
-  const stats = [
+  const userInfoData = [
     {
-      title: "Arizalar",
-      value: 3,
-      suffix: "/5",
-      icon: <FileTextOutlined />,
-      color: "#1890ff",
+      key: "1",
+      label: "F.I.SH.",
+      value: fullName.toUpperCase(),
     },
     {
-      title: "Topshirilgan",
-      value: 2,
-      icon: <CheckCircleOutlined />,
-      color: "#52c41a",
+      key: "2",
+      label: "Elektron pochta",
+      value: currentUser?.email || "Kiritilmagan",
     },
     {
-      title: "Kutilmoqda",
-      value: 1,
-      icon: <ClockCircleOutlined />,
-      color: "#faad14",
+      key: "3",
+      label: "Rol",
+      value: currentUser?.role || "Ariza beruvchi",
     },
     {
-      title: "Profil to‘liqligi",
-      value: currentUser?.profile_completion ?? 0,
-      suffix: "%",
-      icon: <TrophyOutlined />,
-      color: "#722ed1",
+      key: "4",
+      label: "Tashkilot",
+      value: currentUser?.organization || "None",
+    },
+    {
+      key: "5",
+      label: "Tug'ilgan kun",
+      value: currentUser?.birth_date || "Kiritilmagan",
+    },
+    {
+      key: "6",
+      label: "Tug'ilgan joyi",
+      value: currentUser?.birth_place || "NOMA'LUM",
+    },
+    {
+      key: "7",
+      label: "Fuqarolik",
+      value: currentUser?.citizenship || "O'ZBEKISTON",
+    },
+    {
+      key: "8",
+      label: "Telefon raqami",
+      value: currentUser?.phone_number || "Kiritilmagan",
+    },
+    {
+      key: "9",
+      label: "Millati",
+      value: currentUser?.nationality || "O'ZBEK",
+    },
+    {
+      key: "10",
+      label: "Doimiy yashash joyi",
+      value: currentUser?.permanent_address || "Kiritilmagan",
+    },
+    {
+      key: "11",
+      label: "PINFL",
+      value: currentUser?.pinfl || "Kiritilmagan",
+    },
+  ];
+
+  const columns = [
+    {
+      title: "MA'LUMOT TURI",
+      dataIndex: "label",
+      key: "label",
+      width: "25%",
+      render: (text: string) => (
+        <span style={{
+          color: theme === "dark" ? "rgb(180, 183, 189)" : "#484650",
+          fontSize: "14px"
+        }}>{text}</span>
+      ),
+    },
+    {
+      title: "MA'LUMOT",
+      dataIndex: "value",
+      key: "value",
+      render: (text: string) => (
+        <span style={{
+          color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650",
+          fontSize: "14px"
+        }}>{text}</span>
+      ),
     },
   ];
 
   /* ================= HANDLERS ================= */
-
-  const openProfileModal = () => {
-    setIsProfileModalOpen(true);
-    setIsEditing(false);
-    form.setFieldsValue({
-      first_name: currentUser?.first_name,
-      last_name: currentUser?.last_name,
-      middle_name: currentUser?.middle_name,
-      email: currentUser?.email,
-      phone_number: currentUser?.phone_number,
-    });
-  };
 
   const handleSaveProfile = async (values: ProfileFormValues) => {
     try {
@@ -202,103 +179,65 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen  py-8!">
-      <Breadcrumb
-        className="mb-6!"
-        items={[
-          {
-            href: "/",
-            title: (
-              <span className="flex items-center gap-2">
-                <HomeOutlined /> Dashboard
-              </span>
-            ),
-          },
-          { title: "Bosh sahifa" },
-        ]}
-      />
-
-      {/* HEADER */}
-      <Card className="mb-8! rounded-2xl bg-transparent! backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar size={96} src={currentUser?.photo} icon={<UserOutlined />} />
-              <Button
-                size="small"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute -bottom-2 -right-2"
-                onClick={openProfileModal}
-              />
-            </div>
-
-            <div>
-              <Title level={3}>{fullName}</Title>
-              <Text>{currentUser?.role || "Foydalanuvchi"}</Text>
-              <div className="mt-2 flex gap-2">
-                {currentUser?.is_verified && (
-                  <Tag color="success" icon={<CheckCircleOutlined />}>
-                    Tasdiqlangan
-                  </Tag>
-                )}
-                <Tag>
-                  <CalendarOutlined />{" "}
-                  {formatDistanceToNow(new Date(currentUser?.date_joined ?? generateTimestamp(24)), {
-                    addSuffix: true,
-                    locale: uz,
-                  })}
-                </Tag>
-              </div>
-            </div>
-          </div>
-
-          <Progress
-            type="circle"
-            percent={currentUser?.profile_completion ?? 0}
-            size={90}
-          />
-        </div>
-      </Card>
-
-      {/* STATS */}
-      <Row gutter={[24, 24]} className="mb-8">
-        {stats.map((stat) => (
-          <Col xs={24} md={12} lg={6} key={stat.title}>
-            <Card className="bg-transparent! backdrop-blur-sm rounded-lg p-4 text-center">
-              <Statistic
-                title={stat.title}
-                value={stat.value}
-                suffix={stat.suffix}
-                valueStyle={{ color: stat.color }}
-                prefix={stat.icon}
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* ACTIVITIES
-      <Card title="So‘nggi faoliyat">
-        <Timeline
-          items={recentActivities.map((a) => ({
-            dot: getStatusIcon(a.status),
-            color: getStatusColor(a.status),
-            children: (
-              <div>
-                <strong>{a.action}</strong>
-                <p className="text-gray-500">{a.description}</p>
-                <small>
-                  {formatDistanceToNow(new Date(a.timestamp), {
-                    addSuffix: true,
-                    locale: uz,
-                  })}
-                </small>
-              </div>
-            ),
-          }))}
+    <div style={{ minHeight: "100vh" }}>
+      {/* Page Title */}
+      <div className="mb-4 flex items-center gap-4">
+        <Title level={4} className="!text-[24px]  mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          Bosh sahifa
+        </Title>
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            {
+              href: "/dashboard",
+              title: (
+                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "rgb(115, 103, 240)" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="align-text-top feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </span>
+              ),
+            },
+            { title: <span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Bosh sahifa</span> },
+          ]}
         />
-      </Card> */}
+      </div>
+
+
+
+      {/* User Info Card */}
+      <Card
+        title={
+          <span style={{ fontSize: "20px", fontWeight: 500, color: theme === "dark" ? "#ffffff" : "inherit" }}>
+            Foydalanuvchi malumotlari
+          </span>
+        }
+        style={{
+          borderRadius: 6,
+          background: "transparent",
+          boxShadow: "none",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+        }}
+        styles={{
+          header: {
+            borderBottom: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            padding: "16px 24px",
+            background: "transparent",
+          },
+          body: {
+            padding: 0,
+            background: "transparent",
+          },
+        }}
+      >
+        <Table
+          columns={columns}
+          dataSource={userInfoData}
+          pagination={false}
+          showHeader={true}
+          size="middle"
+          style={{ borderRadius: 0 }}
+          className="user-info-table"
+        />
+      </Card>
 
       {/* PROFILE MODAL */}
       <Modal
@@ -325,6 +264,41 @@ export default function DashboardPage() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <style jsx global>{`
+        .user-info-table .ant-table {
+          background: transparent !important;
+        }
+        
+        .user-info-table .ant-table-thead > tr > th {
+          background: transparent !important;
+          color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+          font-weight: 600 !important;
+          font-size: 12px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+          padding: 12px 24px !important;
+        }
+        
+        .user-info-table .ant-table-tbody > tr > td {
+          background: transparent !important;
+          padding: 14px 24px !important;
+          border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+        }
+        
+        .user-info-table .ant-table-tbody > tr:hover > td {
+          background: ${theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "rgba(115, 103, 240, 0.05)"} !important;
+        }
+        
+        .user-info-table .ant-table-tbody > tr:last-child > td {
+          border-bottom: none !important;
+        }
+        
+        .user-info-table .ant-table-container {
+          background: transparent !important;
+        }
+      `}</style>
     </div>
   );
 }

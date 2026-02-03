@@ -17,14 +17,14 @@ const { Header: AntHeader } = Layout;
 export default function ApplicantHeader() {
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
-  const [userName, setUserName] = useState<string>("User");
+  const [userName, setUserName] = useState<string>("Foydalanuvchi");
 
   useEffect(() => {
     const user = tokenStorage.getUser() as { full_name?: string } | null;
     const fullName = user?.full_name;
     if (fullName) {
       setTimeout(() => {
-        setUserName(fullName.split(" ").pop() || "User");
+        setUserName(fullName.split(" ").pop() || "Foydalanuvchi");
       }, 0);
     }
   }, []);
@@ -51,120 +51,116 @@ export default function ApplicantHeader() {
   ];
 
   return (
-    <AntHeader
-      className="applicant-header"
-      style={{
-        background: theme === "dark"
-          ? "linear-gradient(135deg, rgba(26, 29, 41, 0.98) 0%, rgba(37, 40, 54, 0.98) 100%)"
-          : "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        padding: "0 40px",
-        height: 72,
-        borderBottom: theme === "dark"
-          ? "1px solid rgba(255, 255, 255, 0.08)"
-          : "1px solid rgba(0, 0, 0, 0.06)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        boxShadow: theme === "dark"
-          ? "0 4px 20px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
-          : "0 4px 20px rgba(0, 0, 0, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.03)",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      }}
-    >
+    <div className={`sticky pt-[1.3rem] top-0 z-1000`} style={{ background: theme === "dark" ? "rgb(22, 29, 49)" : "rgb(246, 246, 246)" }}>
+      <AntHeader
+        className="applicant-header"
+        style={{
+          background: theme === "dark"
+            ? "rgb(40, 48, 70)"
+            : "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          padding: ".8rem 1rem",
+          height: 60,
+          borderRadius: "6px",
+          borderBottom: theme === "dark"
+            ? "1px solid rgba(255, 255, 255, 0.08)"
+            : "1px solid rgba(0, 0, 0, 0.06)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          position: "sticky",
+          top: 0,
+          zIndex: 1000,
+          boxShadow: theme === "dark"
+            ? "0 4px 20px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+            : "0 4px 20px rgba(0, 0, 0, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.03)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
 
 
 
-      {/* Right side - Actions */}
-      <Space size="middle" style={{ alignItems: "center" }}>
-        <Button
-          type="text"
-          icon={theme === "dark" ? <SunOutlined /> : <MoonOutlined />}
-          onClick={toggleTheme}
-          className="header-action-btn theme-toggle-btn"
-          style={{
-            fontSize: "20px",
-            color: theme === "dark" ? "#ffffff" : "#666",
-            width: 46,
-            height: 46,
-            borderRadius: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <span
+        {/* Right side - Actions */}
+        <Space size="middle" style={{ alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+          <Button
+            type="text"
+            icon={theme === "dark" ? <SunOutlined /> : <MoonOutlined />}
+            onClick={toggleTheme}
+            className="header-action-btn theme-toggle-btn"
             style={{
+              fontSize: "20px",
+              color: theme === "dark" ? "#ffffff" : "#666",
+              height: 46,
+              borderRadius: "14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
               position: "relative",
-              zIndex: 1,
-
+              overflow: "hidden",
             }}
-            className="theme-icon"
-          />
-        </Button>
-
-
-
-
-        <span
-          style={{
-            fontWeight: 700,
-            color: theme === "dark" ? "#ffffff" : "#333",
-            fontSize: "15px",
-            letterSpacing: "0.4px",
-          }}
-        >
-          {userName}
-        </span>
-
-        <Dropdown
-          menu={{
-            items: userMenuItems,
-            className: "user-dropdown-menu",
-          }}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayStyle={{ marginTop: 12 }}
-        >
-          <Avatar
-            className="user-avatar"
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              cursor: "pointer",
-              verticalAlign: "middle",
-              boxShadow: "0 4px 20px rgba(102, 126, 234, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              border: `2.5px solid ${theme === "dark" ? "rgba(102, 126, 234, 0.4)" : "rgba(255, 255, 255, 0.6)"}`,
-              position: "relative",
-            }}
-            size={46}
-            icon={<UserOutlined />}
           >
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#52c41a",
-                border: `2px solid ${theme === "dark" ? "#1a1d29" : "#ffffff"}`,
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-              }}
-            />
-          </Avatar>
-        </Dropdown>
-      </Space>
+         
+          </Button>
 
-      <style jsx>{`
+
+
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+
+            <span
+              style={{
+                fontWeight: 700,
+                color: theme === "dark" ? "#ffffff" : "#333",
+                fontSize: "14px",
+                textTransform: "uppercase"
+              }}
+            >
+              {userName}
+            </span>
+
+            <Dropdown
+              menu={{
+                items: userMenuItems,
+                className: "user-dropdown-menu",
+              }}
+              trigger={["click"]}
+              placement="bottomRight"
+              overlayStyle={{ marginTop: 12 }}
+            >
+              <Avatar
+                className="user-avatar"
+                style={{
+
+                  cursor: "pointer",
+                  verticalAlign: "middle",
+
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+
+                  position: "relative",
+                }}
+                size={40}
+                icon={<img src="/avatar.png" alt="avatar" />}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: "#52c41a",
+                    border: `2px solid ${theme === "dark" ? "#1a1d29" : "#ffffff"}`,
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                  }}
+                />
+              </Avatar>
+            </Dropdown>
+          </div>
+        </Space>
+
+        <style jsx>{`
         .applicant-header {
           position: relative;
         }
@@ -221,8 +217,8 @@ export default function ApplicantHeader() {
         .user-info-card:hover {
           transform: translateY(-2px);
           box-shadow: ${theme === "dark"
-          ? "0 6px 20px rgba(102, 126, 234, 0.25)"
-          : "0 6px 20px rgba(102, 126, 234, 0.18)"};
+            ? "0 6px 20px rgba(102, 126, 234, 0.25)"
+            : "0 6px 20px rgba(102, 126, 234, 0.18)"};
           border-color: ${theme === "dark" ? "rgba(102, 126, 234, 0.5)" : "rgba(102, 126, 234, 0.35)"};
         }
         .status-indicator {
@@ -249,8 +245,8 @@ export default function ApplicantHeader() {
           border-radius: 12px !important;
           padding: 8px !important;
           box-shadow: ${theme === "dark"
-          ? "0 8px 32px rgba(0, 0, 0, 0.4)"
-          : "0 8px 32px rgba(0, 0, 0, 0.12)"} !important;
+            ? "0 8px 32px rgba(0, 0, 0, 0.4)"
+            : "0 8px 32px rgba(0, 0, 0, 0.12)"} !important;
           background: ${theme === "dark" ? "#1a1d29" : "#ffffff"} !important;
           border: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)"} !important;
         }
@@ -264,6 +260,7 @@ export default function ApplicantHeader() {
           background: ${theme === "dark" ? "rgba(102, 126, 234, 0.15)" : "rgba(102, 126, 234, 0.08)"} !important;
         }
       `}</style>
-    </AntHeader>
+      </AntHeader>
+    </div>
   );
 }

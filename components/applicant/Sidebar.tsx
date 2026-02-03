@@ -1,47 +1,123 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Layout, Menu } from "antd";
-import Image from "next/image";
-import {
-  HomeOutlined,
-  FileTextOutlined,
-  FolderOutlined,
-} from "@ant-design/icons";
+import type { MenuProps } from "antd";
+
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Sider } = Layout;
 
-const menuItems = [
-  {
-    key: "/dashboard",
-    icon: <HomeOutlined />,
-    label: "Mening Profilim",
-  },
-  {
-    key: "/applications",
-    icon: <FileTextOutlined />,
-    label: "Arizalar",
-  },
-  {
-    key: "/my-submissions",
-    icon: <FolderOutlined />,
-    label: "Mening Arizalarim",
-  },
-];
+type MenuItem = Required<MenuProps>["items"][number];
+
+// Chevron icon component
+const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{
+      transition: "transform 0.3s ease",
+      transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+      opacity: 0.6
+    }}
+  >
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
 
 export default function ApplicantSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useThemeStore();
 
+  // State for open submenu keys
+  const [openKeys, setOpenKeys] = useState<string[]>(() => {
+    if (pathname === "/applications" || pathname === "/my-submissions") {
+      return ["documents"];
+    }
+    return [];
+  });
+
+  // Update openKeys when pathname changes
+  useEffect(() => {
+    if (pathname === "/applications" || pathname === "/my-submissions") {
+      const timer = setTimeout(() => {
+        setOpenKeys(["documents"]);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
+
+  const isDocumentsOpen = openKeys.includes("documents");
+
+  const menuItems: MenuItem[] = [
+    {
+      key: "/dashboard",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>,
+      label: "Mening Profilim",
+    },
+    {
+      key: "documents",
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>,
+      label: (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          Shaxsiy hujjatlar
+          <ChevronIcon isOpen={isDocumentsOpen} />
+        </div>
+      ),
+      children: [
+        {
+          icon: <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-briefcase"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>,
+          key: "/applications",
+          label: "Arizalar",
+        },
+        {
+          icon: <svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-briefcase"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>,
+          key: "/my-submissions",
+          label: "Mening Arizalarim",
+        },
+      ],
+    },
+    {
+      key: "/feedback",
+      icon: <svg viewBox="64 64 896 896" focusable="false" data-icon="send" width="20px" height="20px" fill="currentColor" aria-hidden="true"><defs><style></style></defs><path d="M931.4 498.9L94.9 79.5c-3.4-1.7-7.3-2.1-11-1.2a15.99 15.99 0 00-11.7 19.3l86.2 352.2c1.3 5.3 5.2 9.6 10.4 11.3l147.7 50.7-147.6 50.7c-5.2 1.8-9.1 6-10.3 11.3L72.2 926.5c-.9 3.7-.5 7.6 1.2 10.9 3.9 7.9 13.5 11.1 21.5 7.2l836.5-417c3.1-1.5 5.6-4.1 7.2-7.1 3.9-8 .7-17.6-7.2-21.6zM170.8 826.3l50.3-205.6 295.2-101.3c2.3-.8 4.2-2.6 5-5 1.4-4.2-.8-8.7-5-10.2L221.1 403 171 198.2l628 314.9-628.2 313.2z"></path></svg>,
+      label: "Xato topdingizmi?",
+    },
+  ];
+
   const handleMenuClick = ({ key }: { key: string }) => {
-    router.push(key);
+    if (key === "/feedback") {
+      window.open("https://t.me/ilmiy_darajali_kadrlar", "_blank");
+      return;
+    }
+    if (key !== "documents") {
+      router.push(key);
+    }
+  };
+
+  const handleOpenChange = (keys: string[]) => {
+    setOpenKeys(keys);
+  };
+
+  // Get selected keys including parent for submenu
+  const getSelectedKeys = () => {
+    if (pathname === "/applications" || pathname === "/my-submissions") {
+      return [pathname];
+    }
+    return [pathname];
   };
 
   return (
     <Sider
-      width={280}
+      width={260}
       style={{
         overflow: "auto",
         height: "100vh",
@@ -49,119 +125,124 @@ export default function ApplicantSidebar() {
         left: 0,
         top: 0,
         bottom: 0,
-        background: theme === "dark" 
-          ? "linear-gradient(180deg, #1a1d29 0%, #1f2230 100%)" 
-          : "#ffffff",
-        borderRight: `1px solid ${theme === "dark" ? "#252836" : "#e8e8e8"}`,
-        boxShadow: theme === "dark" 
-          ? "4px 0 20px rgba(0, 0, 0, 0.3)" 
-          : "2px 0 8px rgba(0, 0, 0, 0.05)",
+        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+        borderRight: "none",
+        boxShadow: "none",
         transition: "all 0.3s ease",
       }}
     >
+      {/* Logo Section */}
       <div
         style={{
-          padding: "24px",
-          borderBottom: theme === "dark" ? "1px solid #252836" : "1px solid #e8e8e8",
-          background: theme === "dark" 
-            ? "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)" 
-            : "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
+          padding: "20px 24px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Image src="/logo.png" alt="Logo" width={48} height={48}/>
-          <div>
-            <div
-              style={{
-                fontWeight: 700,
-                color: theme === "dark" ? "#ffffff" : "#1a1a1a",
-                fontSize: "18px",
-                letterSpacing: "-0.5px",
-              }}
-            >
-              Ariza beruvchi
-            </div>
-            <div
-              style={{
-                fontSize: "12px",
-                color: theme === "dark" ? "#a0a0a0" : "#666",
-                marginTop: 2,
-              }}
-            >
-              PhD Tizimi
-            </div>
-          </div>
+        {/* Custom Logo - matching the image */}
+        <div style={{ position: "relative", width: 38, height: 38 }}>
+          {/* Head/Circle */}
+          <img src="/logo.png" alt="logo" />
         </div>
+
+        {/* Title */}
+        <span
+          style={{
+            fontSize: "18px",
+            fontWeight: 700,
+            // background: "linear-gradient(118deg,#7367f0,rgba(115,103,240,.7))",
+            // WebkitBackgroundClip: "text",
+            // WebkitTextFillColor: "transparent",
+            // backgroundClip: "text",
+            color: "#7367f0"
+          }}
+        >
+          Ariza beruvchi
+        </span>
       </div>
+
+      {/* Menu */}
       <Menu
         mode="inline"
-        selectedKeys={[pathname]}
+        selectedKeys={getSelectedKeys()}
+        openKeys={openKeys}
+        onOpenChange={handleOpenChange}
         items={menuItems}
         onClick={handleMenuClick}
         style={{
           borderRight: 0,
           background: "transparent",
-          padding: "16px 8px",
+          padding: "8px 12px",
         }}
-        theme={theme === "dark" ? "dark" : "light"}
-        className="custom-menu-applicant"
+        className="custom-menu-applicant-new"
       />
+
       <style jsx global>{`
-        .custom-menu-applicant .ant-menu-item {
-          margin: 6px 8px !important;
-          border-radius: 12px !important;
-          height: 52px !important;
-          line-height: 52px !important;
-          color: ${theme === "dark" ? "#ffffff" : "#333"} !important;
-          padding: 0 16px !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        .custom-menu-applicant-new {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .custom-menu-applicant-new .ant-menu-item,
+        .custom-menu-applicant-new .ant-menu-submenu-title {
+          margin: 1px 0 !important;
+          border-radius: 4px !important;
+          height: 42px !important;
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
+          padding: 10px 15px 10px 15px !important;
+          transition: all 0.2s ease !important;
           font-weight: 500 !important;
+          font-size: 15px !important;
           display: flex !important;
           align-items: center !important;
         }
-        .custom-menu-applicant .ant-menu-item-selected {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        
+        .custom-menu-applicant-new .ant-menu-item-selected {
+          background: linear-gradient(118deg,#7367f0,rgba(115,103,240,.7) )!important;
           color: white !important;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
-          transform: translateX(4px) !important;
+          box-shadow: 0 0 10px 1px rgba(115,103,240,.7) !important;
         }
-        .custom-menu-applicant .ant-menu-item-selected::before {
+        
+        .custom-menu-applicant-new .ant-menu-item-selected .anticon,
+        .custom-menu-applicant-new .ant-menu-item-selected svg {
+          stroke: #ffffff !important;
+        }
+        
+        .custom-menu-applicant-new .ant-menu-item:hover:not(.ant-menu-item-selected),
+        .custom-menu-applicant-new .ant-menu-submenu-title:hover {
+          background: rgba(129, 140, 248, 0.08) !important;
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
+        }
+        
+        .custom-menu-applicant-new .ant-menu-item .anticon,
+        .custom-menu-applicant-new .ant-menu-submenu-title .anticon,
+        .custom-menu-applicant-new .ant-menu-item svg,
+        .custom-menu-applicant-new .ant-menu-submenu-title svg {
+          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
+          font-size: 20px !important;
+        }
+        
+        .custom-menu-applicant-new .ant-menu-submenu .ant-menu-item {
+          padding-left: 25px !important;
+          height: 42px !important;
+          font-size: 14px !important;
+        }
+        
+        .custom-menu-applicant-new .ant-menu-submenu-arrow {
           display: none !important;
         }
-        .custom-menu-applicant .ant-menu-item-selected .anticon {
-          color: white !important;
-          transform: scale(1.1) !important;
+        
+        .custom-menu-applicant-new .ant-menu-sub {
+          background: transparent !important;
         }
-        .custom-menu-applicant .ant-menu-item:hover:not(.ant-menu-item-selected) {
-          background: ${theme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.08)"} !important;
-          transform: translateX(4px) !important;
+        
+        /* Remove default ant-design borders and backgrounds */
+        .custom-menu-applicant-new .ant-menu-item::after {
+          display: none !important;
         }
-        .custom-menu-applicant .ant-menu-item .anticon {
-          color: ${theme === "dark" ? "#a0a0a0" : "#666"} !important;
-          font-size: 18px !important;
-          margin-right: 12px !important;
-          transition: all 0.3s ease !important;
-        }
-        .custom-menu-applicant .ant-menu-item:hover .anticon {
-          color: ${theme === "dark" ? "#ffffff" : "#667eea"} !important;
-          transform: scale(1.1) !important;
-        }
-        .custom-menu-applicant .ant-menu-item-selected .anticon {
-          color: white !important;
-        }
-        /* Custom scrollbar */
-        .custom-menu-applicant::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-menu-applicant::-webkit-scrollbar-track {
-          background: ${theme === "dark" ? "#1a1d29" : "#f5f5f5"};
-        }
-        .custom-menu-applicant::-webkit-scrollbar-thumb {
-          background: ${theme === "dark" ? "#252836" : "#d9d9d9"};
-          border-radius: 3px;
-        }
-        .custom-menu-applicant::-webkit-scrollbar-thumb:hover {
-          background: ${theme === "dark" ? "#667eea" : "#667eea"};
+        
+        .custom-menu-applicant-new.ant-menu-inline {
+          border-inline-end: none !important;
         }
       `}</style>
     </Sider>

@@ -35,22 +35,22 @@ export default function AdminPanelPage() {
   const { theme } = useThemeStore();
   const { data: applications, isLoading: isLoadingApps } = useGet<ApplicationListResponse>("/admin/application/");
   const { data: submissions, isLoading: isLoadingSubs } = useGet<ApplicationSubmissionListResponse>("/admin/application/submissions/");
-console.log(applications, submissions);
+  console.log(applications, submissions);
   const totalApplications = applications?.results?.length || 0;
   const totalSubmissions = submissions?.count || 0;
   const submissionsList = submissions?.results || [];
-  
+
   // Arizalar holati boyicha statistika
   const approvedCount = submissionsList.filter((s) => s.status === "approved").length;
   const rejectedCount = submissionsList.filter((s) => s.status === "rejected").length;
   const pendingCount = submissionsList.filter((s) => s.status === "under_review" || s.status === "submitted").length;
   const draftCount = submissionsList.filter((s) => s.status === "draft").length;
-  
+
   // Tolovlar boyicha statistika (ReviewSubmission da payment_status yo'q)
   const paidCount = 0; // submissionsList.filter((s) => s.payment_status === "PAID").length;
   const pendingPaymentCount = 0; // submissionsList.filter((s) => s.payment_status === "PENDING").length;
   const failedPaymentCount = 0; // submissionsList.filter((s) => s.payment_status === "FAILED").length;
-  
+
   // Oylik statistika (oxirgi 6 oy)
   const currentMonth = new Date().getMonth();
   const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
@@ -68,10 +68,10 @@ console.log(applications, submissions);
       rad: monthSubmissions.filter((s) => s.status === "rejected").length,
     };
   });
-  
+
   // Eng kop ariza berilgan arizalar (top 5) - API da total_submissions yo'q
   // const topApplications = [];
-  
+
   // Oxirgi arizalar (5 ta)
   const recentSubmissions = [...submissionsList]
     .sort((a, b) => {
@@ -95,13 +95,13 @@ console.log(applications, submissions);
     { name: "Kutilmoqda", value: pendingPaymentCount, color: "#faad14" },
     { name: "Xatolik", value: failedPaymentCount, color: "#ff4d4f" },
   ].filter((item) => item.value > 0);
-  
+
   // Foiz ozgarishlar (mock data - keyinroq API'dan keladi)
   const calculatePercentage = (current: number, total: number) => {
     if (total === 0) return 0;
     return Math.round((current / total) * 100);
   };
-  
+
   const approvalRate = totalSubmissions > 0 ? calculatePercentage(approvedCount, totalSubmissions) : 0;
   const paymentRate = totalSubmissions > 0 ? calculatePercentage(paidCount, totalSubmissions) : 0;
 
@@ -114,15 +114,15 @@ console.log(applications, submissions);
     border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
     borderRadius: "12px",
     padding: "24px",
-    boxShadow: theme === "dark" 
-      ? "0 4px 12px rgba(0, 0, 0, 0.2)" 
+    boxShadow: theme === "dark"
+      ? "0 4px 12px rgba(0, 0, 0, 0.2)"
       : "0 2px 8px rgba(0, 0, 0, 0.08)",
   };
 
   return (
     <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
       {/* Key Metrics Cards */}
-      Dashboard
+      Boshqaruv paneli
       {/* <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card style={cardStyle}>

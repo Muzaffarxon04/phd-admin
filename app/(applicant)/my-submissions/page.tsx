@@ -1,14 +1,14 @@
 "use client";
 
-import { 
-  Card, 
-  Table, 
-  Tag, 
-  Button, 
-  Space, 
-  Typography, 
-  Progress, 
-  Badge, 
+import {
+  Card,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Progress,
+  Badge,
   Timeline,
   // Statistic,
   Row,
@@ -16,9 +16,9 @@ import {
   Alert,
   Tooltip
 } from "antd";
-import { 
-  EyeOutlined, 
-  FileTextOutlined, 
+import {
+  EyeOutlined,
+  FileTextOutlined,
   // CheckCircleOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
@@ -73,7 +73,7 @@ export default function MySubmissionsPage() {
   const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse | Submission[]>("/applicant/my-submissions/");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Handle different response formats
   const submissions = useMemo(() => {
     if (!submissionsData) return [];
@@ -82,13 +82,13 @@ export default function MySubmissionsPage() {
     if (submissionsData.data && Array.isArray(submissionsData.data)) return submissionsData.data;
     return [];
   }, [submissionsData]);
-  
+
   // Filter submissions based on status and search
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(submission => {
       const matchesStatus = statusFilter === "all" || submission.status === statusFilter;
       const matchesSearch = submission.application_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           submission.submission_number.toLowerCase().includes(searchTerm.toLowerCase());
+        submission.submission_number.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStatus && matchesSearch;
     });
   }, [submissions, statusFilter, searchTerm]);
@@ -131,7 +131,7 @@ export default function MySubmissionsPage() {
           <div className="font-semibold text-blue-600 dark:text-blue-400">
             #{text}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-[#484650]"}`}>
             Yaratilgan: {formatDate(record.created_at)}
           </div>
         </div>
@@ -150,11 +150,11 @@ export default function MySubmissionsPage() {
       render: (text: string, record: Submission) => (
         <div className="max-w-xs">
           <Tooltip title={text}>
-            <div className="font-medium truncate" title={text}>
+            <div className={`font-medium truncate ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`} title={text}>
               {text}
             </div>
           </Tooltip>
-          <div className="text-xs text-gray-500">
+          <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-[#484650]"}`}>
             {record.submitted_at && "Topshirilgan: " + formatDate(record.submitted_at)}
           </div>
         </div>
@@ -171,9 +171,9 @@ export default function MySubmissionsPage() {
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Badge 
-          status={status === "APPROVED" ? "success" : status === "REJECTED" ? "error" : "processing"} 
-          text={getApplicationStatusLabel(status)}
+        <Badge
+          status={status === "APPROVED" ? "success" : status === "REJECTED" ? "error" : "processing"}
+          text={<span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{getApplicationStatusLabel(status)}</span>}
         />
       ),
       width: 150,
@@ -182,7 +182,7 @@ export default function MySubmissionsPage() {
       title: (
         <div className="flex items-center gap-2">
           <DollarOutlined />
-          <span>Tolov</span>
+          <span>Tolov holati</span>
         </div>
       ),
       dataIndex: "payment_status",
@@ -220,29 +220,29 @@ export default function MySubmissionsPage() {
         <Space size="small">
           <Link href={`/my-submissions/${record.id}`}>
             <Tooltip title="Ko'rish">
-              <Button 
-                type="primary" 
-                size="small" 
+              <Button
+                type="primary"
+                size="small"
                 icon={<EyeOutlined />}
                 className=" from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
               />
             </Tooltip>
           </Link>
-          
+
           {record.status === "DRAFT" && (
-        <Link href={`/my-submissions/${record.id}`}>
+            <Link href={`/my-submissions/${record.id}`}>
               <Tooltip title="Tahrirlash">
-                <Button 
+                <Button
                   size="small"
                   icon={<EyeInvisibleOutlined />}
                 />
               </Tooltip>
-        </Link>
+            </Link>
           )}
-          
+
           {record.documents_uploaded && record.total_required_documents && (
             <Tooltip title={`${record.documents_uploaded}/${record.total_required_documents} hujjat yuklandi`}>
-              <Button 
+              <Button
                 size="small"
                 icon={<DownloadOutlined />}
               >
@@ -261,7 +261,7 @@ export default function MySubmissionsPage() {
       <div className="min-h-screen p-8">
         <div className="max-w-7xl mx-auto">
           <Title level={2} className="mb-8">Mening Arizalarim</Title>
-        <TableSkeleton />
+          <TableSkeleton />
         </div>
       </div>
     );
@@ -270,19 +270,19 @@ export default function MySubmissionsPage() {
   if (error) {
     // Handle array error format from backend
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
-    
+
     const errorData = (error).data;
     if (errorData && Array.isArray(errorData)) {
       errorMessage = errorData.join(", ");
     }
-    
+
     return (
       <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto text-center">
-        <ErrorState 
+          <ErrorState
             description={errorMessage}
-          onRetry={() => window.location.reload()}
-        />
+            onRetry={() => window.location.reload()}
+          />
         </div>
       </div>
     );
@@ -298,7 +298,7 @@ export default function MySubmissionsPage() {
             <Text className="text-xl text-purple-100">Ozingiz topshirgan arizalarni kuzating</Text>
           </div>
 
-     ]
+          ]
         </div>
       </div>
 
@@ -306,7 +306,7 @@ export default function MySubmissionsPage() {
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <Title level={2} className="mb-0">Arizalar royxati</Title>
-          
+
           <div className="flex items-center gap-4">
             <div className="relative">
               <input
@@ -318,7 +318,7 @@ export default function MySubmissionsPage() {
               />
               <FileTextOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-            
+
             <select
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={statusFilter}
@@ -345,7 +345,7 @@ export default function MySubmissionsPage() {
               <div className="space-y-3">
                 {[
                   { label: "Topshirilgan", value: stats.submitted, color: "blue" },
-                  { label: "Korib chiqilmoqda", value: stats.underReview, color: "processing" },
+                  { label: "Ko'rib chiqilmoqda", value: stats.underReview, color: "processing" },
                   { label: "Tasdiqlangan", value: stats.approved, color: "success" },
                   { label: "Rad etilgan", value: stats.rejected, color: "error" },
                 ].map((item) => (
@@ -360,12 +360,12 @@ export default function MySubmissionsPage() {
                         size="small"
                         showInfo={false}
                         strokeColor={{
-                          '0%': item.color === "blue" ? "#1890ff" : 
-                                item.color === "processing" ? "#1890ff" :
-                                item.color === "success" ? "#52c41a" : "#ff4d4f",
-                          '100%': item.color === "blue" ? "#1890ff" : 
-                                  item.color === "processing" ? "#1890ff" :
-                                  item.color === "success" ? "#52c41a" : "#ff4d4f",
+                          '0%': item.color === "blue" ? "#1890ff" :
+                            item.color === "processing" ? "#1890ff" :
+                              item.color === "success" ? "#52c41a" : "#ff4d4f",
+                          '100%': item.color === "blue" ? "#1890ff" :
+                            item.color === "processing" ? "#1890ff" :
+                              item.color === "success" ? "#52c41a" : "#ff4d4f",
                         }}
                         trailColor={theme === "dark" ? "#374151" : "#f0f0f0"}
                         style={{ width: "80px" }}
@@ -377,7 +377,7 @@ export default function MySubmissionsPage() {
               </div>
             </Card>
           </Col>
-          
+
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
@@ -416,9 +416,9 @@ export default function MySubmissionsPage() {
         </Row>
 
         {/* Table */}
-        <Card 
+        <Card
           className="transform hover:scale-[1.01] transition-all duration-300"
-          bodyStyle={{ 
+          bodyStyle={{
             padding: "0",
             borderRadius: "16px",
             overflow: "hidden",
@@ -430,9 +430,9 @@ export default function MySubmissionsPage() {
               <Title level={3} className="mb-0">Arizalar jadvali</Title>
               <Space>
                 <Badge count={filteredSubmissions.length} overflowCount={999} />
-              <Link href="/applications">
-                <Button 
-                  type="primary"
+                <Link href="/applications">
+                  <Button
+                    type="primary"
                     icon={<PlusOutlined />}
                     className=" from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0"
                   >
@@ -444,27 +444,27 @@ export default function MySubmissionsPage() {
 
             {filteredSubmissions.length === 0 ? (
               <div className="text-center py-12">
-                <EmptyState 
+                <EmptyState
                   description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
                   action={
                     <Link href="/applications">
                       <Button type="primary">
-                  Yangi ariza yaratish
-                </Button>
-              </Link>
-            }
-          />
+                        Yangi ariza yaratish
+                      </Button>
+                    </Link>
+                  }
+                />
               </div>
-        ) : (
-          <Table 
-            columns={columns} 
-                dataSource={filteredSubmissions} 
-            rowKey="id"
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={filteredSubmissions}
+                rowKey="id"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
                   showQuickJumper: true,
-                  showTotal: (total, range) => 
+                  showTotal: (total, range) =>
                     `${range[0]}-${range[1]} dan ${total} ta ariza`,
                 }}
                 className="custom-submission-table"
@@ -480,7 +480,7 @@ export default function MySubmissionsPage() {
               color: item.color,
               dot: <ClockCircleOutlined />,
               children: (
-                <Card 
+                <Card
                   size="small"
                   className="mb-4 border-l-4 border-l-blue-500"
                 >
@@ -492,16 +492,16 @@ export default function MySubmissionsPage() {
                     #{item.submissionNumber} • {formatDate(item.date)}
                     {item.reviewNotes && (
                       <div className="mt-2">
-                        <Alert 
-                          message="Izoh" 
-                          description={item.reviewNotes} 
-                          type="info" 
-                          showIcon 
+                        <Alert
+                          message="Izoh"
+                          description={item.reviewNotes}
+                          type="info"
+                          showIcon
                         />
                       </div>
                     )}
                   </div>
-      </Card>
+                </Card>
               )
             }))}
           />

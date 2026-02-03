@@ -6,6 +6,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -17,6 +18,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -24,9 +26,12 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -36,6 +41,7 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -53,6 +59,18 @@
 /* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Body background for light mode */
+body {
+  background-color: rgba(246, 246, 246, 1);
+}
+
+/* Dark mode body background */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1d29;
+  }
 }
 
 /* Custom Scrollbar */
@@ -84,4 +102,17 @@ html {
 *:focus-visible {
   outline: 2px solid rgba(102, 126, 234, 0.5);
   outline-offset: 2px;
+}
+
+/* Ant Design Table Global Styles */
+.ant-table {
+  color: #484650 !important;
+}
+
+.ant-table-thead>tr>th {
+  color: #484650 !important;
+}
+
+.ant-table-tbody>tr>td {
+  color: #484650 !important;
 }

@@ -61,8 +61,8 @@ export default function ApplicantLayout({
           alignItems: "center", 
           minHeight: "100vh",
           background: theme === "dark" 
-            ? "linear-gradient(135deg, #1a1d29 0%, #252836 100%)" 
-            : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
+            ? "rgb(22, 29, 49)" 
+            : "rgb(246,246,246)"
         }}
       >
         <Spin size="large" />
@@ -75,15 +75,16 @@ export default function ApplicantLayout({
       style={{ 
         minHeight: "100vh", 
         background: theme === "dark" 
-          ? "linear-gradient(135deg, #1a1d29 0%, #252836 100%)" 
-          : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          ? "rgb(22, 29, 49)" 
+          : "rgb(246,246,246)",
         transition: "background 0.3s ease"
       }}
     >
       <ApplicantSidebar />
       <Layout 
         style={{ 
-          marginLeft: 280, 
+          marginLeft: 280,
+          marginRight:20, 
           background: "transparent",
           transition: "margin-left 0.3s ease"
         }}
@@ -91,17 +92,18 @@ export default function ApplicantLayout({
         <ApplicantHeader />
         <Content
           style={{
-            margin: "24px",
-            padding: 32,
+            marginTop: "20px",
+            padding: 22,
             minHeight: 280,
-            background: theme === "dark" ? "#1a1d29" : "#ffffff",
-            borderRadius: 16,
+            background: theme === "dark"
+            ? "rgb(40, 48, 70)"
+            : "rgba(255, 255, 255, 0.98)",
+            borderRadius: 6,
             color: theme === "dark" ? "#ffffff" : "#000000",
             boxShadow: theme === "dark" 
               ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)" 
               : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
             transition: "all 0.3s ease",
-            border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.06)",
           }}
         >
           {children}

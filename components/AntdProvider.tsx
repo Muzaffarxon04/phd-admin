@@ -2,6 +2,7 @@
 
 import { ConfigProvider, App, theme as antdTheme } from "antd";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import { useEffect } from "react";
 
 export default function AntdProvider({
   children,
@@ -11,6 +12,16 @@ export default function AntdProvider({
   const { theme } = useThemeStore();
   const isClient = typeof window !== "undefined";
 
+  useEffect(() => {
+    if (isClient) {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [theme, isClient]);
+
   // On server, use light theme as default to prevent hydration mismatch
   const currentTheme = isClient ? theme : "light";
 
@@ -19,6 +30,7 @@ export default function AntdProvider({
       theme={{
         algorithm:
           currentTheme === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+          
         token: {
           colorPrimary: "#667eea",
           borderRadius: 8,
