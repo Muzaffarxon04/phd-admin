@@ -246,19 +246,6 @@ export default function AdminSubmissionsPage() {
       </div>
     );
   }
-  console.log(submissions);
-  // Ensure submissions is always an array
-  const tableData = Array.isArray(submissions) ? submissions : [];
-
-  const cardStyle = {
-    background: theme === "dark" ? "#252836" : "#ffffff",
-    border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
-    borderRadius: "12px",
-    padding: "24px",
-    boxShadow: theme === "dark"
-      ? "0 4px 12px rgba(0, 0, 0, 0.2)"
-      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-  };
 
   return (
     <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
