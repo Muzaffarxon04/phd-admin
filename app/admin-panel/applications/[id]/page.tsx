@@ -472,7 +472,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       <h1 className="text-3xl font-bold mb-6">{application.title}</h1>
 
       <Card className="mb-6">
-        <Descriptions bordered>
+        <Descriptions bordered column={1}>
           <Descriptions.Item label="ID">{application.id}</Descriptions.Item>
           <Descriptions.Item label="Holati">
             <Tag color={application.status === "PUBLISHED" ? "green" : "default"}>{application.status}</Tag>
@@ -481,7 +481,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           <Descriptions.Item label="Boshlanish">{formatDate(application.start_date)}</Descriptions.Item>
           <Descriptions.Item label="Tugash">{formatDate(application.end_date)}</Descriptions.Item>
           <Descriptions.Item label="Arizalar soni">{application.total_submissions}</Descriptions.Item>
-          <Descriptions.Item label="Tavsif">{application.description}</Descriptions.Item>
+          <Descriptions.Item  label="Tavsif">{application.description}</Descriptions.Item>
 
         </Descriptions>
 

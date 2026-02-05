@@ -12,6 +12,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "PhD Imtihonlar Tizimi",
   description: "Oliy ta'lim tizimida malakaviy imtihonlar uchun hujjatlarni onlayn topshirish",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

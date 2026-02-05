@@ -40,7 +40,7 @@ export default function ApplicantHome() {
             <Image src="/logo.png" alt="Logo" width={35} height={35} />
             <span className={`text-xl font-bold tracking-tight ${theme === "dark" ? "text-white" : "text-[#1d4ed8]"
               }`}>
-              PhD System
+              PhD Tizimi
             </span>
           </Link>
 
@@ -275,7 +275,7 @@ export default function ApplicantHome() {
                 href={isLoggedIn ? "/dashboard" : "/register"}
                 className="group relative inline-flex items-center justify-center gap-4 px-12 py-5 bg-white text-blue-700 font-extrabold text-xl rounded-2xl shadow-2xl hover:bg-blue-50 transition-all duration-500 transform hover:scale-105 active:scale-95 overflow-hidden"
               >
-                <span className="relative z-10 flex items-center gap-3 text-blue-700">
+                <span className="relative z-10 flex items-center gap-3 text-white">
                   {isLoggedIn ? "Kabinetga o'tish" : "Hoziroq ro'yxatdan o'tish"}
                   <ArrowRightOutlined className="transition-transform duration-300 group-hover:translate-x-2" />
                 </span>
@@ -304,7 +304,7 @@ export default function ApplicantHome() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 ">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.png" alt="Logo" width={45} height={45} />
-              <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#1D4ED8]"}`}>PhD System</span>
+              <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#1D4ED8]"}`}>PhD Tizimi</span>
             </Link>
 
           </div>
