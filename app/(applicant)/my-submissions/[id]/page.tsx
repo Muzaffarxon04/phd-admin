@@ -18,12 +18,25 @@ import {
   Result,
   Badge,
   Steps,
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Radio,
+  Checkbox,
+  InputNumber,
+  Upload
 } from "antd";
+import type { UploadFile } from "antd/es/upload/interface";
+import dayjs from "dayjs";
+// import type { Dayjs } from "dayjs";
 import {
   useGet,
   usePost,
+  useUpload,
+  useUploadPatch,
   // usePatch, 
-  // useUpload 
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -50,7 +63,7 @@ import {
   InboxOutlined,
   FileTextOutlined
 } from "@ant-design/icons";
-
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const { Title, Text } = Typography;
 import { useState } from "react";
 interface Submission {
@@ -157,6 +170,107 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
       message.error(error.message || "Topshirishda xatolik");
     },
   });
+
+  // Fetch application details to get field definitions (options, types, etc.)
+  const { data: applicationData } = useGet<{ data: any }>(
+    submission?.application?.id ? `/applicant/applications/${submission.application.id}/` : "",
+    { enabled: !!submission?.application?.id }
+  );
+  const applicationFields = applicationData?.data?.fields || [];
+
+  const { mutate: updateSubmission, isPending: isUpdating } = useUploadPatch(
+    `/applicant/submissions/${id}/update/`,
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
+        message.success("Ariza muvaffaqiyatli yangilandi!");
+        setIsEditModalOpen(false);
+      },
+      onError: (error) => {
+        message.error(error.message || "Yangilashda xatolik");
+      },
+    }
+  );
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm] = Form.useForm();
+
+  const handleEditClick = () => {
+    if (!submission || !applicationFields.length) return;
+
+    // Prefill form
+    const initialValues: Record<string, any> = {};
+    submission.answers.forEach((ans) => {
+      const fieldDef = applicationFields.find((f: any) => f.id === ans.field);
+      if (fieldDef) {
+        if (fieldDef.field_type === "FILE" && (ans.answer || ans.answer_text)) {
+          // Prefill fileList for Upload component
+          initialValues[`field_${ans.field}`] = [{
+            uid: '-1',
+            name: 'Fayl yuklangan',
+            status: 'done',
+            url: BASE_URL?.replace("/api/v1", "") + (ans.answer || ans.answer_text || ""),
+          }];
+        } else if (fieldDef.field_type === "DATE" && ans.answer) {
+          initialValues[`field_${ans.field}`] = dayjs(ans.answer);
+        } else if (fieldDef.field_type === "CHECKBOX" && ans.answer) {
+          // Assuming checkbox answer is stored as comma separated string or similar
+          initialValues[`field_${ans.field}`] = ans.answer.split(",").map((s: string) => s.trim());
+        } else {
+          initialValues[`field_${ans.field}`] = ans.answer || ans.answer_text;
+        }
+      }
+    });
+
+    editForm.setFieldsValue(initialValues);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (values: any) => {
+    const formData = new FormData();
+    const answers: any[] = [];
+
+    applicationFields.forEach((field: any) => {
+      const value = values[`field_${field.id}`];
+
+      if (field.field_type === "FILE") {
+        if (value && Array.isArray(value) && value.length > 0) {
+          // If new file uploaded (originFileObj exists)
+          if (value[0].originFileObj) {
+            formData.append(`field_${field.id}_file`, value[0].originFileObj);
+          }
+        }
+
+        // We push empty string for file answer text or keep it as is if not updating
+        answers.push({
+          field_id: field.id,
+          answer_text: "",
+        });
+        return;
+      }
+
+      let answerText = "";
+      if (value !== undefined && value !== null) {
+        if (field.field_type === "DATE") {
+          answerText = value.format("YYYY-MM-DD");
+        } else if (Array.isArray(value)) {
+          answerText = value.join(", ");
+        } else {
+          answerText = String(value);
+        }
+      }
+
+      if (answerText) {
+        answers.push({
+          field_id: field.id,
+          answer_text: answerText,
+        });
+      }
+    });
+
+    formData.append("answers", JSON.stringify(answers));
+    updateSubmission(formData);
+  };
 
   // const { mutate: updateSubmission } = usePatch(`/applicant/submissions/${id}/update/`, {
   //   onSuccess: () => {
@@ -317,7 +431,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   </div>
 
                   <div className="space-y-4">
-                 
+
                     {submission.submitted_at && (
                       <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
                         <Text style={textStyle}>Topshirilgan</Text>
@@ -376,7 +490,17 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               {/* Main Content: Answers */}
               <Col xs={24} lg={16}>
                 <Card className="border-0 mb-6" style={cardStyle} title={
-                  <span style={{ fontSize: '16px', ...titleStyle }}>Ariza ma'lumotlari</span>
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontSize: '16px', ...titleStyle }}>Javoblar</span>
+                    <Button
+                      size="large"
+                      type="primary"
+                      className="h-[40px] rounded-lg"
+                      onClick={handleEditClick}
+                    >
+                      Tahrirlash
+                    </Button>
+                  </div>
                 }>
                   <List
                     itemLayout="vertical"
@@ -388,7 +512,18 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                             {answer.field_label}
                           </Text>
                           <div className="text-base" style={{ color: theme === 'dark' ? '#e5e7eb' : '#1f2937' }}>
-                            {answer.answer || answer.answer_text || "—"}
+                            {answer.field_type === "FILE" ? (
+                              <a
+                                href={BASE_URL?.replace("/api/v1", "") + (answer.answer || answer.answer_text || "")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Faylni ko'rish
+                              </a>
+                            ) : (
+                              answer.answer || answer.answer_text || "—"
+                            )}
                           </div>
                         </div>
                       </List.Item>
@@ -445,13 +580,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                         >
                           Topshirish
                         </Button>
-                        <Button
-                          size="large"
-                          block
-                          className="h-[40px] rounded-lg"
-                        >
-                          Tahrirlash
-                        </Button>
+
                       </>
                     )}
 
@@ -488,6 +617,87 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
           </>
         )}
       </div>
+      <Modal
+        title="Arizani tahrirlash"
+        open={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        footer={null}
+        width={800}
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleEditSubmit}
+        >
+          {applicationFields
+            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+            .map((field: any) => (
+              <Form.Item
+                key={field.id}
+                name={`field_${field.id}`}
+                label={field.label}
+                rules={[{ required: field.required, message: "To'ldirish majburiy" }]}
+                valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
+                getValueFromEvent={field.field_type === "FILE" ? (e: any) => {
+                  if (Array.isArray(e)) {
+                    return e;
+                  }
+                  return e?.fileList;
+                } : undefined}
+              >
+                {(() => {
+                  switch (field.field_type) {
+                    case "TEXT": return <Input />;
+                    case "TEXTAREA": return <Input.TextArea rows={4} />;
+                    case "NUMBER": return <InputNumber className="w-full" />;
+                    case "DATE": return <DatePicker className="w-full" format="YYYY-MM-DD" />;
+                    case "SELECT":
+                      return (
+                        <Select>
+                          {(field.options || []).map((opt: string) => (
+                            <Select.Option key={opt} value={opt}>{opt}</Select.Option>
+                          ))}
+                        </Select>
+                      );
+                    case "RADIO":
+                      return (
+                        <Radio.Group>
+                          {(field.options || []).map((opt: string) => (
+                            <Radio key={opt} value={opt}>{opt}</Radio>
+                          ))}
+                        </Radio.Group>
+                      );
+                    case "CHECKBOX":
+                      return (
+                        <Checkbox.Group>
+                          <Row>
+                            {(field.options || []).map((opt: string) => (
+                              <Col span={24} key={opt}><Checkbox value={opt}>{opt}</Checkbox></Col>
+                            ))}
+                          </Row>
+                        </Checkbox.Group>
+                      );
+                    case "FILE":
+                      return (
+                        <Upload
+                          maxCount={1}
+                          beforeUpload={() => false}
+                          listType="picture"
+                        >
+                          <Button icon={<UploadOutlined />}>Fayl yuklash</Button>
+                        </Upload>
+                      );
+                    default: return <Input />;
+                  }
+                })()}
+              </Form.Item>
+            ))}
+          <div className="flex justify-end gap-2 mt-4">
+            <Button onClick={() => setIsEditModalOpen(false)}>Bekor qilish</Button>
+            <Button type="primary" htmlType="submit" loading={isUpdating}>Saqlash</Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }

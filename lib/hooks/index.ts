@@ -7,6 +7,7 @@ export {
   usePatch,
   useDelete,
   useUpload,
+  useUploadPatch,
   API_BASE_URL,
   apiRequest,
   apiUpload,

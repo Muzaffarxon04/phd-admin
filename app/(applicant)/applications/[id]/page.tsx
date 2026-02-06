@@ -18,7 +18,7 @@ import {
 } from "antd";
 import {
   useGet,
-  usePost
+  useUpload
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -257,7 +257,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   const specialities = application?.specialities || [];
 
-  const { mutate: createSubmission, isPending: isCreating } = usePost<unknown, SubmissionData>(
+  const { mutate: createSubmission, isPending: isCreating } = useUpload<unknown>(
     "/applicant/submissions/create/",
     {
       onSuccess: () => {
@@ -277,27 +277,42 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!application) return;
 
-    // Validate speciality selection if needed (assuming it's optional but recommended to be explicit if it was required in requirements, but user said "speciality keyida... yubor", making it sound necessary part of payload)
+    // Validate speciality selection if needed
     if (!selectedSpeciality) {
       message.error("Iltimos, mutaxassislikni tanlang!");
       return;
     }
 
-    const answers: Array<{ field_id: number; answer_text?: string; file?: File }> = [];
+    const formData = new FormData();
+    formData.append("application", String(application.id));
+    formData.append("speciality", String(selectedSpeciality));
+
+    const answers: Array<{
+      field_id: number;
+      answer_text: string;
+      answer_number: null;
+      answer_date: null;
+      answer_json: Record<string, unknown>;
+    }> = [];
 
     application.fields.forEach((field) => {
       const value = values[`field_${field.id}`];
 
       if (field.field_type === "FILE") {
-        // File upload will be handled separately in submission detail page
-        // For now, we'll skip file fields in initial submission
-        if (field.required) {
-          // Add empty answer for required file fields
-          answers.push({
-            field_id: field.id,
-            answer_text: "",
-          });
+        // Handle file upload
+   
+        if (value && Array.isArray(value) && value.length > 0 && value[0].originFileObj) {
+          formData.append(`field_${field.id}_file`, value[0].originFileObj);
         }
+
+        // Push empty answer for file field as per requirement
+        answers.push({
+          field_id: field.id,
+          answer_text: "",
+          answer_number: null,
+          answer_date: null,
+          answer_json: {},
+        });
         return;
       }
 
@@ -322,15 +337,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         answers.push({
           field_id: field.id,
           answer_text: answerText || "",
+          answer_number: null,
+          answer_date: null,
+          answer_json: {},
         });
       }
     });
 
-    createSubmission({
-      application: application.id,
-      speciality: selectedSpeciality,
-      answers,
-    });
+    formData.append("answers", JSON.stringify(answers));
+
+    createSubmission(formData);
   };
 
   if (isLoading) {

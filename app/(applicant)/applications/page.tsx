@@ -170,7 +170,7 @@ function ApplicationsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-          
+
               <Input
                 placeholder="Arizani izlang..."
                 className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"
@@ -370,6 +370,22 @@ function ApplicationsPage() {
                             }}
                           />
                         </div>
+                        <Button
+                          type="primary"
+                          block
+                          className="mt-4"
+                          style={{
+                            height: "40px",
+                            fontWeight: 500,
+                            borderRadius: "8px"
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/applications/${app.id}`);
+                          }}
+                        >
+                          Ariza topshirish
+                        </Button>
                       </div>
                     </div>
                   </div>

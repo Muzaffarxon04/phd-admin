@@ -159,12 +159,13 @@ async function apiRequest<T>(
 // File upload function
 async function apiUpload(
   endpoint: string,
-  formData: FormData
+  formData: FormData,
+  method: string = "POST"
 ): Promise<unknown> {
   const url = `${API_BASE_URL}${endpoint}`;
 
   const config: RequestInit = {
-    method: "POST",
+    method,
     headers: {},
   };
 
@@ -300,13 +301,24 @@ export function useDelete<TData = unknown>(
   });
 }
 
-// Upload file hook
+// Upload file hook (POST)
 export function useUpload<TData = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, FormData>
 ): UseMutationResult<TData, ApiError, FormData> {
   return useMutation<TData, ApiError, FormData>({
-    mutationFn: (formData) => apiUpload(endpoint, formData) as Promise<TData>,
+    mutationFn: (formData) => apiUpload(endpoint, formData, "POST") as Promise<TData>,
+    ...options,
+  });
+}
+
+// Upload file hook (PATCH)
+export function useUploadPatch<TData = unknown>(
+  endpoint: string,
+  options?: UseMutationOptions<TData, ApiError, FormData>
+): UseMutationResult<TData, ApiError, FormData> {
+  return useMutation<TData, ApiError, FormData>({
+    mutationFn: (formData) => apiUpload(endpoint, formData, "PATCH") as Promise<TData>,
     ...options,
   });
 }
