@@ -14,6 +14,7 @@ import {
   // LinkOutlined,
   // SettingOutlined,
   LogoutOutlined,
+  FileWordOutlined
 } from "@ant-design/icons";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -38,7 +39,7 @@ const menuItems = [
   {
     key: "/admin-panel/submissions",
     icon: <FileTextOutlined />,
-    label: "Topshirilgan Arizalar",
+    label: "Qabul Hujjatlari",
   },
 
   {
@@ -50,6 +51,11 @@ const menuItems = [
     key: "/admin-panel/specialities",
     icon: <BookOutlined />,
     label: "Mutaxassisliklar",
+  },
+  {
+    key: "/admin-panel/guvohnoma",
+    icon: <FileWordOutlined />,
+    label: "Guvohnoma",
   },
   // {
   //   key: "/admin-panel/application-specialities",

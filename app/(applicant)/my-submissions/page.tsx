@@ -132,7 +132,7 @@ export default function MySubmissionsPage() {
       dataIndex: "submission_number",
       key: "submission_number",
       render: (text: string, record: Submission) => (
-        <div className="px-4 py-2">
+        <div>
           <div className="font-bold text-base" style={{ color: "#7367f0" }}>
             #{text}
           </div>
@@ -399,7 +399,7 @@ export default function MySubmissionsPage() {
       
           <div className="flex items-center gap-3">
             <div className="relative">
-              <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70" />
+            
               <Input
                 placeholder="Arizani izlang..."
                 className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"

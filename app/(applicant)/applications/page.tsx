@@ -170,7 +170,7 @@ function ApplicationsPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70" />
+          
               <Input
                 placeholder="Arizani izlang..."
                 className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"

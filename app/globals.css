@@ -116,3 +116,32 @@ body {
 .ant-table-tbody>tr>td {
   color: #484650 !important;
 }
+
+/* Admin Panel Specific Table Styles */
+.admin-page-container .ant-table-thead>tr>th,
+.admin-page-container .ant-table-tbody>tr>td {
+  padding: 0 12px !important;
+  /* Reduced padding for smaller row height */
+  font-size: 13px !important;
+  /* Smaller font size */
+}
+
+.admin-page-container .ant-table-thead>tr>th span,
+.admin-page-container .ant-table-tbody>tr>td div,
+.admin-page-container .ant-table-tbody>tr>td span {
+  font-size: 13px !important;
+}
+
+/* Specific overrides for common classes used in tables */
+.admin-page-container .text-base {
+  font-size: 14px !important;
+  /* Reduced from default base */
+}
+
+.admin-page-container .text-sm {
+  font-size: 12px !important;
+}
+
+.admin-page-container .text-xs {
+  font-size: 11px !important;
+}

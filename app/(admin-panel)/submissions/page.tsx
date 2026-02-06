@@ -18,10 +18,11 @@ import { useGet } from "@/lib/hooks";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor
+import {
+  formatDate, getApplicationStatusLabel, getApplicationStatusColor
   //  getPaymentStatusColor
 
- } from "@/lib/utils";
+} from "@/lib/utils";
 import { useState, useMemo } from "react";
 
 const { Title } = Typography;
@@ -60,7 +61,7 @@ export default function SubmissionsPage() {
   const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse>("/admin/submissions/");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Handle the specific response structure
   const submissions = useMemo(() => {
     if (submissionsData) {
@@ -68,14 +69,14 @@ export default function SubmissionsPage() {
     }
     return [];
   }, [submissionsData]);
-  
+
   // Filter submissions based on status and search
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(submission => {
       const matchesStatus = statusFilter === "all" || submission.status === statusFilter;
       const matchesSearch = submission.application_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           submission.applicant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           submission.submission_number.toLowerCase().includes(searchTerm.toLowerCase());
+        submission.applicant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.submission_number.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStatus && matchesSearch;
     });
   }, [submissions, statusFilter, searchTerm]);
@@ -236,9 +237,9 @@ export default function SubmissionsPage() {
       render: () => (
         <Space size="small">
           <Tooltip title="Ko'rish">
-            <Button 
-              type="primary" 
-              size="small" 
+            <Button
+              type="primary"
+              size="small"
               icon={<EyeOutlined />}
             />
           </Tooltip>
@@ -252,7 +253,7 @@ export default function SubmissionsPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
-          <Title level={2} className="mb-8">Topshirilgan Arizalar</Title>
+          <Title level={2} className="mb-8">Qabul Hujjatlari</Title>
           <TableSkeleton />
         </div>
       </div>
@@ -261,7 +262,7 @@ export default function SubmissionsPage() {
 
   if (error) {
     let errorMessage = error.message || "Ma'lumotlarni yuklashda xatolik yuz berdi";
-    
+
     // Handle different error formats
     if (typeof error === "object" && error !== null) {
       const errorData = (error as { data?: unknown }).data;
@@ -275,11 +276,11 @@ export default function SubmissionsPage() {
         }
       }
     }
-    
+
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-4xl mx-auto text-center">
-          <ErrorState 
+          <ErrorState
             description={errorMessage}
             onRetry={() => window.location.reload()}
           />
@@ -294,7 +295,7 @@ export default function SubmissionsPage() {
       <div className=" from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Topshirilgan Arizalar</h1>
+            <h1 className="text-4xl font-bold mb-4">Qabul Hujjatlari</h1>
             <p className="text-xl text-purple-100">Barcha arizalarni boshqarish</p>
           </div>
 
@@ -348,10 +349,10 @@ export default function SubmissionsPage() {
         {/* Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <Title level={2} className="mb-0!">Arizalar jadvali</Title>
-          
+
           <div className="flex items-center gap-4">
             <div className="relative">
-              <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+             
               <input
                 type="text"
                 placeholder="Qidirish..."
@@ -360,7 +361,7 @@ export default function SubmissionsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <select
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
               value={statusFilter}
@@ -408,7 +409,7 @@ export default function SubmissionsPage() {
               </div>
             </Card>
           </Col>
-          
+
           <Col xs={24} lg={12}>
             <Card className="transform hover:scale-105 transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
@@ -439,9 +440,9 @@ export default function SubmissionsPage() {
         </Row>
 
         {/* Table */}
-        <Card 
+        <Card
           className="transform hover:scale-[1.01] transition-all duration-300"
-          bodyStyle={{ 
+          bodyStyle={{
             padding: "0",
             borderRadius: "16px",
             overflow: "hidden"
@@ -450,7 +451,7 @@ export default function SubmissionsPage() {
           <div className="p-6">
             {filteredSubmissions.length === 0 ? (
               <div className="text-center py-12">
-                <EmptyState 
+                <EmptyState
                   description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
                   action={
                     <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>
@@ -460,15 +461,15 @@ export default function SubmissionsPage() {
                 />
               </div>
             ) : (
-              <Table 
-                columns={columns} 
-                dataSource={filteredSubmissions} 
+              <Table
+                columns={columns}
+                dataSource={filteredSubmissions}
                 rowKey="id"
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
                   showQuickJumper: true,
-                  showTotal: (total, range) => 
+                  showTotal: (total, range) =>
                     `${range[0]}-${range[1]} dan ${total} ta ariza`,
                 }}
                 className="custom-submission-table"

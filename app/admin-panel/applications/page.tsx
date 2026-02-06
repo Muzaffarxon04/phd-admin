@@ -46,7 +46,7 @@ const columns: ColumnsType<Application> = [
     ),
     key: "title_info",
     render: (_, record) => (
-      <div className="px-4 py-2">
+      <div>
         <div className="font-bold text-sm text-[#7367f0] mb-1">
           #{record.id}
         </div>
@@ -137,7 +137,10 @@ const columns: ColumnsType<Application> = [
       <div className="flex justify-center py-2">
         <Link href={`/admin-panel/applications/${record.id}`}>
           <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
+                ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
+                : "bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
+              }`}
             icon={<EyeOutlined style={{ fontSize: "18px" }} />}
           />
         </Link>
@@ -275,7 +278,6 @@ export default function AdminApplicationsPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;

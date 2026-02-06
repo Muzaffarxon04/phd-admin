@@ -90,12 +90,7 @@ export default function ReportsPage() {
     // Here you would call the actual export API
   };
 
-  const statusColors = {
-    PUBLISHED: "green",
-    DRAFT: "orange",
-    CLOSED: "red",
-    ARCHIVED: "gray",
-  };
+
 
   const [, _setDateRange] = useState<unknown>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("month");

@@ -50,6 +50,43 @@ export interface ExaminerDetail {
   recent_assignments: string;
 }
 
+export interface ExaminerStatistics {
+  total_submissions: number;
+  approved_submissions: number;
+  rejected_submissions: number;
+  pending_submissions: number;
+  average_score: string;
+}
+
+export interface Assignment {
+  id: number;
+  submission_number: string;
+  status: string;
+}
+
+export interface ExaminerWorkloadData {
+  examiner: {
+    id: number;
+    title: string;
+    department: string;
+  };
+  workload: {
+    total_assignments: number;
+    pending_reviews: number;
+    in_progress_reviews: number;
+    completed_reviews: number;
+    total_reviews: number;
+  };
+  assignments: Assignment[];
+}
+
+export interface ExaminerWorkloadResponse {
+  message: string;
+  error: null | string;
+  status: number;
+  data: ExaminerWorkloadData;
+}
+
 // Examiner API Service
 export const examinerApi = {
   /**
@@ -120,4 +157,23 @@ export const examinerApi = {
     });
   },
 
+  /**
+   * GET /examiner/{id}/statistics/
+   * Get examiner statistics
+   */
+  getExaminerStatistics: async (id: string): Promise<ExaminerStatistics> => {
+    return apiRequest<ExaminerStatistics>(`/examiner/${id}/statistics/`, {
+      method: "GET",
+    });
+  },
+
+  /**
+   * GET /examiner/{id}/workload/
+   * Get examiner workload details
+   */
+  getExaminerWorkload: async (id: string): Promise<ExaminerWorkloadResponse> => {
+    return apiRequest<ExaminerWorkloadResponse>(`/examiner/${id}/workload/`, {
+      method: "GET",
+    });
+  },
 };

@@ -74,6 +74,7 @@ export default function AdminPanelLayout({
       >
         <Header />
         <Content
+          className="admin-page-container"
           style={{
             marginTop: "20px",
             padding: 22,

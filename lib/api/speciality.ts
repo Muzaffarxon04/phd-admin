@@ -37,6 +37,14 @@ export interface SpecialityDetail {
   applications: string;
 }
 
+export interface SpecialityStatistics {
+  total_submissions: number;
+  approved_submissions: number;
+  rejected_submissions: number;
+  pending_submissions: number;
+  average_score: string;
+}
+
 // Speciality API Service
 export const specialityApi = {
   /**
@@ -104,6 +112,16 @@ export const specialityApi = {
   deleteSpeciality: async (): Promise<{ message: string }> => {
     return apiRequest<{ message: string }>("/speciality/delete/", {
       method: "DELETE",
+    });
+  },
+
+  /**
+   * GET /speciality/specialities/{id}/statistics/
+   * Get speciality statistics
+   */
+  getSpecialityStatistics: async (id: string): Promise<SpecialityStatistics> => {
+    return apiRequest<SpecialityStatistics>(`/speciality/specialities/${id}/statistics/`, {
+      method: "GET",
     });
   },
 };

@@ -11,21 +11,23 @@ import {
   message,
   Popconfirm,
   Typography,
+  Card,
 } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
+  // SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   BookOutlined,
   CodeOutlined,
   TeamOutlined,
   CheckCircleOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  LineChartOutlined,
+  ClockCircleOutlined
 } from "@ant-design/icons";
 import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
-import type { Speciality } from "@/types";
-// import { formatDate } from "@/lib/utils";
+import type { Speciality, SpecialityStatistics } from "@/types";
 
 const { Title } = Typography;
 
@@ -34,6 +36,8 @@ export default function SpecialitiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSpeciality, setEditingSpeciality] = useState<Speciality | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [statsSpecialityId, setStatsSpecialityId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   // Fetch specialities
@@ -45,6 +49,12 @@ export default function SpecialitiesPage() {
       data: Speciality[];
     };
   }>("/speciality/list/");
+
+  // Fetch speciality statistics
+  const { data: specialityStats, isLoading: isStatsLoading } = useGet<{ data: SpecialityStatistics }>(
+    statsSpecialityId ? `/speciality/specialities/${statsSpecialityId}/statistics/` : "",
+    { enabled: !!statsSpecialityId }
+  );
 
   const specialities = specialitiesData?.data?.data || [];
 
@@ -150,7 +160,7 @@ export default function SpecialitiesPage() {
       dataIndex: "name",
       key: "name",
       render: (name: string) => (
-        <div className="px-4 py-2 font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+        <div className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
           {name}
         </div>
       ),
@@ -236,13 +246,21 @@ export default function SpecialitiesPage() {
         </div>
       ),
       key: "actions",
-      width: 120,
+      width: 150,
       render: (_: unknown, record: Speciality) => (
         <div className="flex items-center justify-center gap-2 py-2">
           <Button
             className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
             icon={<EditOutlined style={{ fontSize: "18px" }} />}
             onClick={() => handleEdit(record)}
+          />
+          <Button
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 border-0 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-sm"
+            icon={<LineChartOutlined style={{ fontSize: "18px" }} />}
+            onClick={() => {
+              setStatsSpecialityId(record.id);
+              setIsStatsModalOpen(true);
+            }}
           />
           <Popconfirm
             title="O&apos;chirish"
@@ -300,7 +318,7 @@ export default function SpecialitiesPage() {
       >
         <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
           <div className="relative max-w-md">
-            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70 z-10" />
+
             <Input
               placeholder="Mutaxassislik nomini qidiring..."
               className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
@@ -344,7 +362,6 @@ export default function SpecialitiesPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
@@ -461,6 +478,57 @@ export default function SpecialitiesPage() {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Statistics Modal */}
+      <Modal
+        title="Mutaxassislik Statistikasi"
+        open={isStatsModalOpen}
+        onCancel={() => {
+          setIsStatsModalOpen(false);
+          setStatsSpecialityId(null);
+        }}
+        footer={null}
+        width={500}
+        className="premium-modal"
+      >
+        <div className="py-4">
+          {isStatsLoading ? (
+            <div className="flex justify-center py-8">
+              <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
+            </div>
+          ) : specialityStats?.data ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Jami arizalar</div>
+                  <div className="text-xl font-bold text-[#7367f0]">{specialityStats.data.total_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                  <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
+                  <div className="text-xl font-bold text-[#28c76f]">{specialityStats.data.approved_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
+                  <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
+                  <div className="text-xl font-bold text-[#ea5455]">{specialityStats.data.rejected_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                  <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
+                  <div className="text-xl font-bold text-[#ff9f43]">{specialityStats.data.pending_submissions || 0}</div>
+                </Card>
+              </div>
+
+              <div className="rounded-xl p-4 text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
+                <div className="text-gray-400 text-xs mb-1">O&apos;rtacha ball</div>
+                <div className="text-2xl font-bold text-[#7367f0]">{specialityStats.data.average_score || "0.0"}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              Statistika ma&apos;lumotlari topilmadi
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

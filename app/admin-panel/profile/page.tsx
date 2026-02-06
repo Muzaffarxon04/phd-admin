@@ -1,18 +1,33 @@
 "use client";
 
+import {
+  Breadcrumb,
+  Card,
+  Table,
+  Modal,
+  Form,
+  Input,
+  message,
+  Typography,
+  Button,
+} from "antd";
+
 import { useState } from "react";
-import { Form, Input, Button, App, Avatar, Upload, Divider, Typography } from "antd";
-import { UserOutlined, MailOutlined, PhoneOutlined, SecurityScanOutlined, LogoutOutlined, EditOutlined, SaveOutlined, CloseOutlined } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
+import { EditOutlined, SaveOutlined } from "@ant-design/icons";
+
 import { useGet, usePatch } from "@/lib/hooks";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useThemeStore } from "@/lib/stores/themeStore";
-const { Title, Text } = Typography;
+
+const { Title } = Typography;
+
+/* ================= TYPES ================= */
 
 interface AdminProfileData {
   id: number;
   first_name: string;
   last_name: string;
+  middle_name?: string;
   email: string;
   phone_number: string;
   role: string;
@@ -27,116 +42,178 @@ interface AdminProfileData {
 interface UpdateAdminProfileData {
   first_name?: string;
   last_name?: string;
+  middle_name?: string;
   email?: string;
-  phone_number?: string;
-  pinfl?: string;
-  address?: string;
-  passport_series?: string;
-  passport_number?: string;
 }
 
-export default function AdminProfilePage() {
-  const [form] = Form.useForm();
-  const [isEditing, setIsEditing] = useState(false);
-  const [filePath, setFilePath] = useState("");
+/* ================= PAGE ================= */
 
-  const router = useRouter();
-  const { message } = App.useApp();
-  const { logout } = useAuthStore();
+export default function AdminProfilePage() {
+  const [form] = Form.useForm<UpdateAdminProfileData>();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const { theme } = useThemeStore();
+  const { user: authUser } = useAuthStore();
 
   // Get user profile data
-  const { data: profile, refetch } = useGet<AdminProfileData>("/auth/me/");
+  const { data: profile, isLoading, refetch } = useGet<AdminProfileData>("/auth/me/");
 
   // Update profile mutation
   const { mutate: updateProfile, isPending: isUpdating } = usePatch<AdminProfileData, UpdateAdminProfileData>("/auth/me/", {
     onSuccess: () => {
       message.success("Profil muvaffaqiyatli yangilandi!");
-      setIsEditing(false);
+      setIsProfileModalOpen(false);
       refetch();
     },
     onError: (error) => {
       let errorMessage = error.message || "Xatolik yuz berdi";
-
       if (Array.isArray((error).data)) {
         errorMessage = (error).data.join(", ");
       }
-
       message.error(errorMessage);
     },
   });
 
-  // Form initial values
-  const initialValues = profile ? {
-    first_name: profile.first_name,
-    last_name: profile.last_name,
-    email: profile.email,
-    phone_number: profile.phone_number,
-    pinfl: profile.pinfl,
-    address: profile.address,
-    passport_series: profile.passport_series,
-    passport_number: profile.passport_number,
-  } : {};
+  /* ================= TABLE DATA ================= */
 
-  const handleSave = (values: UpdateAdminProfileData) => {
-    updateProfile(values);
-  };
+  const fullName = profile
+    ? `${profile.last_name || ""} ${profile.first_name || ""} ${profile.middle_name || ""}`.trim()
+    : authUser?.full_name || "Admin";
+
+  const userInfoData = [
+    {
+      key: "1",
+      label: "F.I.SH.",
+      value: fullName.toUpperCase(),
+    },
+    {
+      key: "2",
+      label: "Elektron pochta",
+      value: profile?.email || "Kiritilmagan",
+    },
+    {
+      key: "3",
+      label: "Rol",
+      value: profile?.role || authUser?.role || "Boshqaruvchi",
+    },
+    {
+      key: "4",
+      label: "Telefon raqami",
+      value: profile?.phone_number || "Kiritilmagan",
+    },
+    {
+      key: "5",
+      label: "PINFL",
+      value: profile?.pinfl || "Kiritilmagan",
+    },
+    {
+      key: "6",
+      label: "Manzil",
+      value: profile?.address || "Kiritilmagan",
+    },
+    {
+      key: "7",
+      label: "Passport Serya",
+      value: profile?.passport_series || "Kiritilmagan",
+    },
+    {
+      key: "8",
+      label: "Passport Raqam",
+      value: profile?.passport_number || "Kiritilmagan",
+    },
+    {
+      key: "9",
+      label: "Ro'yxatdan o'tgan",
+      value: profile?.created_at?.split('T')[0] || "N/A",
+    },
+  ];
+
+  const columns = [
+    {
+      title: "MA'LUMOT TURI",
+      dataIndex: "label",
+      key: "label",
+      width: "25%",
+      render: (text: string) => (
+        <span style={{
+          color: theme === "dark" ? "rgb(180, 183, 189)" : "#484650",
+          fontSize: "14px"
+        }}>{text}</span>
+      ),
+    },
+    {
+      title: "MA'LUMOT",
+      dataIndex: "value",
+      key: "value",
+      render: (text: string) => (
+        <span style={{
+          color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650",
+          fontSize: "14px"
+        }}>{text}</span>
+      ),
+    },
+  ];
+
+  /* ================= HANDLERS ================= */
 
   const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    form.resetFields();
     if (profile) {
       form.setFieldsValue({
         first_name: profile.first_name,
         last_name: profile.last_name,
+        middle_name: profile.middle_name,
         email: profile.email,
-        phone_number: profile.phone_number,
-        pinfl: profile.pinfl,
-        address: profile.address,
-        passport_series: profile.passport_series,
-        passport_number: profile.passport_number,
       });
     }
-    setIsEditing(false);
+    setIsProfileModalOpen(true);
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleSaveProfile = (values: UpdateAdminProfileData) => {
+    updateProfile(values);
   };
 
-
-  const uploadProps = {
-    beforeUpload: (file: File) => {
-      setFilePath(URL.createObjectURL(file));
-      return false;
-    },
-  };
-
-  // Get user name from auth store
-  const { user: authUser } = useAuthStore();
-  const { theme } = useThemeStore();
+  if (isLoading && !profile) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Admin Profili
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">Shaxsiy ma&apos;lumotlaringizni va profil sozlamalarini boshqaring</div>
-        </div>
+    <div className="space-y-6">
+      {/* Page Title & Breadcrumb */}
+      <div className="mb-4 flex items-center gap-4">
+        <Title level={4} className="!text-[24px] !mb-0 border-r border-[#d6dce1] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit", borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "rgb(214,220,225)" }}>
+          Admin Profili
+        </Title>
+        <Breadcrumb
+          items={[
+            {
+              href: "/admin-panel",
+              title: (
+                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "rgb(115, 103, 240)" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="align-text-top feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </span>
+              ),
+            },
+            { title: <span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Profil</span> },
+          ]}
+        />
+      </div>
 
-        <div className="flex items-center gap-3">
-          {!isEditing ? (
+      {/* User Info Card */}
+      <Card
+        title={
+          <div className="flex items-center justify-between w-full">
+            <span style={{ fontSize: "20px", fontWeight: 500, color: theme === "dark" ? "#ffffff" : "inherit" }}>
+              Foydalanuvchi ma&apos;lumotlari
+            </span>
             <Button
               type="primary"
               icon={<EditOutlined />}
               onClick={handleEdit}
-              className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+              className="h-[38px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
               style={{
                 background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
                 boxShadow: "0 8px 25px -8px #7367f0",
@@ -144,202 +221,100 @@ export default function AdminProfilePage() {
             >
               Tahrirlash
             </Button>
-          ) : (
-            <Button
-              onClick={handleCancel}
-              className="h-[42px] px-6 rounded-xl border font-bold flex items-center gap-2"
-              style={{
-                background: theme === "dark" ? "rgb(48, 56, 78)" : "#ffffff",
-                color: theme === "dark" ? "#ffffff" : "#484650",
-                borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "rgb(235, 233, 241)",
-              }}
-              icon={<CloseOutlined />}
-            >
-              Bekor qilish
-            </Button>
-          )}
-          <Button
-            danger
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-            className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-            style={{
-              background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
-              boxShadow: "0 8px 25px -8px #ea5455",
-            }}
-          >
-            Chiqish
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Avatar & Quick Info */}
-        <div className="space-y-6">
-          <div
-            className="rounded-xl overflow-hidden transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div className="p-8 text-center bg-[#7367f0]/5 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-              <div className="relative inline-block group">
-                <Upload {...uploadProps} showUploadList={false}>
-                  <Avatar
-                    size={120}
-                    src={filePath || undefined}
-                    icon={!filePath && <UserOutlined />}
-                    className="cursor-pointer ring-4 ring-[#7367f0]/20 transition-all duration-300 group-hover:ring-[#7367f0]/50"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <EditOutlined className="text-white text-2xl" />
-                  </div>
-                </Upload>
-              </div>
-              <Title level={4} className="!mt-4 !mb-0" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
-                {authUser?.full_name || "Admin"}
-              </Title>
-              <div className="text-[#7367f0] font-bold text-xs uppercase tracking-widest mt-1">
-                {authUser?.role || "Boshqaruvchi"}
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <Text style={{ color: "gray" }}>Status</Text>
-                <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase">Faol</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <Text style={{ color: "gray" }}>ID</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>#{profile?.id || "N/A"}</Text>
-              </div>
-              <div className="flex items-center justify-between">
-                <Text style={{ color: "gray" }}>Ro&apos;yxatdan o&apos;tgan</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{profile?.created_at?.split('T')[0] || "N/A"}</Text>
-              </div>
-            </div>
           </div>
+        }
+        style={{
+          borderRadius: 6,
+          background: "transparent",
+          boxShadow: "none",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+        }}
+        styles={{
+          header: {
+            borderBottom: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            padding: "16px 24px",
+            background: "transparent",
+          },
+          body: {
+            padding: 0,
+            background: "transparent",
+          },
+        }}
+        className="profile-card"
+      >
+        <Table
+          columns={columns}
+          dataSource={userInfoData}
+          pagination={false}
+          showHeader={true}
+          size="middle"
+          style={{ borderRadius: 0 }}
+          className="user-info-table"
+        />
+      </Card>
 
-          <div
-            className="rounded-xl p-6 space-y-4"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-            }}
-          >
-            <Title level={5} className="!mb-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-              <SecurityScanOutlined className="text-[#7367f0] mr-2" /> Xavfsizlik
-            </Title>
-            <p className="text-xs text-gray-400">Parolni o&apos;zgartirish uchun parolni tiklash tizimidan foydalaning.</p>
-            <Button
-              block
-              onClick={() => router.push("/forgot-password")}
-              className="rounded-xl h-[42px] border-0 font-bold"
-              style={{ background: "#7367f015", color: "#7367f0" }}
-            >
-              Parolni yangilash
-            </Button>
+      {/* EDIT MODAL */}
+      <Modal
+        open={isProfileModalOpen}
+        title="Profilni tahrirlash"
+        onCancel={() => setIsProfileModalOpen(false)}
+        onOk={() => form.submit()}
+        okButtonProps={{ loading: isUpdating, className: "bg-[#7367f0]", icon: <SaveOutlined /> }}
+        okText="Saqlash"
+        cancelText="Bekor qilish"
+      >
+        <Form form={form} layout="vertical" onFinish={handleSaveProfile} className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item name="first_name" label="Ism" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="last_name" label="Familiya" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
           </div>
-        </div>
-
-        {/* Right Column: Profile Form */}
-        <div className="lg:col-span-2">
-          <div
-            className="rounded-xl overflow-hidden transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-              <Title level={5} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Asosiy ma&apos;lumotlar</Title>
-            </div>
-
-            <div className="p-8">
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSave}
-                disabled={!isEditing}
-                initialValues={initialValues}
-                className="premium-form"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <Form.Item name="first_name" label="Ism" rules={[{ required: true }]}>
-                    <Input prefix={<UserOutlined />} />
-                  </Form.Item>
-                  <Form.Item name="last_name" label="Familiya" rules={[{ required: true }]}>
-                    <Input prefix={<UserOutlined />} />
-                  </Form.Item>
-                  <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>
-                    <Input prefix={<MailOutlined />} />
-                  </Form.Item>
-                  <Form.Item name="phone_number" label="Telefon" rules={[{ required: true }]}>
-                    <Input prefix={<PhoneOutlined />} />
-                  </Form.Item>
-                </div>
-
-                <Divider style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }} />
-
-                <Title level={5} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Passport ma&apos;lumotlari</Title>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <Form.Item name="pinfl" label="PINFL">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="address" label="Manzil">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="passport_series" label="Serya">
-                    <Input />
-                  </Form.Item>
-                  <Form.Item name="passport_number" label="Raqam">
-                    <Input />
-                  </Form.Item>
-                </div>
-
-                {isEditing && (
-                  <div className="flex gap-4 pt-8">
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={isUpdating}
-                      className="h-[45px] px-8 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-                      style={{ background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))", boxShadow: "0 8px 25px -8px #7367f0" }}
-                      icon={<SaveOutlined />}
-                    >
-                      Ma&apos;lumotlarni saqlash
-                    </Button>
-                    <Button onClick={handleCancel} className="h-[45px] px-8 rounded-xl font-bold">
-                      Bekor qilish
-                    </Button>
-                  </div>
-                )}
-              </Form>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item name="middle_name" label="Sharif">
+              <Input />
+            </Form.Item>
+            <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>
+              <Input />
+            </Form.Item>
           </div>
-        </div>
-      </div>
+        </Form>
+      </Modal>
 
       <style jsx global>{`
-        .premium-form .ant-form-item-label > label {
-          color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
-          font-weight: 600 !important;
-          font-size: 13px !important;
+        .user-info-table .ant-table {
+          background: transparent !important;
         }
-        .premium-form .ant-input, .premium-form .ant-input-affix-wrapper {
-          background: ${theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
-          border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+        
+        .user-info-table .ant-table-thead > tr > th {
+          background: transparent !important;
           color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
-          border-radius: 12px !important;
-          padding: 8px 12px !important;
+          font-weight: 600 !important;
+          font-size: 12px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+          padding: 0 24px !important;
         }
-        .premium-form .ant-input-prefix {
-          color: #7367f0 !important;
-          margin-right: 8px !important;
+        
+        .user-info-table .ant-table-tbody > tr > td {
+          background: transparent !important;
+          padding: 0 24px !important;
+          border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+        }
+        
+        .user-info-table .ant-table-tbody > tr:hover > td {
+          background: ${theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "rgba(115, 103, 240, 0.05)"} !important;
+        }
+        
+        .user-info-table .ant-table-tbody > tr:last-child > td {
+          border-bottom: none !important;
+        }
+        
+        .user-info-table .ant-table-container {
+          background: transparent !important;
         }
       `}</style>
     </div>

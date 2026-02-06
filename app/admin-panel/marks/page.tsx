@@ -36,128 +36,140 @@ import {
   FileTextOutlined,
   SolutionOutlined,
   TrophyOutlined,
+  SearchOutlined,
+  BarChartOutlined
 } from "@ant-design/icons";
-// import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
-import type {
-  ApplicantMark,
-  // ApplicantMarkCreate,
-  // ApplicantMarkUpdate,
-  // MarksStatistics,
-} from "@/lib/api/marks";
-import { formatDate } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { marksApi, ApplicantMark, ApplicantMarkCreate, ApplicantMarkUpdate } from "@/lib/api/marks";
+import { adminApi } from "@/lib/api/admin";
 
-// const { Option } = Select;
+const { Option } = Select;
 
 export default function MarksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<ApplicantMark | null>(null);
   const [form] = Form.useForm();
+  const queryClient = useQueryClient();
 
-  // Mock data - would come from API
-  const marksData = {
-    count: 245,
-    results: [
-      {
-        id: 1,
-        submission: 123,
-        submission_details: {
-          submission_number: "SUB-2025-001",
-          applicant_name: "Ali Valiyev",
-          speciality_name: "Kompyuter fanlari",
-          application_title: "PhD Entrance Exam 2025"
-        },
-        score: "85.50",
-        percentage: "85.50",
-        comments: "Yaxshi natija, lekin matematika bo'yicha kamchiliklar bor",
-        is_active: true,
-        marked_by: 5,
-        marked_at: "2025-01-20T14:30:00Z",
-        created_at: "2025-01-20T14:30:00Z",
-        updated_at: "2025-01-20T14:30:00Z",
-      },
-      {
-        id: 2,
-        submission: 124,
-        submission_details: {
-          submission_number: "SUB-2025-002",
-          applicant_name: "Gulnora Karimova",
-          speciality_name: "Matematika",
-          application_title: "PhD Entrance Exam 2025"
-        },
-        score: "92.00",
-        percentage: "92.00",
-        comments: "A'lo darajada, barcha fanlardan yaxshi natija",
-        is_active: true,
-        marked_by: 3,
-        marked_at: "2025-01-21T10:15:00Z",
-        created_at: "2025-01-21T10:15:00Z",
-        updated_at: "2025-01-21T10:15:00Z",
-      },
-      {
-        id: 3,
-        submission: 125,
-        submission_details: {
-          submission_number: "SUB-2025-003",
-          applicant_name: "Rustam Abdullayev",
-          speciality_name: "Fizika",
-          application_title: "Master Program 2025"
-        },
-        score: "67.25",
-        percentage: "67.25",
-        comments: "Qoniqarsiz, qayta topshirish tavsiya etiladi",
-        is_active: false,
-        marked_by: 7,
-        marked_at: "2025-01-22T16:45:00Z",
-        created_at: "2025-01-22T16:45:00Z",
-        updated_at: "2025-01-22T16:45:00Z",
-      },
-    ]
-  };
+  // Pagination and Filters
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [searchText, setSearchText] = useState("");
 
-  const statistics = {
-    total_marks: 245,
-    average_score: "78.5",
-    passed_count: 192,
-    failed_count: 53,
-  };
+  // Fetch Marks
+  const { data: marksData, isLoading, error } = useQuery({
+    queryKey: ["marks", page, pageSize],
+    queryFn: () => marksApi.getMarks(page, pageSize),
+  });
 
-  const marks = marksData.results;
-  const totalCount = marksData.count;
+  // Fetch Statistics
+  const { data: statistics } = useQuery({
+    queryKey: ["marks-statistics"],
+    queryFn: () => marksApi.getMarksStatistics(),
+  });
 
-  const handleCreate = () => {
-    form.validateFields().then((values: { score: number; submission: number; comments?: string }) => {
-      console.log('Form values:', values);
+  // Fetch Submissions for Select
+  const { data: submissionsData } = useQuery({
+    queryKey: ["submissions-list"],
+    queryFn: () => adminApi.getSubmissions(1, 100), // Fetch 100 for now, improvement: use search/pagination in Select
+  });
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: ApplicantMarkCreate) => marksApi.createMark(data),
+    onSuccess: () => {
       message.success("Baho muvaffaqiyatli qo'shildi");
       setIsModalOpen(false);
       form.resetFields();
-    });
-  };
+      queryClient.invalidateQueries({ queryKey: ["marks"] });
+      queryClient.invalidateQueries({ queryKey: ["marks-statistics"] });
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Xatolik yuz berdi");
+    }
+  });
 
-  const handleUpdate = () => {
-    form.validateFields().then((values: { score: number; submission: number; comments?: string }) => {
-      console.log('Update values:', values);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ApplicantMarkUpdate }) =>
+      marksApi.updateMark(id, data),
+    onSuccess: () => {
       message.success("Baho muvaffaqiyatli yangilandi");
       setIsModalOpen(false);
       setEditingRecord(null);
       form.resetFields();
+      queryClient.invalidateQueries({ queryKey: ["marks"] });
+      queryClient.invalidateQueries({ queryKey: ["marks-statistics"] });
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Xatolik yuz berdi");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => marksApi.deleteMark(id),
+    onSuccess: () => {
+      message.success("Baho o'chirildi");
+      queryClient.invalidateQueries({ queryKey: ["marks"] });
+      queryClient.invalidateQueries({ queryKey: ["marks-statistics"] });
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "O'chirishda xatolik yuz berdi");
+    }
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      marksApi.patchMark(id, { is_active: isActive }),
+    onSuccess: () => {
+      message.success("Status o'zgartirildi");
+      queryClient.invalidateQueries({ queryKey: ["marks"] });
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Statusni o'zgartirishda xatolik");
+    }
+  });
+
+  const handleCreate = () => {
+    form.validateFields().then((values) => {
+      const payload: ApplicantMarkCreate = {
+        submission: values.submission,
+        score: values.score.toString(),
+        comments: values.comments
+      };
+      createMutation.mutate(payload);
+    });
+  };
+
+  const handleUpdate = () => {
+    form.validateFields().then((values) => {
+      if (editingRecord) {
+        const payload: ApplicantMarkUpdate = {
+          score: values.score.toString(),
+          comments: values.comments,
+          is_active: values.is_active
+        };
+        updateMutation.mutate({ id: editingRecord.id.toString(), data: payload });
+      }
     });
   };
 
   const handleDelete = (record: ApplicantMark) => {
-    console.log('Delete record:', record);
-    message.success("Baho o'chirildi");
+    deleteMutation.mutate(record.id.toString());
   };
 
   const toggleMarkStatus = (record: ApplicantMark) => {
-    console.log('Toggle status:', record);
-    message.success(`Baho ${!record.is_active ? 'faollashtirildi' : 'bekor qilindi'}`);
+    toggleStatusMutation.mutate({
+      id: record.id.toString(),
+      isActive: !record.is_active
+    });
   };
 
   const openEditModal = (record: ApplicantMark) => {
     setEditingRecord(record);
     form.setFieldsValue({
       submission: record.submission,
-      score: record.score,
+      score: parseFloat(record.score),
       comments: record.comments,
       is_active: record.is_active,
     });
@@ -202,10 +214,10 @@ export default function MarksPage() {
           />
           <div className="flex flex-col">
             <span className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-              {record.submission_details?.applicant_name}
+              {record.submission_details?.applicant_name || "Noma'lum"}
             </span>
             <span className="text-xs text-gray-400 font-medium font-mono">
-              {record.submission_details?.submission_number}
+              {record.submission_details?.submission_number || `ID: ${record.submission}`}
             </span>
           </div>
         </div>
@@ -223,10 +235,10 @@ export default function MarksPage() {
       render: (_: unknown, record: ApplicantMark) => (
         <div className="py-2">
           <div className="font-bold text-xs text-[#7367f0] mb-1">
-            {record.submission_details?.speciality_name}
+            {record.submission_details?.speciality_name || "-"}
           </div>
           <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">
-            {record.submission_details?.application_title}
+            {record.submission_details?.application_title || "-"}
           </div>
         </div>
       ),
@@ -244,7 +256,7 @@ export default function MarksPage() {
         <div className="flex items-center gap-3 py-1">
           <Progress
             type="circle"
-            percent={parseFloat(record.percentage || "0")}
+            percent={record.percentage ? parseFloat(record.percentage) : parseFloat(record.score)}
             size={36}
             strokeWidth={10}
             strokeColor={getScoreColor(record.score)}
@@ -260,7 +272,7 @@ export default function MarksPage() {
               {record.score} ball
             </div>
             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-              {record.percentage}%
+              {record.percentage || record.score}%
             </div>
           </div>
         </div>
@@ -278,7 +290,7 @@ export default function MarksPage() {
       key: "comments",
       render: (comments: string) => (
         <div className="text-xs text-gray-400 font-medium max-w-[150px] truncate" title={comments}>
-          {comments || "Izoh yo&apos;q"}
+          {comments || "Izoh yo'q"}
         </div>
       ),
       width: 180,
@@ -302,6 +314,7 @@ export default function MarksPage() {
             className={`w-6 h-6 rounded-lg flex items-center justify-center border-0 bg-transparent transition-all duration-300 ${isActive ? "text-red-400 hover:bg-red-500/10 hover:text-red-500" : "text-green-400 hover:bg-green-500/10 hover:text-green-500"
               }`}
             size="small"
+            loading={toggleStatusMutation.isPending}
             onClick={() => toggleMarkStatus(record)}
             icon={isActive ? <DeleteOutlined style={{ fontSize: "12px" }} /> : <CheckCircleOutlined style={{ fontSize: "12px" }} />}
           />
@@ -325,16 +338,17 @@ export default function MarksPage() {
             onClick={() => openEditModal(record)}
           />
           <Popconfirm
-            title="O&apos;chirish"
-            description="Haqiqatan ham o&apos;chirmoqchimisiz?"
+            title="O'chirish"
+            description="Haqiqatan ham o'chirmoqchimisiz?"
             onConfirm={() => handleDelete(record)}
             okText="Ha"
-            cancelText="Yo&apos;q"
+            cancelText="Yo'q"
             overlayClassName="premium-popconfirm"
           >
             <Button
               className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 text-red-500 border-0 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm"
               icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
+              loading={deleteMutation.isPending && deleteMutation.variables === record.id.toString()}
             />
           </Popconfirm>
         </div>
@@ -350,10 +364,23 @@ export default function MarksPage() {
           <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Baholar Boshqaruvi
           </Title>
-          <div className="text-gray-400 text-sm font-medium">Abituriyentlarga baho qo&apos;yish va natijalarni boshqarish</div>
+          <div className="text-gray-400 text-sm font-medium">Abituriyentlarga baho qoyish va natijalarni boshqarish</div>
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            className="h-[42px] px-6 rounded-xl border-0 shadow-sm font-bold flex items-center gap-2 transition-all duration-300 hover:shadow-md"
+            icon={<BarChartOutlined />}
+            onClick={() => setIsStatsModalOpen(true)}
+            style={{
+              background: theme === "dark" ? "rgb(60, 68, 90)" : "#ffffff",
+              color: theme === "dark" ? "#ffffff" : "#484650",
+              border: theme === "dark" ? "1px solid rgb(80, 88, 110)" : "1px solid #e2e8f0",
+            }}
+          >
+            Statistika
+          </Button>
+
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -368,43 +395,58 @@ export default function MarksPage() {
               boxShadow: "0 8px 25px -8px #7367f0",
             }}
           >
-            Baho qo&apos;shish
+            Baho qoyish
           </Button>
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { title: "Jami baholar", value: statistics.total_marks, icon: <StarOutlined />, color: "#7367f0" },
-          { title: "O'rtacha ball", value: statistics.average_score, icon: <TrophyOutlined />, color: "#28c76f" },
-          { title: "O'tganlar", value: statistics.passed_count, icon: <CheckCircleOutlined />, color: "#00cfe8" },
-          { title: "Yiqilganlar", value: statistics.failed_count, icon: <DeleteOutlined />, color: "#ea5455" },
-        ].map((stat, idx) => (
-          <div
-            key={idx}
-            className="rounded-xl p-6 transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                style={{ background: `${stat.color}15`, color: stat.color }}
-              >
-                {stat.icon}
-              </div>
-              <div>
-                <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
-                <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
-              </div>
-            </div>
+      {/* Statistics in Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <BarChartOutlined className="text-[#7367f0]" />
+            <span>Baholar Statistikasi</span>
           </div>
-        ))}
-      </div>
+        }
+        open={isStatsModalOpen}
+        onCancel={() => setIsStatsModalOpen(false)}
+        footer={null}
+        width={1000}
+        className="premium-modal"
+      >
+        {statistics && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 py-4">
+            {[
+              { title: "Jami baholar", value: statistics.total_marks || 0, icon: <StarOutlined />, color: "#7367f0" },
+              { title: "O'rtacha ball", value: statistics.average_score || "0", icon: <TrophyOutlined />, color: "#28c76f" },
+              { title: "O'tganlar", value: statistics.passed_count || 0, icon: <CheckCircleOutlined />, color: "#00cfe8" },
+              { title: "Yiqilganlar", value: statistics.failed_count || 0, icon: <DeleteOutlined />, color: "#ea5455" },
+            ].map((stat, idx) => (
+              <div
+                key={idx}
+                className="rounded-xl p-6 transition-all duration-300"
+                style={{
+                  background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
+                  border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                    style={{ background: `${stat.color}15`, color: stat.color }}
+                  >
+                    {stat.icon}
+                  </div>
+                  <div>
+                    <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
+                    <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <div
         className="rounded-xl overflow-hidden transition-all duration-300"
@@ -414,25 +456,20 @@ export default function MarksPage() {
           boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
         }}
       >
-        <div className="px-6 py-4">
-          <Alert
-            message="E&apos;tibor bering"
-            description="Baholar tizimi hozirda test rejimida ishlamoqda. Ko&apos;rsatilgan ma&apos;lumotlar namunaviy hisoblanadi."
-            type="info"
-            showIcon
-            className="rounded-xl mb-4 border-0"
-            style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f0f0ff" }}
-          />
-        </div>
-
         <Table
           columns={columns}
-          dataSource={marks as unknown as ApplicantMark[]}
+          dataSource={marksData?.results || []}
+          loading={isLoading}
           rowKey="id"
           className="custom-admin-table"
           pagination={{
-            total: totalCount,
-            pageSize: 20,
+            current: page,
+            pageSize: pageSize,
+            total: marksData?.count || 0,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
             showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} dan ${total} ta`,
             className: "px-6 py-4",
           }}
@@ -450,7 +487,6 @@ export default function MarksPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
@@ -494,14 +530,27 @@ export default function MarksPage() {
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingRecord ? "Bahoni tahrirlash" : "Yangi baho qo&apos;shish"}
+        title={editingRecord ? "Bahoni tahrirlash" : "Yangi baho qo'shish"}
         open={isModalOpen}
         onCancel={() => {
           setIsModalOpen(false);
           setEditingRecord(null);
           form.resetFields();
         }}
-        footer={null}
+        footer={[
+          <Button key="cancel" onClick={() => setIsModalOpen(false)}>
+            Bekor qilish
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={createMutation.isPending || updateMutation.isPending}
+            onClick={editingRecord ? handleUpdate : handleCreate}
+            className="bg-[#7367f0] hover:bg-[#7367f0]/90"
+          >
+            {editingRecord ? "Saqlash" : "Qo'shish"}
+          </Button>,
+        ]}
         width={600}
         className="premium-modal"
       >
@@ -515,8 +564,19 @@ export default function MarksPage() {
             label="Ariza"
             rules={[{ required: true, message: "Arizani tanlang" }]}
           >
-            <Select placeholder="Arizani tanlang">
-              {/* This would need submission data */}
+            <Select
+              placeholder="Arizani tanlang"
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string).toLowerCase().includes(input.toLowerCase())
+              }
+              disabled={!!editingRecord}
+            >
+              {submissionsData?.results?.map((sub) => (
+                <Option key={sub.id} value={parseInt(sub.id)}>
+                  {sub.applicant.full_name} ({sub.applicant.pinfl})
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
@@ -533,6 +593,7 @@ export default function MarksPage() {
               style={{ width: '100%' }}
               min={0}
               max={100}
+              step={0.1}
             />
           </Form.Item>
 
@@ -545,6 +606,19 @@ export default function MarksPage() {
               rows={3}
             />
           </Form.Item>
+
+          {editingRecord && (
+            <Form.Item
+              name="is_active"
+              label="Status"
+              valuePropName="checked"
+            >
+              <Select>
+                <Option value={true}>Faol</Option>
+                <Option value={false}>Nofaol</Option>
+              </Select>
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

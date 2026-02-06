@@ -11,6 +11,7 @@ import { tokenStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const { Header: AntHeader } = Layout;
 
@@ -140,7 +141,7 @@ export default function ApplicantHeader() {
                   position: "relative",
                 }}
                 size={40}
-                icon={<img src="/avatar.png" alt="avatar" />}
+                icon={<Image src="/avatar.png" alt="avatar" width={40} height={40} />}
               >
                 <div
                   style={{

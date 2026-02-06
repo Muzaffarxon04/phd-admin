@@ -6,6 +6,7 @@ import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useGet, usePut, usePost } from "@/lib/hooks";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
+import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,7 +60,7 @@ interface CreateFieldData {
 
 const renderFieldInput = (field: ApplicationField) => {
   const options = Array.isArray(field.options) ? field.options : [];
-  
+
   switch (field.field_type) {
     case "TEXT":
       return (
@@ -69,7 +70,7 @@ const renderFieldInput = (field: ApplicationField) => {
           className="w-full"
         />
       );
-    
+
     case "TEXTAREA":
       return (
         <Input.TextArea
@@ -79,7 +80,7 @@ const renderFieldInput = (field: ApplicationField) => {
           className="w-full"
         />
       );
-    
+
     case "EMAIL":
       return (
         <Input
@@ -89,47 +90,47 @@ const renderFieldInput = (field: ApplicationField) => {
           className="w-full"
         />
       );
-    
+
     case "PHONE":
       return (
         <Input
           type="tel"
           placeholder={field.placeholder || "+998901234567"}
-          
+
           className="w-full"
         />
       );
-    
+
     case "NUMBER":
       return (
         <InputNumber
           placeholder={field.placeholder || "Raqam kiriting"}
-          
+
           className="w-full"
           min={field.min_value ? parseFloat(field.min_value) : undefined}
           max={field.max_value ? parseFloat(field.max_value) : undefined}
         />
       );
-    
+
     case "DATE":
       return (
         <DatePicker
           placeholder={field.placeholder || "Sanani tanlang"}
-          
+
           className="w-full"
         />
       );
-    
+
     case "SELECT":
       return (
         <Select
           placeholder={field.placeholder || "Tanlang"}
-          
+
           className="w-full"
           options={options.map((opt: string) => ({ label: opt, value: opt }))}
         />
       );
-    
+
     case "RADIO":
       return (
         <Radio.Group >
@@ -140,7 +141,7 @@ const renderFieldInput = (field: ApplicationField) => {
           ))}
         </Radio.Group>
       );
-    
+
     case "CHECKBOX":
       return (
         <Checkbox.Group >
@@ -151,29 +152,29 @@ const renderFieldInput = (field: ApplicationField) => {
           ))}
         </Checkbox.Group>
       );
-    
+
     case "FILE":
       return (
         <Upload >
           <Button >Fayl yuklash</Button>
         </Upload>
       );
-    
+
     case "URL":
       return (
         <Input
           type="url"
           placeholder={field.placeholder || "https://example.com"}
-          
+
           className="w-full"
         />
       );
-    
+
     default:
       return (
         <Input
           placeholder={field.placeholder || "Qiymat kiriting"}
-          
+
           className="w-full"
         />
       );
@@ -183,6 +184,7 @@ const renderFieldInput = (field: ApplicationField) => {
 export default function AdminApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { theme } = useThemeStore();
   const queryClient = useQueryClient();
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
@@ -194,15 +196,15 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
-  
+
   const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<{ data: Application }, Partial<Application>>(
     `/admin/application/${id}/update/`,
     {
-    onSuccess: () => {
+      onSuccess: () => {
         message.success("Ariza muvaffaqiyatli yangilandi!");
         setIsApplicationModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
-    },
+        queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
+      },
       onError: (error) => {
         message.error(error.message || "Arizani yangilashda xatolik");
       },
@@ -226,9 +228,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const [isUpdatingField, setIsUpdatingField] = useState(false);
 
-  const handleCreateField = (values: CreateFieldData & { 
-    allowed_file_types_input?: string; 
-    min_value?: number | null; 
+  const handleCreateField = (values: CreateFieldData & {
+    allowed_file_types_input?: string;
+    min_value?: number | null;
     max_value?: number | null;
     min_length?: number | null;
     max_length?: number | null;
@@ -238,7 +240,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     const fieldData: CreateFieldData = {
       ...restValues,
     };
-    
+
     // If field_type is FILE, process allowed_file_types
     if (values.field_type === "FILE") {
       if (allowed_file_types_input) {
@@ -252,7 +254,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         fieldData.allowed_file_types = [];
       }
     }
-    
+
     // If field_type is SELECT, RADIO, or CHECKBOX, process options
     if (values.field_type === "SELECT" || values.field_type === "RADIO" || values.field_type === "CHECKBOX") {
       if (options_list && options_list.length > 0) {
@@ -264,7 +266,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         fieldData.options = [];
       }
     }
-    
+
     // If field_type is NUMBER, process min_value and max_value
     if (values.field_type === "NUMBER") {
       const minVal = values.min_value;
@@ -272,7 +274,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       fieldData.min_value = minVal !== null && minVal !== undefined ? String(minVal) : undefined;
       fieldData.max_value = maxVal !== null && maxVal !== undefined ? String(maxVal) : undefined;
     }
-    
+
     // Process min_length and max_length for text-based fields
     if (values.min_length !== undefined && values.min_length !== null) {
       fieldData.min_length = values.min_length;
@@ -280,11 +282,11 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     if (values.max_length !== undefined && values.max_length !== null) {
       fieldData.max_length = values.max_length;
     }
-    
+
     if (editingField) {
       handleUpdateField(editingField.id, fieldData);
     } else {
-    createField(fieldData);
+      createField(fieldData);
     }
   };
 
@@ -311,12 +313,12 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const handleEditField = (field: ApplicationField) => {
     setEditingField(field);
     setIsFieldModalOpen(true);
-    
+
     // Populate form with field data
-    const optionsArray = Array.isArray(field.options) 
+    const optionsArray = Array.isArray(field.options)
       ? field.options.map((opt: string) => ({ value: opt }))
       : [];
-    
+
     form.setFieldsValue({
       label: field.label,
       field_type: field.field_type,
@@ -462,26 +464,37 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   }
 
   return (
-    <div>
+    <div style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
       <div className="mb-6">
         <Link href="/admin-panel/applications">
-          <Button type="link">← Orqaga</Button>
+          <Button type="link" className={theme === "dark" ? "text-gray-400 hover:text-white" : ""}>← Orqaga</Button>
         </Link>
       </div>
 
-      <h1 className="text-3xl font-bold mb-6">{application.title}</h1>
+      <h1 className="text-3xl font-bold mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{application.title}</h1>
 
-      <Card className="mb-6">
-        <Descriptions bordered column={1}>
+      <Card
+        className="mb-6"
+        style={{
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid #f0f0f0",
+        }}
+      >
+        <Descriptions
+          bordered
+          column={1}
+          contentStyle={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}
+          labelStyle={{ color: theme === "dark" ? "#94a3b8" : "inherit", background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)" }}
+        >
           <Descriptions.Item label="ID">{application.id}</Descriptions.Item>
           <Descriptions.Item label="Holati">
             <Tag color={application.status === "PUBLISHED" ? "green" : "default"}>{application.status}</Tag>
           </Descriptions.Item>
-          
+
           <Descriptions.Item label="Boshlanish">{formatDate(application.start_date)}</Descriptions.Item>
           <Descriptions.Item label="Tugash">{formatDate(application.end_date)}</Descriptions.Item>
           <Descriptions.Item label="Arizalar soni">{application.total_submissions}</Descriptions.Item>
-          <Descriptions.Item  label="Tavsif">{application.description}</Descriptions.Item>
+          <Descriptions.Item label="Tavsif">{application.description}</Descriptions.Item>
 
         </Descriptions>
 
@@ -507,10 +520,15 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         </div>
       </Card>
 
-      <Card>
+      <Card
+        style={{
+          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid #f0f0f0",
+        }}
+      >
         <Tabs
           items={[
-       
+
             {
               key: "fields",
               label: "Maydonlar",
@@ -539,36 +557,42 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                           <Card
                             key={field.id + "-" + index}
                             className="border border-gray-200"
+                            style={{
+                              background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "#ffffff",
+                              borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#e5e7eb",
+                            }}
                             extra={
-                          <Space>
+                              <Space>
                                 <Button
                                   type="primary"
                                   size="small"
                                   icon={<EditOutlined />}
                                   onClick={() => handleEditField(field)}
+                                  className={theme === "dark" ? "bg-[#7367f0]/20 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white" : ""}
                                 >
                                   Tahrirlash
                                 </Button>
-                            <Button
-                              danger
-                              size="small"
-                              icon={<DeleteOutlined />}
+                                <Button
+                                  danger
+                                  size="small"
+                                  icon={<DeleteOutlined />}
                                   onClick={() => handleDeleteField(field.id)}
-                            >
-                              O&apos;chirish
-                            </Button>
-                          </Space>
+                                  className={theme === "dark" ? "bg-red-500/20 text-red-500 border-0 hover:bg-red-500 hover:text-white" : ""}
+                                >
+                                  O&apos;chirish
+                                </Button>
+                              </Space>
                             }
                           >
                             <div className="space-y-3">
                               <div className="flex items-center gap-2 mb-2">
-                                <span className="font-semibold text-base">{field.label}</span>
+                                <span className="font-semibold text-base" style={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}>{field.label}</span>
                                 {field.required && <Tag color="red">Majburiy</Tag>}
                                 <Tag>{field.field_type}</Tag>
                               </div>
-                              
+
                               {field.help_text && (
-                                <p className="text-sm text-gray-600 mb-2">{field.help_text}</p>
+                                <p className="text-sm mb-2" style={{ color: theme === "dark" ? "#94a3b8" : "#4b5563" }}>{field.help_text}</p>
                               )}
 
                               <div className="mt-3">
@@ -579,7 +603,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                         ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8" style={{ color: theme === "dark" ? "#94a3b8" : "#6b7280" }}>
                       Hozircha maydonlar mavjud emas
                     </div>
                   )}
@@ -589,10 +613,23 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
             {
               key: "statistics",
               label: "Statistika",
-              children: <div>Jami arizalar: {application.total_submissions}</div>,
+              children: <div style={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}>Jami arizalar: {application.total_submissions}</div>,
             },
           ]}
         />
+        <style jsx global>{`
+          .ant-tabs-tab {
+            color: ${theme === "dark" ? "#94a3b8" : "rgba(0, 0, 0, 0.88)"} !important;
+          }
+          .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+            color: #7367f0 !important;
+          }
+          .ant-descriptions-bordered .ant-descriptions-item-label,
+          .ant-descriptions-bordered .ant-descriptions-item-content {
+            border-color: ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "#f0f0f0"} !important;
+          }
+        `}
+        </style>
       </Card>
 
       <Modal
@@ -729,14 +766,14 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           {(fieldType === "TEXT" || fieldType === "TEXTAREA" || fieldType === "EMAIL" || fieldType === "PHONE" || fieldType === "URL") && (
             <Row gutter={16}>
               <Col span={12}>
-              <Form.Item name="min_length" label="Minimal uzunlik">
-                <InputNumber className="w-full" placeholder="Minimal uzunlik" min={0} />
-              </Form.Item>
+                <Form.Item name="min_length" label="Minimal uzunlik">
+                  <InputNumber className="w-full" placeholder="Minimal uzunlik" min={0} />
+                </Form.Item>
               </Col>
               <Col span={12}>
-              <Form.Item name="max_length" label="Maksimal uzunlik">
-                <InputNumber className="w-full" placeholder="Maksimal uzunlik" min={0} />
-              </Form.Item>
+                <Form.Item name="max_length" label="Maksimal uzunlik">
+                  <InputNumber className="w-full" placeholder="Maksimal uzunlik" min={0} />
+                </Form.Item>
               </Col>
             </Row>
           )}

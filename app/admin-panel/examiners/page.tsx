@@ -27,11 +27,14 @@ import {
   ClusterOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  StarOutlined
+  StarOutlined,
+  LineChartOutlined,
+  ProjectOutlined
 } from "@ant-design/icons";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import type { Examiner, Speciality } from "@/types";
+import type { ExaminerWorkloadResponse, ExaminerStatistics } from "@/lib/api/examiner";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -40,6 +43,10 @@ export default function ExaminersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExaminer, setEditingExaminer] = useState<Examiner | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [statsExaminerId, setStatsExaminerId] = useState<string | null>(null);
+  const [isWorkloadModalOpen, setIsWorkloadModalOpen] = useState(false);
+  const [workloadExaminerId, setWorkloadExaminerId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   // Fetch examiners
@@ -66,8 +73,22 @@ export default function ExaminersPage() {
     from: number;
   }>("/speciality/list/");
 
+  // Fetch examiner statistics
+  const { data: examinerStats, isLoading: isStatsLoading } = useGet<{ data: ExaminerStatistics }>(
+    statsExaminerId ? `/examiner/${statsExaminerId}/statistics/` : "",
+    { enabled: !!statsExaminerId }
+  );
+
+  // Fetch examiner workload
+  const { data: workloadData, isLoading: isWorkloadLoading } = useGet<ExaminerWorkloadResponse>(
+    workloadExaminerId ? `/examiner/${workloadExaminerId}/workload/` : "",
+    { enabled: !!workloadExaminerId }
+  );
+
   const examiners = examinersData?.data?.data || [];
   const specialitiesList = specialities?.data?.data
+  const workloadStats = workloadData?.data?.workload;
+  const recentAssignments = workloadData?.data?.assignments;
 
   // Mutations
   const createExaminer = usePost("/examiner/create/", {
@@ -178,7 +199,7 @@ export default function ExaminersPage() {
       ),
       key: "name_info",
       render: (_: unknown, record: Examiner) => (
-        <div className="flex items-center gap-3 px-4 py-2">
+        <div className="flex items-center gap-3 ">
           <Avatar
             icon={<UserOutlined />}
             className="shrink-0 ring-2 ring-[#7367f0]/20"
@@ -274,13 +295,30 @@ export default function ExaminersPage() {
         </div>
       ),
       key: "actions",
-      width: 120,
+      width: 150,
       render: (_: unknown, record: Examiner) => (
         <div className="flex items-center justify-center gap-2 py-2">
           <Button
             className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
             icon={<EditOutlined style={{ fontSize: "18px" }} />}
             onClick={() => handleEdit(record)}
+          />
+          <Button
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 border-0 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-sm"
+            icon={<LineChartOutlined style={{ fontSize: "18px" }} />}
+            onClick={() => {
+              setStatsExaminerId(record.id);
+              setIsStatsModalOpen(true);
+            }}
+          />
+          <Button
+            className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-500 border-0 hover:bg-purple-500 hover:text-white transition-all duration-300 shadow-sm"
+            icon={<ProjectOutlined style={{ fontSize: "18px" }} />}
+            title="Yuklama"
+            onClick={() => {
+              setWorkloadExaminerId(record.id);
+              setIsWorkloadModalOpen(true);
+            }}
           />
           <Popconfirm
             title="O&apos;chirish"
@@ -338,7 +376,7 @@ export default function ExaminersPage() {
       >
         <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
           <div className="relative max-w-md">
-            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7367f0] opacity-70 z-10" />
+
             <Input
               placeholder="Imtihonchi nomini qidiring..."
               className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
@@ -384,7 +422,6 @@ export default function ExaminersPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
@@ -469,9 +506,6 @@ export default function ExaminersPage() {
               <Input placeholder="Ilmiy unvon" />
             </Form.Item>
 
-
-
-
             <Form.Item
               name="department"
               label="Lavozim"
@@ -498,9 +532,6 @@ export default function ExaminersPage() {
               </Select>
             </Form.Item>
 
-
-
-
             <Form.Item name="is_active" label="Faollik" valuePropName="checked">
               <input type="checkbox" className="rounded" />
             </Form.Item>
@@ -525,6 +556,126 @@ export default function ExaminersPage() {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Statistics Modal */}
+      <Modal
+        title="Imtihonchi Statistikasi"
+        open={isStatsModalOpen}
+        onCancel={() => {
+          setIsStatsModalOpen(false);
+          setStatsExaminerId(null);
+        }}
+        footer={null}
+        width={500}
+        className="premium-modal"
+      >
+        <div className="py-4">
+          {isStatsLoading ? (
+            <div className="flex justify-center py-8">
+              <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
+            </div>
+          ) : examinerStats?.data ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Jami arizalar</div>
+                  <div className="text-xl font-bold text-[#7367f0]">{examinerStats.data.total_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                  <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
+                  <div className="text-xl font-bold text-[#28c76f]">{examinerStats.data.approved_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
+                  <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
+                  <div className="text-xl font-bold text-[#ea5455]">{examinerStats.data.rejected_submissions || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                  <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
+                  <div className="text-xl font-bold text-[#ff9f43]">{examinerStats.data.pending_submissions || 0}</div>
+                </Card>
+              </div>
+
+              <div className="rounded-xl p-4 text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
+                <div className="text-gray-400 text-xs mb-1">O&apos;rtacha ball</div>
+                <div className="text-2xl font-bold text-[#7367f0]">{examinerStats.data.average_score || "0.0"}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              Statistika ma&apos;lumotlari topilmadi
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Workload Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <ProjectOutlined className="text-[#7367f0]" />
+            <span>Imtihonchi Yuklamasi</span>
+          </div>
+        }
+        open={isWorkloadModalOpen}
+        onCancel={() => {
+          setIsWorkloadModalOpen(false);
+          setWorkloadExaminerId(null);
+        }}
+        footer={null}
+        width={600}
+        className="premium-modal"
+      >
+        <div className="py-4">
+          {isWorkloadLoading ? (
+            <div className="flex justify-center py-8">
+              <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
+            </div>
+          ) : workloadStats ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Jami biriktirilgan</div>
+                  <div className="text-xl font-bold text-[#7367f0]">{workloadStats.total_assignments || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                  <div className="text-gray-400 text-xs mb-1">Yakunlangan</div>
+                  <div className="text-xl font-bold text-[#28c76f]">{workloadStats.completed_reviews || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                  <div className="text-gray-400 text-xs mb-1">Jarayonda</div>
+                  <div className="text-xl font-bold text-[#ff9f43]">{workloadStats.in_progress_reviews || 0}</div>
+                </Card>
+                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
+                  <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
+                  <div className="text-xl font-bold text-[#ea5455]">{workloadStats.pending_reviews || 0}</div>
+                </Card>
+              </div>
+
+              {recentAssignments && recentAssignments.length > 0 && (
+                <div>
+                  <div className="font-bold mb-3 text-sm">So&apos;nggi biriktirilganlar</div>
+                  <div className="space-y-2">
+                    {recentAssignments.map((assignment) => (
+                      <div
+                        key={assignment.id}
+                        className="p-3 rounded-xl flex items-center justify-between"
+                        style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "#f8f9fa" }}
+                      >
+                        <span className="font-medium text-sm">{assignment.submission_number}</span>
+                        <Tag>{assignment.status}</Tag>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              Yuklama ma&apos;lumotlari topilmadi
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

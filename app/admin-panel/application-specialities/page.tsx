@@ -2,19 +2,14 @@
 
 import { useState } from "react";
 import {
-  Card,
   Button,
   Table,
-  Tag,
   Modal,
   Form,
   InputNumber,
   Select,
   message,
-  Row,
-  Col,
-  Statistic,
-  Breadcrumb,
+  // Breadcrumb,
 } from "antd";
 import {
   PlusOutlined,
@@ -65,7 +60,7 @@ export default function ApplicationSpecialitiesPage() {
       ),
       key: "app_info",
       render: (_: unknown, record: ApplicationSpecialityList) => (
-        <div className="px-4 py-2 font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+        <div className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
           {record.application_title}
         </div>
       ),
@@ -239,7 +234,6 @@ export default function ApplicationSpecialitiesPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;

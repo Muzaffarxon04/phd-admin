@@ -105,15 +105,7 @@ export default function PaymentsPage() {
     // REFUNDED: filteredPayments.filter(p => p.status === "REFUNDED").length,
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PAID": return "green";
-      case "PENDING": return "orange";
-      case "FAILED": return "red";
-      case "REFUNDED": return "blue";
-      default: return "default";
-    }
-  };
+
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -158,7 +150,7 @@ export default function PaymentsPage() {
       ),
       key: "submission_info",
       render: (_: unknown, record: PaymentRecord) => (
-        <div className="px-4 py-2">
+        <div >
           <div className="font-bold text-sm text-[#7367f0] mb-1 font-mono">
             {record.submission_number}
           </div>
@@ -404,7 +396,6 @@ export default function PaymentsPage() {
           }
           .custom-admin-table .ant-table-tbody > tr > td {
             border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-            padding: 12px 16px !important;
           }
           .custom-admin-table .ant-table-tbody > tr:hover > td {
             background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;

@@ -2,11 +2,18 @@
 
 import { Form, Input, InputNumber, DatePicker, App, Button, Space, Card, Switch, Select } from "antd";
 import { useRouter } from "next/navigation";
-import { usePost } from "@/lib/hooks";
+import { usePost, useGet } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import Link from "next/link";
+import type { Speciality, Examiner } from "@/types";
+
+interface ApplicationSpeciality {
+  speciality_id: string | number;
+  examiner_ids: (string | number)[];
+  max_applicants: number;
+}
 
 interface ApplicationField {
   label: string;
@@ -36,6 +43,7 @@ interface CreateApplicationData {
   application_fee?: string;
   instructions?: string;
   fields?: ApplicationField[];
+  specialities?: ApplicationSpeciality[];
 }
 
 interface Application {
@@ -61,6 +69,13 @@ export default function CreateApplicationPage() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
 
+  // Fetch specialities and examiners
+  const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
+  const { data: examinersData } = useGet<{ data: { data: Examiner[] } }>("/examiner/list/");
+
+  const specialitiesList = specialitiesData?.data?.data || [];
+  const examinersList = examinersData?.data?.data || [];
+
   const { mutate: createApplication, isPending: isCreating } = usePost<{ data: Application }, CreateApplicationData>("/admin/application/create/", {
     onSuccess: () => {
       message.success("Ariza muvaffaqiyatli yaratildi!");
@@ -84,6 +99,7 @@ export default function CreateApplicationPage() {
     application_fee?: number;
     instructions?: string;
     fields?: ApplicationField[];
+    specialities?: ApplicationSpeciality[];
   }) => {
     createApplication({
       title: values.title,
@@ -97,6 +113,7 @@ export default function CreateApplicationPage() {
       ...(values.application_fee && { application_fee: values.application_fee.toString() }),
       ...(values.instructions && { instructions: values.instructions }),
       ...(values.fields && values.fields.length > 0 && { fields: values.fields }),
+      ...(values.specialities && values.specialities.length > 0 && { specialities: values.specialities }),
     });
   };
 
@@ -256,6 +273,80 @@ export default function CreateApplicationPage() {
                     </Form.Item>
                     <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer" />
                   </Space>
+                ))}
+              </>
+            )}
+          </Form.List>
+
+          <div className="border-t my-8" />
+
+          <Form.List name="specialities">
+            {(fields, { add, remove }) => (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-base font-medium">Mutaxassisliklar va Imtihonchilar</span>
+                  <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+                    Mutaxassislik qo&apos;shish
+                  </Button>
+                </div>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Card key={key} size="small" style={{ marginBottom: 16 }}>
+                    <div className="flex justify-end">
+                      <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "speciality_id"]}
+                        label="Mutaxassislik"
+                        rules={[{ required: true, message: "Mutaxassislikni tanlang!" }]}
+                      >
+                        <Select
+                          placeholder="Mutaxassislikni tanlang"
+                          showSearch
+                          optionFilterProp="children"
+                          className="premium-select"
+                        >
+                          {specialitiesList.map((s: Speciality) => (
+                            <Select.Option key={s.id} value={s.id}>
+                              {s.code} - {s.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "examiner_ids"]}
+                        label="Imtihonchilar"
+                        rules={[{ required: true, message: "Imtihonchilarni tanlang!" }]}
+                      >
+                        <Select
+                          mode="multiple"
+                          placeholder="Imtihonchilarni tanlang"
+                          showSearch
+                          optionFilterProp="children"
+                          className="premium-select"
+                        >
+                          {examinersList.map((e: Examiner) => (
+                            <Select.Option key={e.id} value={e.id}>
+                              {e.first_name} {e.last_name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                       className="w-full"
+                        name={[name, "max_applicants"]}
+                        label="Maksimal talabgorlar"
+                        rules={[{ required: true, message: "Soni kiriting!" }]}
+                      >
+                        <InputNumber min={1} className="!w-full"  placeholder="Maksimal talabgorlar" />
+                      </Form.Item>
+                    </div>
+                  </Card>
                 ))}
               </>
             )}

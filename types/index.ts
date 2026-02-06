@@ -200,6 +200,14 @@ export interface MonthlyStat {
   revenue: number;
 }
 
+export interface SpecialityStatistics {
+  total_submissions: number;
+  approved_submissions: number;
+  rejected_submissions: number;
+  pending_submissions: number;
+  average_score: number | string;
+}
+
 // Settings Types
 export interface SystemSettings {
   applicationPeriodOpen: boolean;

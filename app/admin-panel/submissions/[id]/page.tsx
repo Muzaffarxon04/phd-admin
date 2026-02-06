@@ -11,11 +11,19 @@ import {
   Tabs,
   Avatar,
   Divider,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Space,
+  message,
+  Drawer,
 } from "antd";
 import { useGet, usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
+import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import {
   CheckOutlined,
   CloseOutlined,
@@ -159,36 +167,72 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const { theme } = useThemeStore();
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [scoreForm] = Form.useForm();
+
+  // Drawer review state
+  const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
+  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
+  const [reviewForm] = Form.useForm();
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
   const { data: submissionData, isLoading } = useGet<{ data: SubmissionDetail }>(
     `/admin/application/submissions/${id}/`
   );
   const submission = submissionData?.data;
 
-  const { mutate: approveSubmission } = usePost(`/admin/application/submissions/${id}/approve/`, {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
-      setIsApproving(false);
-    },
-    onError: () => setIsApproving(false),
-  });
+  const handleReviewSubmit = async (values: { notes: string }) => {
+    if (!reviewAction) return;
 
-  const { mutate: rejectSubmission } = usePost(`/admin/application/submissions/${id}/reject/`, {
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
-      setIsRejecting(false);
-    },
-    onError: () => setIsRejecting(false),
-  });
+    setIsReviewSubmitting(true);
+    try {
+      const endpoint = reviewAction === "approve"
+        ? `/admin/application/submissions/${id}/approve/`
+        : `/admin/application/submissions/${id}/reject/`;
 
-  const handleApprove = () => {
-    setIsApproving(true);
-    approveSubmission({ notes: "Tasdiqlandi" });
+      await apiRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify({ notes: values.notes }),
+      });
+
+      message.success(reviewAction === "approve" ? "Ariza tasdiqlandi" : "Ariza rad etildi");
+      setReviewDrawerOpen(false);
+      reviewForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Xatolik yuz berdi";
+      message.error(errorMessage);
+    } finally {
+      setIsReviewSubmitting(false);
+    }
   };
 
-  const handleReject = () => {
-    setIsRejecting(true);
-    rejectSubmission({ notes: "Hujjatlar noto'g'ri yoki to'liq emas" });
+  const openReviewDrawer = (action: "approve" | "reject") => {
+    setReviewAction(action);
+    setReviewDrawerOpen(true);
+  };
+
+  const { mutate: submitScore, isPending: isSubmittingScore } = usePost("/admin/application/marks/", {
+    onSuccess: () => {
+      message.success("Baho muvaffaqiyatli qo'yildi");
+      setIsScoreModalOpen(false);
+      scoreForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
+    },
+    onError: (error) => {
+      message.error(error.message || "Baho qo'yishda xatolik");
+    },
+  });
+
+
+
+  const handleScoreSubmit = (values: { score: number; comments: string }) => {
+    submitScore({
+      submission: parseInt(id),
+      score: values.score.toString(),
+      comments: values.comments,
+    });
   };
 
   if (isLoading) {
@@ -225,9 +269,9 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           <Link href="/admin-panel/submissions">
             <Button
               icon={<ArrowLeftOutlined />}
-              className="w-10 h-10 rounded-xl flex items-center justify-center border-0 shadow-md"
+              className="w-10 h-10 rounded-xl flex items-center justify-center border-0 shadow-md transition-all duration-300"
               style={{
-                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                background: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "#ffffff",
                 color: theme === "dark" ? "#ffffff" : "#484650",
               }}
             />
@@ -254,13 +298,12 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         </div>
 
         <div className="flex items-center gap-3">
-          {submission.status === "UNDER_REVIEW" && (
+          {(submission.status === "SUBMITTED" || submission.status === "UNDER_REVIEW") && (
             <>
               <Button
                 danger
                 icon={<CloseOutlined />}
-                onClick={handleReject}
-                loading={isRejecting}
+                onClick={() => openReviewDrawer("reject")}
                 className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
                 style={{
                   background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
@@ -272,8 +315,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
               <Button
                 type="primary"
                 icon={<CheckOutlined />}
-                onClick={handleApprove}
-                loading={isApproving}
+                onClick={() => openReviewDrawer("approve")}
                 className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
                 style={{
                   background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
@@ -283,6 +325,20 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 Qabul qilish
               </Button>
             </>
+          )}
+          {submission.status === "APPROVED" && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={() => setIsScoreModalOpen(true)}
+              className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+              style={{
+                background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))",
+                boxShadow: "0 8px 25px -8px #28c76f",
+              }}
+            >
+              Baho qo&apos;yish
+            </Button>
           )}
         </div>
       </div>
@@ -400,7 +456,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             }}
           >
             <div className="flex items-center gap-4 mb-6">
-              <Avatar size={56} icon={<UserOutlined />} className="bg-[#7367f0]" />
+              <Avatar size={56} icon={<UserOutlined />} className="bg-[#7367f0] shrink-0" />
               <div>
                 <Title level={5} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
                   {submission.applicant_name}
@@ -529,6 +585,79 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           background: rgba(115, 103, 240, 0.05) !important;
         }
       `}</style>
+
+      <Modal
+        title="Ariza Baholash"
+        open={isScoreModalOpen}
+        onCancel={() => setIsScoreModalOpen(false)}
+        footer={null}
+        className="premium-modal"
+      >
+        {submission && (
+          <>
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-400 font-medium">Ariza raqami:</span>
+                <span className="font-bold text-[#7367f0]">#{submission.submission_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 font-medium">Arizachi:</span>
+                <span className="font-bold">{submission.applicant_name}</span>
+              </div>
+            </div>
+
+            <Form
+              form={scoreForm}
+              layout="vertical"
+              onFinish={handleScoreSubmit}
+            >
+              <Form.Item
+                name="score"
+                label="Imtihon bali"
+                rules={[{ required: true, message: "Ballni kiriting" }]}
+              >
+                <InputNumber
+                  className="!w-full flex items-center"
+                  placeholder="Masalan: 85"
+                  min={0}
+                  max={100}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="comments"
+                label="Eslatmalar"
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Imtihon natijalari bo'yicha qo'shimcha ma'lumotlar"
+                  className="rounded-xl"
+                />
+              </Form.Item>
+
+              <Form.Item className="mb-0 text-right">
+                <Space>
+                  <Button onClick={() => setIsScoreModalOpen(false)} className="rounded-xl">
+                    Bekor qilish
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isSubmittingScore}
+                    className="rounded-xl h-[40px] px-6 border-0"
+                    style={{
+                      background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                      boxShadow: "0 8px 25px -8px #7367f0",
+                    }}
+                  >
+                    Saqlash
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

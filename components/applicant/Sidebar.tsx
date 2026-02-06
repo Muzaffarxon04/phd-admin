@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Layout, Menu } from "antd";
 import type { MenuProps } from "antd";
-
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
@@ -143,7 +143,7 @@ export default function ApplicantSidebar() {
         {/* Custom Logo - matching the image */}
         <div style={{ position: "relative", width: 38, height: 38 }}>
           {/* Head/Circle */}
-          <img src="/logo.png" alt="logo" />
+          <Image src="/logo.png" alt="logo" width={38} height={38} />
         </div>
 
         {/* Title */}
