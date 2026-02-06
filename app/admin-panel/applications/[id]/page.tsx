@@ -284,6 +284,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     }
 
     if (editingField) {
+      console.log(fieldData);
       handleUpdateField(editingField.id, fieldData);
     } else {
       createField(fieldData);
@@ -550,7 +551,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                     </Button>
                   </div>
                   {application.fields && application.fields.length > 0 ? (
-                    <div className="space-y-6">
+                    <div className="!space-y-2">
                       {application.fields
                         .sort((a, b) => (a.order || 0) - (b.order || 0))
                         .map((field, index) => (

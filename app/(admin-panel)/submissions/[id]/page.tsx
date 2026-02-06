@@ -184,7 +184,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto">
         <Tabs defaultActiveKey="1" type="card">
           <TabPane tab="Umumiy ma&apos;lumot" key="1">
             {/* Timeline */}

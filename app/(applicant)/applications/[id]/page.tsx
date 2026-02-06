@@ -42,6 +42,8 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title, Text, Paragraph } = Typography;
 
+import { type Speciality } from "@/types";
+
 interface ApplicationField {
   id: number;
   label: string;
@@ -77,6 +79,7 @@ interface Application {
   required_documents?: unknown[];
   user_submission_count?: number;
   fields: ApplicationField[];
+  specialities: Speciality[];
 }
 
 interface ApplicationResponse {
@@ -88,6 +91,7 @@ interface ApplicationResponse {
 
 interface SubmissionData {
   application: number;
+  speciality?: string;
   answers: Array<{
     field_id: number;
     answer_text?: string;
@@ -242,8 +246,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const [completedFields] = useState<Set<number>>(new Set());
   const { theme } = useThemeStore();
 
+  // Custom states
+  const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
+
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = applicationResponse?.data;
+
+
+
+
+  const specialities = application?.specialities || [];
 
   const { mutate: createSubmission, isPending: isCreating } = usePost<unknown, SubmissionData>(
     "/applicant/submissions/create/",
@@ -264,6 +276,12 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!application) return;
+
+    // Validate speciality selection if needed (assuming it's optional but recommended to be explicit if it was required in requirements, but user said "speciality keyida... yubor", making it sound necessary part of payload)
+    if (!selectedSpeciality) {
+      message.error("Iltimos, mutaxassislikni tanlang!");
+      return;
+    }
 
     const answers: Array<{ field_id: number; answer_text?: string; file?: File }> = [];
 
@@ -310,6 +328,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
     createSubmission({
       application: application.id,
+      speciality: selectedSpeciality,
       answers,
     });
   };
@@ -345,7 +364,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const canApply = application?.can_apply?.can_apply;
+  const canApply = true
 
   return (
     <div className="min-h-screen ">
@@ -373,7 +392,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           ]}
         />
       </div>
-     
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* {!canApply && (
           <div
@@ -397,9 +416,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
            
           </div>
         )} */}
- <Title level={3} className="!text-[24px]  border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-        {application.title}
-      </Title>
+        <Title level={3} className="!text-[24px]  border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          {application.title}
+        </Title>
         {/* Application Info */}
         <div
           className="rounded-lg transition-all duration-300 p-6 mb-8"
@@ -565,6 +584,37 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               autoComplete="off"
               className="premium-form"
             >
+              {/* Speciality Selection */}
+              <div className="mb-8 p-4 rounded-xl border border-dashed border-[#7367f0]/30 bg-[#7367f0]/5">
+                <Form.Item
+                  label={<span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>Mutaxassislikni tanlang <span className="text-red-500">*</span></span>}
+                  required
+                  className="mb-0"
+                >
+                  <Select
+                    placeholder="Mutaxassislikni tanlang"
+                    size="large"
+                    className="w-full custom-select-premium"
+                    // loading={isSpecialitiesLoading}
+                    value={selectedSpeciality}
+                    onChange={setSelectedSpeciality}
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={specialities.map((spec) => ({
+                      value: spec.id,
+                      label: `${spec.code} - ${spec.name}`,
+                    }))}
+                    dropdownStyle={{
+                      background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                      border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                    }}
+                  />
+                </Form.Item>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                 {application.fields
                   .sort((a, b) => (a.order || 0) - (b.order || 0))

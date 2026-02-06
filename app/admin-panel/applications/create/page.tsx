@@ -71,7 +71,7 @@ export default function CreateApplicationPage() {
 
   // Fetch specialities and examiners
   const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
-  const { data: examinersData } = useGet<{ data: { data: Examiner[] } }>("/examiner/list/");
+  const { data: examinersData } = useGet<{ data: { data: Examiner[] } }>("/examiner/list/?is_active=true");
 
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];

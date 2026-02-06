@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, UseQueryOptions, UseMutationOptions, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 import { tokenStorage } from "@/lib/utils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api-doktarant.tashmeduni.uz/api/v1";
@@ -78,7 +78,7 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const config: RequestInit = {
     ...options,
     headers: {
@@ -100,12 +100,12 @@ async function apiRequest<T>(
 
   try {
     let response = await fetch(url, config);
-    
+
     // If 401 Unauthorized, try to refresh token and retry
     if (response.status === 401 && endpoint !== "/auth/token/refresh/") {
       try {
         const newAccessToken = await refreshAccessToken();
-        
+
         // Retry the original request with new token
         config.headers = {
           ...config.headers,
@@ -115,9 +115,9 @@ async function apiRequest<T>(
       } catch {
         // Refresh failed, throw original error
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = 
+        const errorMessage =
           ((errorData as { error?: string; message?: string })?.error) ||
-          ((errorData as { error?: string; message?: string })?.message) || 
+          ((errorData as { error?: string; message?: string })?.message) ||
           response.statusText;
         throw new ApiError(
           response.status,
@@ -126,12 +126,12 @@ async function apiRequest<T>(
         );
       }
     }
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMessage = 
+      const errorMessage =
         ((errorData as { error?: string; message?: string })?.error) ||
-        ((errorData as { error?: string; message?: string })?.message) || 
+        ((errorData as { error?: string; message?: string })?.message) ||
         response.statusText;
       throw new ApiError(
         response.status,
@@ -146,7 +146,7 @@ async function apiRequest<T>(
       const text = await response.text();
       return text ? JSON.parse(text) : ({} as T);
     }
-    
+
     return {} as T;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -162,7 +162,7 @@ async function apiUpload(
   formData: FormData
 ): Promise<unknown> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const config: RequestInit = {
     method: "POST",
     headers: {},
@@ -183,12 +183,12 @@ async function apiUpload(
 
   try {
     let response = await fetch(url, config);
-    
+
     // If 401 Unauthorized, try to refresh token and retry
     if (response.status === 401 && endpoint !== "/auth/token/refresh/") {
       try {
         const newAccessToken = await refreshAccessToken();
-        
+
         // Retry the original request with new token
         config.headers = {
           ...config.headers,
@@ -198,9 +198,9 @@ async function apiUpload(
       } catch {
         // Refresh failed, throw original error
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = 
+        const errorMessage =
           ((errorData as { error?: string; message?: string })?.error) ||
-          ((errorData as { error?: string; message?: string })?.message) || 
+          ((errorData as { error?: string; message?: string })?.message) ||
           response.statusText;
         throw new ApiError(
           response.status,
@@ -209,12 +209,12 @@ async function apiUpload(
         );
       }
     }
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMessage = 
+      const errorMessage =
         ((errorData as { error?: string; message?: string })?.error) ||
-        ((errorData as { error?: string; message?: string })?.message) || 
+        ((errorData as { error?: string; message?: string })?.message) ||
         response.statusText;
       throw new ApiError(
         response.status,
@@ -236,7 +236,7 @@ async function apiUpload(
 export function useGet<TData = unknown>(
   endpoint: string,
   options?: Omit<UseQueryOptions<TData, ApiError>, "queryKey" | "queryFn">
-) {
+): UseQueryResult<TData, ApiError> {
   return useQuery<TData, ApiError>({
     queryKey: [endpoint],
     queryFn: () => apiRequest<TData>(endpoint, { method: "GET" }),
@@ -248,7 +248,7 @@ export function useGet<TData = unknown>(
 export function usePost<TData = unknown, TVariables = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, TVariables>
-) {
+): UseMutationResult<TData, ApiError, TVariables> {
   return useMutation<TData, ApiError, TVariables>({
     mutationFn: (variables) =>
       apiRequest<TData>(endpoint, {
@@ -263,7 +263,7 @@ export function usePost<TData = unknown, TVariables = unknown>(
 export function usePut<TData = unknown, TVariables = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, TVariables>
-) {
+): UseMutationResult<TData, ApiError, TVariables> {
   return useMutation<TData, ApiError, TVariables>({
     mutationFn: (variables) =>
       apiRequest<TData>(endpoint, {
@@ -278,7 +278,7 @@ export function usePut<TData = unknown, TVariables = unknown>(
 export function usePatch<TData = unknown, TVariables = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, TVariables>
-) {
+): UseMutationResult<TData, ApiError, TVariables> {
   return useMutation<TData, ApiError, TVariables>({
     mutationFn: (variables) =>
       apiRequest<TData>(endpoint, {
@@ -293,7 +293,7 @@ export function usePatch<TData = unknown, TVariables = unknown>(
 export function useDelete<TData = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, void>
-) {
+): UseMutationResult<TData, ApiError, void> {
   return useMutation<TData, ApiError, void>({
     mutationFn: () => apiRequest<TData>(endpoint, { method: "DELETE" }),
     ...options,
@@ -304,7 +304,7 @@ export function useDelete<TData = unknown>(
 export function useUpload<TData = unknown>(
   endpoint: string,
   options?: UseMutationOptions<TData, ApiError, FormData>
-) {
+): UseMutationResult<TData, ApiError, FormData> {
   return useMutation<TData, ApiError, FormData>({
     mutationFn: (formData) => apiUpload(endpoint, formData) as Promise<TData>,
     ...options,
