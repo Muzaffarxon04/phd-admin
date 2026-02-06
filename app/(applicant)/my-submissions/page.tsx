@@ -11,10 +11,6 @@ import {
 } from "antd";
 import {
   EyeOutlined,
-  FileTextOutlined,
-  ClockCircleOutlined,
-  TrophyOutlined,
-  DollarOutlined,
   DownloadOutlined,
   PlusOutlined,
   HomeOutlined,
@@ -86,7 +82,7 @@ export default function MySubmissionsPage() {
   // Timeline data for visual representation
 
   const columns = [
-  
+
     {
       title: "Ariza raqami",
       dataIndex: "submission_number",
@@ -96,7 +92,7 @@ export default function MySubmissionsPage() {
       ),
       width: 160,
     },
-      {
+    {
       title: "Ariza nomi",
       dataIndex: "application_title",
       key: "application_title",
@@ -120,7 +116,7 @@ export default function MySubmissionsPage() {
       ),
       width: 140,
     },
-  
+
     {
       title: "Topshirilgan vaqt",
       dataIndex: "submitted_at",
