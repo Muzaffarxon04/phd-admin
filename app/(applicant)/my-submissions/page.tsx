@@ -16,7 +16,8 @@ import {
   Alert,
   Tooltip,
   Input,
-  Breadcrumb
+  Breadcrumb,
+  ConfigProvider
 } from "antd";
 import {
   EyeOutlined,
@@ -41,7 +42,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, cloneElement, isValidElement } from "react";
 
 const { Title, Text } = Typography;
 
@@ -282,8 +283,8 @@ export default function MySubmissionsPage() {
     }
 
     return (
-      <div className="min-h-screen p-8">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="min-h-screen ">
+        <div className=" mx-auto text-center">
           <ErrorState
             description={errorMessage}
             onRetry={() => window.location.reload()}
@@ -320,7 +321,7 @@ export default function MySubmissionsPage() {
         </div>
 
         {/* Premium Filters & Search */}
-     
+
         {/* Premium Stats Grid
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
@@ -384,54 +385,50 @@ export default function MySubmissionsPage() {
         {/* Table Section */}
         <div
           className="rounded-xl overflow-hidden transition-all duration-300 mb-8"
-          style={{
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-            border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-            boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <div className="p-6">
-            <div className="flex justify-between items-center ">
-              <Title level={4} className="mb-0!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                Arizalar jadvali
-              </Title>
-                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      
-          <div className="flex items-center gap-3">
-            <div className="relative">
-            
-              <Input
-                placeholder="Arizani izlang..."
-                className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"
-                style={{
-                  background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                  border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                  color: theme === "dark" ? "#ffffff" : "#484650",
-                }}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
 
-            <select
-              className="px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7367f0]/50 transition-all duration-300 cursor-pointer text-sm"
-              style={{
-                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                color: theme === "dark" ? "#ffffff" : "#484650",
-              }}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">Saralash</option>
-              <option value="DRAFT">Tayyorlanmoqda</option>
-              <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
-              <option value="APPROVED">Tasdiqlangan</option>
-              <option value="REJECTED">Rad etilgan</option>
-            </select>
-          </div>
-        </div>
+        >
+          <div >
+            <div className="flex justify-between items-center ">
+              {/* <Title level={4} className="mb-0!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                Arizalar jadvali
+              </Title> */}
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+
+                    <Input
+                      placeholder="Arizani izlang..."
+                      className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"
+                      style={{
+                        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                        color: theme === "dark" ? "#ffffff" : "#484650",
+                      }}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <select
+                    className="px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7367f0]/50 transition-all duration-300 cursor-pointer text-sm"
+                    style={{
+                      background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                      border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                      color: theme === "dark" ? "#ffffff" : "#484650",
+                    }}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">Saralash</option>
+                    <option value="DRAFT">Tayyorlanmoqda</option>
+                    <option value="SUBMITTED">Topshirilgan</option>
+                    <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
+                    <option value="APPROVED">Tasdiqlangan</option>
+                    <option value="REJECTED">Rad etilgan</option>
+                  </select>
+                </div>
+              </div>
 
               <Link href="/applications">
                 <Button
@@ -462,25 +459,57 @@ export default function MySubmissionsPage() {
                 />
               </div>
             ) : (
-              <Table
-                columns={columns}
-                dataSource={filteredSubmissions}
-                rowKey="id"
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  showQuickJumper: true,
-                  showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} dan ${total} ta ariza`,
+              <ConfigProvider
+                theme={{
+                  token: {
+                    colorBgContainer: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                    colorText: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+                    colorTextHeading: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+                    colorBorderSecondary: theme === "dark" ? "rgb(59, 66, 83)" : "#f0f0f0",
+                    colorFillAlter: theme === "dark" ? "rgb(33, 41, 60)" : "#fafafa", // For header background
+                  },
+                  components: {
+                    Table: {
+                      headerBg: theme === "dark" ? "rgb(33, 41, 60)" : "#fafafa",
+                      headerColor: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+                      rowHoverBg: theme === "dark" ? "rgb(55, 63, 85)" : "#fafafa",
+                      borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "#f0f0f0",
+                    }
+                  }
                 }}
-                className="custom-submission-table"
-              />
+              >
+                <Table
+                  columns={columns}
+                  dataSource={filteredSubmissions}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) =>
+                      `${range[0]}-${range[1]} dan ${total} ta ariza`,
+                    itemRender: (page, type, element) => {
+                      if ((type === 'page' || type === 'prev' || type === 'next') && isValidElement(element)) {
+                        return cloneElement(element as React.ReactElement<any>, {
+                          style: {
+                            backgroundColor: theme === 'dark' ? 'rgb(40, 48, 70)' : undefined,
+                            color: theme === 'dark' ? '#fff' : undefined,
+                            borderColor: theme === 'dark' ? 'rgb(59, 66, 83)' : undefined
+                          }
+                        });
+                      }
+                      return element;
+                    }
+                  }}
+                  className="custom-submission-table"
+                />
+              </ConfigProvider>
             )}
           </div>
         </div>
 
         {/* Recent Activities Section */}
-        <div className="mt-12 bg-transparent">
+        {/* <div className="mt-12 bg-transparent">
           <Title level={4} className="mb-8" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             So&apos;nggi faolliklar
           </Title>
@@ -490,7 +519,7 @@ export default function MySubmissionsPage() {
               dot: <div className="p-1 rounded-full bg-white dark:bg-[#283046] border-2 border-current"><ClockCircleOutlined style={{ fontSize: "14px" }} /></div>,
               children: (
                 <div
-                  className="mb-8 p-6 rounded-xl transition-all duration-300 hover:translate-x-1"
+                  className="mb-8 rounded-xl transition-all duration-300 hover:translate-x-1"
                   style={{
                     background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
                     border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
@@ -529,7 +558,7 @@ export default function MySubmissionsPage() {
               )
             }))}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

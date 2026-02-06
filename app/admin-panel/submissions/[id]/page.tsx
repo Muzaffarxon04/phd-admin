@@ -75,7 +75,7 @@ const formatAnswer = (item: DataObject) => {
   if (item.field_type === "FILE" && item.answer) {
     return (
       <a
-        href={API_BASE_URL + item.answer || ""}
+        href={API_BASE_URL?.replace("/api/v1", "") + item.answer || ""}
         target="_blank"
         rel="noopener noreferrer"
         className="text-[#7367f0] hover:underline font-bold flex items-center gap-2"
@@ -169,6 +169,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const [isRejecting, setIsRejecting] = useState(false);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [scoreForm] = Form.useForm();
+  const [form] = Form.useForm();
 
   // Drawer review state
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
@@ -304,10 +305,11 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 danger
                 icon={<CloseOutlined />}
                 onClick={() => openReviewDrawer("reject")}
-                className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+                className="h-[42px] px-6 !text-white rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
                 style={{
                   background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
                   boxShadow: "0 8px 25px -8px #ea5455",
+                  color: "white",
                 }}
               >
                 Rad etish
@@ -429,7 +431,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                         <span className="font-medium text-sm">Hujjat #{doc.id || idx + 1}</span>
                       </div>
                       <a
-                        href={(API_BASE_URL || "") + (doc.file || "")}
+                        href={(API_BASE_URL?.replace("/api/v1", "") || "") + (doc.file || "")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#7367f0] text-xs font-bold hover:underline"
@@ -585,6 +587,75 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           background: rgba(115, 103, 240, 0.05) !important;
         }
       `}</style>
+
+   <Drawer
+        title={reviewAction === "approve" ? "Arizani Tasdiqlash" : "Arizani Rad Etish"}
+        placement="right"
+        onClose={() => {
+          setReviewDrawerOpen(false);
+          form.resetFields();
+        }}
+        open={reviewDrawerOpen}
+        width={400}
+        styles={{
+          header: {
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            color: theme === "dark" ? "#ffffff" : "#000000",
+            borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
+          },
+          body: {
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            color: theme === "dark" ? "#ffffff" : "#000000",
+          }
+        }}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleReviewSubmit}
+        >
+          <Form.Item
+            name="notes"
+            label={<span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Eslatmalar</span>}
+            rules={[{ required: true, message: "Eslatma kiritish majburiy!" }]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="Qaror bo'yicha izoh qoldiring..."
+              className="rounded-xl"
+            />
+          </Form.Item>
+
+          <div className="flex gap-3 justify-end mt-4">
+            <Button
+              onClick={() => {
+                setReviewDrawerOpen(false);
+                form.resetFields();
+              }}
+              className="rounded-xl"
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isReviewSubmitting}
+              className="rounded-xl"
+              style={{
+                background: reviewAction === "approve"
+                  ? "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))"
+                  : "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
+                borderColor: reviewAction === "approve" ? "#28c76f" : "#ea5455",
+                boxShadow: reviewAction === "approve"
+                  ? "0 8px 25px -8px #28c76f"
+                  : "0 8px 25px -8px #ea5455",
+              }}
+            >
+              {reviewAction === "approve" ? "Tasdiqlash" : "Rad etish"}
+            </Button>
+          </div>
+        </Form>
+      </Drawer>
 
       <Modal
         title="Ariza Baholash"

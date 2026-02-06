@@ -323,5 +323,68 @@ export function useUploadPatch<TData = unknown>(
   });
 }
 
+// Download file function
+async function apiDownload(
+  endpoint: string,
+  filename?: string
+): Promise<void> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const headers: Record<string, string> = {
+  };
+
+  if (typeof window !== "undefined") {
+    const token = tokenStorage.getAccessToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  try {
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      // Try to read error as json
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(response.status, response.statusText, errorData);
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+
+    // Try to get filename from content-disposition
+    let finalFilename = filename || "download";
+    const contentDisposition = response.headers.get('content-disposition');
+    if (contentDisposition && !filename) {
+      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+      if (matches != null && matches[1]) {
+        finalFilename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    link.setAttribute('download', finalFilename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Download hook
+export function useDownload(
+  endpoint: string,
+  filename?: string,
+  options?: UseMutationOptions<void, ApiError, void>
+): UseMutationResult<void, ApiError, void> {
+  return useMutation<void, ApiError, void>({
+    mutationFn: () => apiDownload(endpoint, filename),
+    ...options,
+  });
+}
+
 // Export API base URL and request function for direct use if needed
 export { API_BASE_URL, apiRequest, apiUpload };

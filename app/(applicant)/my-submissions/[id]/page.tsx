@@ -36,6 +36,7 @@ import {
   usePost,
   useUpload,
   useUploadPatch,
+  useDownload,
   // usePatch, 
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
@@ -188,6 +189,19 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
       },
       onError: (error) => {
         message.error(error.message || "Yangilashda xatolik");
+      },
+    }
+  );
+
+  const { mutate: downloadGuvohnoma, isPending: isDownloading } = useDownload(
+    `/pdf/submission-marks/${submissionId}/generate-guvohnoma/`,
+    `guvohnoma-${submission?.submission_number || "certificate"}.pdf`,
+    {
+      onSuccess: () => {
+        message.success("Guvohnoma yuklanmoqda...");
+      },
+      onError: (error) => {
+        message.error(error.message || "Guvohnomani yuklashda xatolik");
       },
     }
   );
@@ -478,7 +492,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 description={submission.review_notes}
                 type={submission.status === 'REJECTED' ? 'error' : 'info'}
                 showIcon
-                className="mb-6 rounded-lg border-0"
+                className="!mb-6 rounded-lg border-0 "
                 style={{
                   backgroundColor: submission.status === 'REJECTED' ? (theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2') : (theme === 'dark' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff'),
                   color: theme === 'dark' ? '#e5e7eb' : '#1f2937'
@@ -592,7 +606,17 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
                     {submission.status === "APPROVED" && (
                       <div className="text-center py-4">
-                        <Text type="success" strong>Arizangiz tasdiqlandi</Text>
+                        <Text type="success" strong className="block mb-3">Arizangiz tasdiqlandi</Text>
+                        <Button
+                          type="primary"
+                          icon={<DownloadOutlined />}
+                          onClick={() => downloadGuvohnoma()}
+                          loading={isDownloading}
+                          block
+                          className="h-[40px] rounded-lg shadow-none bg-green-600 hover:bg-green-500"
+                        >
+                          Guvohnomani yuklash
+                        </Button>
                       </div>
                     )}
 
