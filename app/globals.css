@@ -117,6 +117,10 @@ body {
   color: #484650 !important;
 }
 
+td, th {
+  padding: 6px 12px !important;
+}
+
 /* Admin Panel Specific Table Styles */
 .admin-page-container .ant-table-thead>tr>th,
 .admin-page-container .ant-table-tbody>tr>td {

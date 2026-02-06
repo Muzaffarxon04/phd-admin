@@ -11,13 +11,21 @@ import {
   Typography,
   Breadcrumb,
   Input,
+  Table,
+  Segmented,
+  Tooltip,
+  Progress,
+  ConfigProvider,
 } from "antd";
 import {
   ExclamationCircleOutlined,
   DownOutlined,
+  AppstoreOutlined,
+  BarsOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
-import { CardSkeleton } from "@/components/LoadingSkeleton";
+import { ApplicationCardSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
@@ -68,6 +76,7 @@ function ApplicationsPage() {
   const { data: applicationsData, isLoading, error } = useGet<ApplicationsResponse | AvailableApplication[]>("/applicant/applications/");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
   const toggleCard = (id: number, e: React.MouseEvent) => {
@@ -101,15 +110,123 @@ function ApplicationsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const columns = [
+    {
+      title: "#",
+      key: "index",
+      width: 50,
+      render: (_: unknown, __: unknown, index: number) => (
+        <span className="text-gray-400 font-medium">{index + 1}</span>
+      ),
+    },
+    {
+      title: "Ariza nomi",
+      dataIndex: "title",
+      key: "title",
+      render: (text: string) => (
+        <Text strong ellipsis={{ tooltip: text }} className="max-w-[250px] text-[12px]" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{text}</Text>
+      ),
+      width: 250,
+    },
+    {
+      title: "Tavsifi",
+      dataIndex: "description",
+      key: "description",
+      render: (text: string) => (
+        <Text type="secondary" ellipsis={{ tooltip: text }} className="max-w-[200px] text-[12px]">
+          {text}
+        </Text>
+      ),
+      width: 200,
+    },
+    {
+      title: "To'lov",
+      dataIndex: "application_fee",
+      key: "application_fee",
+      render: (fee: string) => <Text strong className="whitespace-nowrap">{Number(fee).toLocaleString()} UZS</Text>,
+      width: 140,
+    },
+    {
+      title: "Boshlanish",
+      dataIndex: "start_date",
+      key: "start_date",
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDate(date)}</span>,
+      width: 125,
+    },
+    {
+      title: "Tugash",
+      dataIndex: "end_date",
+      key: "end_date",
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDate(date)}</span>,
+      width: 90,
+    },
+    {
+      title: "Imtihon",
+      dataIndex: "exam_date",
+      key: "exam_date",
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{date ? formatDate(date) : "-"}</span>,
+      width: 90,
+    },
+    {
+      title: "Max. arizalar",
+      dataIndex: "max_submissions",
+      key: "max_submissions",
+      render: (count: number) => <span className="text-xs">{count || 0}</span>,
+      width: 145,
+    },
+
+    {
+      title: "Holat",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => (
+        <Tag
+          className="border-0 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wider"
+          style={{
+            background: "rgba(115, 103, 240, 0.15)",
+            color: "#7367f0"
+          }}
+        >
+          {getApplicationStatusLabel(status || "DRAFT")}
+        </Tag>
+      ),
+    },
+    {
+      title: "Amallar",
+      key: "actions",
+      fixed: "right" as const,
+      width: 98,
+      render: (_: unknown, record: AvailableApplication) => (
+    <div className="flex items-center justify-center">
+          <Tooltip title="Ariza topshirish">
+          <Button
+            type="primary"
+            icon={<EyeOutlined />}
+            size="small"
+            shape="circle"
+            className="flex items-center justify-center hover:scale-110 transition-transform"
+            style={{
+              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(115, 103, 240, 0.3)"
+            }}
+            onClick={() => router.push(`/applications/${record.id}`)}
+          />
+        </Tooltip>
+    </div>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen">
         <div className="max-w-7xl mx-auto">
           <Title level={2} className="mb-8 text-center">Mavjud Arizalar</Title>
           <Row gutter={[24, 24]}>
-            {[1, 2, 3].map((i) => (
-              <Col xs={24} sm={12} lg={8} xl={6} key={i}>
-                <CardSkeleton />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Col xs={24} sm={12} lg={8} key={i}>
+                <ApplicationCardSkeleton />
               </Col>
             ))}
           </Row>
@@ -196,12 +313,25 @@ function ApplicationsPage() {
               <option value="all">Saralash</option>
               <option value="DRAFT">Tayyorlanmoqda</option>
               <option value="SUBMITTED">Topshirilgan</option>
-              <option value="UNDER_REVIEW">Ko&apos;rib chiqilmoqda</option>
             </select>
           </div>
+
+          <Segmented
+            options={[
+              { value: "table", icon: <BarsOutlined /> },
+              { value: "grid", icon: <AppstoreOutlined /> },
+            ]}
+            value={viewMode}
+            onChange={(value) => setViewMode(value as "grid" | "table")}
+            className="rounded-xl p-1"
+            style={{
+              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+            }}
+          />
         </div>
 
-        {/* Applications Grid */}
+        {/* Applications Content */}
         {filteredApplications.length === 0 ? (
           <div className="text-center py-12">
             <EmptyState
@@ -218,7 +348,7 @@ function ApplicationsPage() {
               }
             />
           </div>
-        ) : (
+        ) : viewMode === "grid" ? (
           <Row gutter={[24, 24]}>
             {filteredApplications.map((app: AvailableApplication) => {
               const isExpanded = expandedCards.has(app.id);
@@ -392,6 +522,56 @@ function ApplicationsPage() {
               );
             })}
           </Row>
+        ) : (
+          <ConfigProvider
+            theme={{
+              token: {
+                colorBgContainer: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                colorText: theme === "dark" ? "#ffffff" : "#484650",
+                colorTextHeading: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "#5a5a6a",
+                borderRadius: 12,
+              },
+              components: {
+                Table: {
+                  headerBg: theme === "dark" ? "rgb(33, 41, 60)" : "#f4f5f6",
+                  headerColor: theme === "dark" ? "#ffffff" : "#222222",
+                  headerBorderRadius: 0,
+                  cellPaddingInline: 16,
+                  cellPaddingBlock: 16,
+                  rowHoverBg: theme === "dark" ? "rgb(55, 63, 85)" : "#fafafa",
+                }
+              }
+            }}
+          >
+            <div
+              className="rounded-xl overflow-hidden border"
+              style={{
+                borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "rgb(235, 233, 241)",
+                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+              }}
+            >
+              <Table
+                columns={columns.map(col => ({
+                  ...col,
+                  title: typeof col.title === 'string' ? (
+                    <span className="text-[11px] font-black uppercase tracking-widest">{col.title}</span>
+                  ) : col.title,
+                  onCell: () => ({
+                    style: { verticalAlign: 'top' }
+                  })
+                }))}
+                dataSource={filteredApplications}
+                rowKey="id"
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  className: "px-6 py-4 mb-0",
+                }}
+                className={`custom-redesigned-table ${theme === "dark" ? "dark-table" : ""}`}
+                scroll={{ x: 1400 }}
+              />
+            </div>
+          </ConfigProvider>
         )}
       </div>
     </div>

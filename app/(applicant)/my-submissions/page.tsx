@@ -86,86 +86,74 @@ export default function MySubmissionsPage() {
   // Timeline data for visual representation
 
   const columns = [
+  
     {
-      title: (
-        <div className="flex items-center gap-2 py-3 px-4">
-          <FileTextOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza raqami</span>
-        </div>
-      ),
+      title: "Ariza raqami",
       dataIndex: "submission_number",
       key: "submission_number",
-      render: (text: string, record: Submission) => (
-        <div>
-          <div className="font-bold text-base" style={{ color: "#7367f0" }}>
-            #{text}
-          </div>
-          <div className="text-xs font-medium text-gray-400 mt-0.5">
-            {formatDate(record.created_at)}
-          </div>
-        </div>
+      render: (text: string) => (
+        <span className="font-bold text-[#7367f0]">#{text}</span>
       ),
-      width: 180,
+      width: 160,
     },
-    {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <TrophyOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza nomi</span>
-        </div>
-      ),
+      {
+      title: "Ariza nomi",
       dataIndex: "application_title",
       key: "application_title",
-      render: (text: string, record: Submission) => (
-        <div className="max-w-xs py-2">
-          <Tooltip title={text}>
-            <div className={`font-bold text-sm truncate ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-              {text}
-            </div>
-          </Tooltip>
-          {record.submitted_at && (
-            <div className="text-xs text-gray-400 mt-0.5">
-              Topshirilgan: {formatDate(record.submitted_at)}
-            </div>
-          )}
-        </div>
+      render: (text: string) => (
+        <Tooltip title={text}>
+          <div className={`font-bold text-sm truncate max-w-[200px] ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+            {text}
+          </div>
+        </Tooltip>
       ),
-      width: 280,
+      width: 200,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <ClockCircleOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holat</span>
-        </div>
+      title: "Yaratilgan vaqt",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (date: string) => (
+        <span className="text-xs text-gray-400 whitespace-nowrap">
+          {formatDate(date)}
+        </span>
       ),
+      width: 140,
+    },
+  
+    {
+      title: "Topshirilgan vaqt",
+      dataIndex: "submitted_at",
+      key: "submitted_at",
+      render: (date?: string) => (
+        <span className="text-xs text-gray-400 whitespace-nowrap">
+          {date ? formatDate(date) : "-"}
+        </span>
+      ),
+      width: 140,
+    },
+    {
+      title: "Holat",
       dataIndex: "status",
       key: "status",
       render: (status: string) => {
         const label = getApplicationStatusLabel(status);
         return (
-          <div className="py-2">
-            <span
-              className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                  status === "DRAFT" ? "bg-gray-500/10 text-gray-500 border-gray-500/20" :
-                    "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                }`}
-            >
-              {label}
-            </span>
-          </div>
+          <span
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+              status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                status === "DRAFT" ? "bg-gray-500/10 text-gray-500 border-gray-500/20" :
+                  "bg-purple-500/10 text-purple-500 border-purple-500/20"
+              }`}
+          >
+            {label}
+          </span>
         );
       },
-      width: 160,
+      width: 140,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <DollarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">To&apos;lov</span>
-        </div>
-      ),
+      title: "To'lov",
       dataIndex: "payment_status",
       key: "payment_status",
       render: (status: string) => {
@@ -182,45 +170,47 @@ export default function MySubmissionsPage() {
                 "text-gray-500 bg-gray-500/10 border-gray-500/20";
 
         return (
-          <div className="py-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}>
-              {labels[status] || status}
-            </span>
-          </div>
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border whitespace-nowrap ${colorClass}`}>
+            {labels[status] || status}
+          </span>
         );
       },
-      width: 130,
+      width: 120,
     },
     {
-      title: (
-        <div className="flex items-center justify-center py-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Amallar</span>
-        </div>
-      ),
+      title: "Amallar",
       key: "actions",
+      fixed: "right" as const,
+      width: 80,
       render: (_: unknown, record: Submission) => (
-        <div className="flex justify-center items-center gap-2 py-2">
+        <div className="flex items-center justify-center gap-2">
           <Link href={`/my-submissions/${record.id}`}>
             <Tooltip title="Ko'rish">
-              <button
-                className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
-              >
-                <EyeOutlined style={{ fontSize: "18px" }} />
-              </button>
+              <Button
+                shape="circle"
+                icon={<EyeOutlined />}
+                size="small"
+                className="flex items-center justify-center hover:scale-110 transition-transform"
+                style={{
+                  background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                  border: "none",
+                  boxShadow: "0 2px 8px rgba(115, 103, 240, 0.3)",
+                  color: "#fff"
+                }}
+              />
             </Tooltip>
           </Link>
 
           {record.documents_uploaded && record.total_required_documents && (
             <Tooltip title={`${record.documents_uploaded}/${record.total_required_documents} hujjat yuklandi`}>
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/10 text-blue-500 text-xs font-bold border border-blue-500/20">
-                <DownloadOutlined style={{ fontSize: "14px" }} />
-                {record.documents_uploaded}
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-blue-500/10 text-blue-500 text-[10px] font-bold border border-blue-500/20 whitespace-nowrap">
+                <DownloadOutlined style={{ fontSize: "12px" }} />
+                {record.documents_uploaded}/{record.total_required_documents}
               </div>
             </Tooltip>
           )}
         </div>
       ),
-      width: 150,
     },
   ];
 
@@ -425,29 +415,39 @@ export default function MySubmissionsPage() {
                 theme={{
                   token: {
                     colorBgContainer: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                    colorText: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
-                    colorTextHeading: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+                    colorText: theme === "dark" ? "#ffffff" : "#484650",
+                    colorTextHeading: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "#5a5a6a",
                     colorBorderSecondary: theme === "dark" ? "rgb(59, 66, 83)" : "#f0f0f0",
-                    colorFillAlter: theme === "dark" ? "rgb(33, 41, 60)" : "#fafafa", // For header background
+                    borderRadius: 12,
                   },
                   components: {
                     Table: {
-                      headerBg: theme === "dark" ? "rgb(33, 41, 60)" : "#fafafa",
-                      headerColor: theme === "dark" ? "#ffffff" : "rgba(0, 0, 0, 0.88)",
+                      headerBg: theme === "dark" ? "rgb(33, 41, 60)" : "#f4f5f6",
+                      headerColor: theme === "dark" ? "#ffffff" : "#222222",
+                      headerBorderRadius: 0,
+                      cellPaddingInline: 16,
+                      cellPaddingBlock: 16,
                       rowHoverBg: theme === "dark" ? "rgb(55, 63, 85)" : "#fafafa",
-                      borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "#f0f0f0",
                     }
                   }
                 }}
               >
                 <Table
-                  columns={columns}
+                  columns={columns.map(col => ({
+                    ...col,
+                    title: typeof col.title === 'string' ? (
+                      <span className="text-[11px] font-black uppercase tracking-widest">{col.title}</span>
+                    ) : col.title,
+                    onCell: () => ({
+                      style: { verticalAlign: 'top' }
+                    })
+                  }))}
                   dataSource={filteredSubmissions}
                   rowKey="id"
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
-                    showQuickJumper: true,
+                    className: "px-6 py-4 mb-0",
                     showTotal: (total, range) =>
                       `${range[0]}-${range[1]} dan ${total} ta ariza`,
                     itemRender: (page, type, element) => {
@@ -463,7 +463,8 @@ export default function MySubmissionsPage() {
                       return element;
                     }
                   }}
-                  className="custom-submission-table"
+                  className="custom-redesigned-table"
+                  scroll={{ x: 1200 }}
                 />
               </ConfigProvider>
             )}
