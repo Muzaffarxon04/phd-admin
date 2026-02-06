@@ -5,11 +5,9 @@ import {
   EyeOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  // ExclamationCircleOutlined,
   DollarOutlined,
   CalendarOutlined,
   ReloadOutlined,
-  SearchOutlined,
   FileTextOutlined,
   UserOutlined
 } from "@ant-design/icons";
@@ -352,7 +350,7 @@ export default function SubmissionsPage() {
 
           <div className="flex items-center gap-4">
             <div className="relative">
-             
+
               <input
                 type="text"
                 placeholder="Qidirish..."

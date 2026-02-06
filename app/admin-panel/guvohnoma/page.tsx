@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Button, Select, Typography, message, Spin } from "antd";
-import { DownloadOutlined, FileWordOutlined, FileTextOutlined } from "@ant-design/icons";
+import { Card, Button, Select, Typography, message } from "antd";
+import { DownloadOutlined, FileWordOutlined } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { wordsApi } from "@/lib/api/words";
 import type { Speciality } from "@/types";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 
 interface Application {
@@ -84,7 +84,7 @@ export default function GuvohnomaPage() {
 
             <div className="grid grid-cols-1 gap-6">
                 <Card
-                   
+
                     style={{
                         background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
                         border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",

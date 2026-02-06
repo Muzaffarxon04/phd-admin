@@ -1,19 +1,9 @@
 "use client";
 
 import {
-  Card,
   Table,
-  Tag,
   Button,
-  Space,
   Typography,
-  Progress,
-  Badge,
-  Timeline,
-  // Statistic,
-  Row,
-  Col,
-  Alert,
   Tooltip,
   Input,
   Breadcrumb,
@@ -22,18 +12,12 @@ import {
 import {
   EyeOutlined,
   FileTextOutlined,
-  // CheckCircleOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
   DollarOutlined,
-  CalendarOutlined,
   DownloadOutlined,
   PlusOutlined,
-  SearchOutlined,
   HomeOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  InfoCircleOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -41,10 +25,10 @@ import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
 import React, { useState, useMemo, cloneElement, isValidElement } from "react";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface Submission {
   id: number;
@@ -99,28 +83,7 @@ export default function MySubmissionsPage() {
     });
   }, [submissions, statusFilter, searchTerm]);
 
-  // Calculate statistics
-  const stats = useMemo(() => ({
-    total: filteredSubmissions.length,
-    submitted: filteredSubmissions.filter(s => s.status === "SUBMITTED").length,
-    underReview: filteredSubmissions.filter(s => s.status === "UNDER_REVIEW").length,
-    approved: filteredSubmissions.filter(s => s.status === "APPROVED").length,
-    rejected: filteredSubmissions.filter(s => s.status === "REJECTED").length,
-    paid: filteredSubmissions.filter(s => s.payment_status === "PAID").length,
-    pendingPayment: filteredSubmissions.filter(s => s.payment_status === "PENDING").length,
-  }), [filteredSubmissions]);
-
   // Timeline data for visual representation
-  const timelineData = filteredSubmissions.slice(0, 5).map(submission => ({
-    key: submission.id,
-    status: submission.status,
-    title: submission.application_title,
-    submissionNumber: submission.submission_number,
-    date: submission.created_at,
-    paymentStatus: submission.payment_status,
-    reviewNotes: submission.review_notes,
-    color: getApplicationStatusColor(submission.status),
-  }));
 
   const columns = [
     {
@@ -180,7 +143,6 @@ export default function MySubmissionsPage() {
       key: "status",
       render: (status: string) => {
         const label = getApplicationStatusLabel(status);
-        const color = getApplicationStatusColor(status);
         return (
           <div className="py-2">
             <span
@@ -490,7 +452,7 @@ export default function MySubmissionsPage() {
                       `${range[0]}-${range[1]} dan ${total} ta ariza`,
                     itemRender: (page, type, element) => {
                       if ((type === 'page' || type === 'prev' || type === 'next') && isValidElement(element)) {
-                        return cloneElement(element as React.ReactElement<any>, {
+                        return cloneElement(element as React.ReactElement, {
                           style: {
                             backgroundColor: theme === 'dark' ? 'rgb(40, 48, 70)' : undefined,
                             color: theme === 'dark' ? '#fff' : undefined,

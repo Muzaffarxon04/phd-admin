@@ -14,7 +14,6 @@ import {
 } from "antd";
 import {
   ExclamationCircleOutlined,
-  SearchOutlined,
   DownOutlined,
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";

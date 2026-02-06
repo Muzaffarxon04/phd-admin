@@ -89,15 +89,6 @@ interface ApplicationResponse {
   data: Application;
 }
 
-interface SubmissionData {
-  application: number;
-  speciality?: string;
-  answers: Array<{
-    field_id: number;
-    answer_text?: string;
-    file?: File;
-  }>;
-}
 
 const renderFieldInput = (field: ApplicationField, theme: string) => {
   const options = field.options || [];
@@ -300,7 +291,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
       if (field.field_type === "FILE") {
         // Handle file upload
-   
+
         if (value && Array.isArray(value) && value.length > 0 && value[0].originFileObj) {
           formData.append(`field_${field.id}_file`, value[0].originFileObj);
         }

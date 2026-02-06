@@ -1,16 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Button, Tag, Space, Typography, Input } from "antd";
+import { Table, Button, Typography } from "antd";
 const { Title } = Typography;
 import type { ColumnsType } from "antd/es/table";
 import {
   EyeOutlined,
   PlusOutlined,
-  SearchOutlined,
-  FileTextOutlined,
   CalendarOutlined,
-  UserOutlined,
   TrophyOutlined
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
@@ -138,8 +135,8 @@ const columns: ColumnsType<Application> = [
         <Link href={`/admin-panel/applications/${record.id}`}>
           <Button
             className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
-                : "bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
+              ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
+              : "bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
               }`}
             icon={<EyeOutlined style={{ fontSize: "18px" }} />}
           />

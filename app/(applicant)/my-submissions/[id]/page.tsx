@@ -6,17 +6,13 @@ import {
   Spin,
   Tag,
   Button,
-  Progress,
   Typography,
   Row,
   Col,
   message,
   Alert,
   List,
-  Tooltip,
-  Space,
   Result,
-  Badge,
   Steps,
   Modal,
   Form,
@@ -28,13 +24,11 @@ import {
   InputNumber,
   Upload
 } from "antd";
-import type { UploadFile } from "antd/es/upload/interface";
 import dayjs from "dayjs";
 // import type { Dayjs } from "dayjs";
 import {
   useGet,
   usePost,
-  useUpload,
   useUploadPatch,
   useDownload,
   // usePatch, 
@@ -55,13 +49,9 @@ import {
   UploadOutlined,
   DownloadOutlined,
   ArrowLeftOutlined,
-
   UserOutlined,
   TeamOutlined,
-
-  ReloadOutlined,
   SendOutlined,
-  InboxOutlined,
   FileTextOutlined
 } from "@ant-design/icons";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -106,6 +96,31 @@ interface Submission {
   created_at: string;
   submitted_at?: string;
   updated_at?: string;
+}
+
+interface ApplicationField {
+  id: number;
+  label: string;
+  field_type: "TEXT" | "TEXTAREA" | "EMAIL" | "PHONE" | "NUMBER" | "DATE" | "SELECT" | "RADIO" | "CHECKBOX" | "FILE" | "URL";
+  help_text?: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[];
+  min_length?: number | null;
+  max_length?: number | null;
+  min_value?: string | null;
+  max_value?: string | null;
+  allowed_file_types?: string[];
+  max_file_size?: number | null;
+  order?: number;
+}
+
+interface Application {
+  id: number;
+  title: string;
+  description: string;
+  fields: ApplicationField[];
+  // Add other fields if necessary based on your API usage
 }
 
 const statusTimeline = [
@@ -173,7 +188,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   });
 
   // Fetch application details to get field definitions (options, types, etc.)
-  const { data: applicationData } = useGet<{ data: any }>(
+  const { data: applicationData } = useGet<{ data: Application }>(
     submission?.application?.id ? `/applicant/applications/${submission.application.id}/` : "",
     { enabled: !!submission?.application?.id }
   );
@@ -213,9 +228,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     if (!submission || !applicationFields.length) return;
 
     // Prefill form
-    const initialValues: Record<string, any> = {};
+    const initialValues: Record<string, unknown> = {};
     submission.answers.forEach((ans) => {
-      const fieldDef = applicationFields.find((f: any) => f.id === ans.field);
+      const fieldDef = applicationFields.find((f) => f.id === ans.field);
       if (fieldDef) {
         if (fieldDef.field_type === "FILE" && (ans.answer || ans.answer_text)) {
           // Prefill fileList for Upload component
@@ -240,11 +255,11 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = (values: any) => {
+  const handleEditSubmit = (values: Record<string, unknown>) => {
     const formData = new FormData();
-    const answers: any[] = [];
+    const answers: Array<{ field_id: number; answer_text: string }> = [];
 
-    applicationFields.forEach((field: any) => {
+    applicationFields.forEach((field) => {
       const value = values[`field_${field.id}`];
 
       if (field.field_type === "FILE") {
@@ -265,7 +280,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
       let answerText = "";
       if (value !== undefined && value !== null) {
-        if (field.field_type === "DATE") {
+        if (field.field_type === "DATE" && dayjs.isDayjs(value)) {
           answerText = value.format("YYYY-MM-DD");
         } else if (Array.isArray(value)) {
           answerText = value.join(", ");
@@ -338,7 +353,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
           />
           <Link href="/my-submissions">
             <Button type="primary" className="mt-4 h-[42px] px-6 rounded-xl font-medium">
-              Arizalar ro'yxatiga qaytish
+              Arizalar ro&apos;yxatiga qaytish
             </Button>
           </Link>
         </div>
@@ -349,17 +364,6 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   const currentStatusIndex = statusTimeline.findIndex(step => step.status === submission.status);
   const activeStep = currentStatusIndex >= 0 ? currentStatusIndex : 0;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED": return "success";
-      case "REJECTED": return "error";
-      case "UNDER_REVIEW": return "processing";
-      case "SUBMITTED": return "processing";
-      case "DRAFT": return "default";
-      case "WITHDRAWN": return "default";
-      default: return "default";
-    }
-  };
 
   const cardStyle = {
     background: theme === "dark" ? "#1f2937" : "#ffffff",
@@ -454,7 +458,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     )}
                     {submission.updated_at && (
                       <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
-                        <Text style={textStyle}>So'nggi o'zgarish</Text>
+                        <Text style={textStyle}>So&apos;nggi o&apos;zgarish</Text>
                         <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDate(submission.updated_at)}</Text>
                       </div>
                     )}
@@ -465,7 +469,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               <Col xs={24} md={12}>
                 <Card className="h-full border-0" style={cardStyle}>
                   <div className="flex items-center justify-between mb-6">
-                    <Title level={5} style={titleStyle}>To'lov</Title>
+                    <Title level={5} style={titleStyle}>To&apos;lov</Title>
                     <Tag bordered={false} color={submission.payment_status === "PAID" ? "success" : "warning"}>
                       {submission.payment_status === "PAID" ? "TO'LANGAN" : submission.payment_status}
                     </Tag>
@@ -533,7 +537,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:underline"
                               >
-                                Faylni ko'rish
+                                Faylni ko&apos;rish
                               </a>
                             ) : (
                               answer.answer || answer.answer_text || "—"
@@ -554,7 +558,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 }>
                   {submission?.documents?.length === 0 ? (
                     <div className="text-center py-8">
-                      <Text style={textStyle}>Hujjatlar yo'q</Text>
+                      <Text style={textStyle}>Hujjatlar yo&apos;q</Text>
                     </div>
                   ) : (
                     <List
@@ -600,7 +604,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
                     {(submission.status === "SUBMITTED" || submission.status === "UNDER_REVIEW") && (
                       <div className="text-center py-4">
-                        <Text type="secondary">Arizangiz ko'rib chiqilmoqda</Text>
+                        <Text type="secondary">Arizangiz ko&apos;rib chiqilmoqda</Text>
                       </div>
                     )}
 
@@ -654,15 +658,15 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
           onFinish={handleEditSubmit}
         >
           {applicationFields
-            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-            .map((field: any) => (
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((field) => (
               <Form.Item
                 key={field.id}
                 name={`field_${field.id}`}
                 label={field.label}
-                rules={[{ required: field.required, message: "To'ldirish majburiy" }]}
+                rules={[{ required: field.required, message: "To&apos;ldirish majburiy" }]}
                 valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
-                getValueFromEvent={field.field_type === "FILE" ? (e: any) => {
+                getValueFromEvent={field.field_type === "FILE" ? (e) => {
                   if (Array.isArray(e)) {
                     return e;
                   }

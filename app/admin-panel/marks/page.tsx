@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import {
-  Card,
   Button,
   Table,
-  Tag,
-  Space,
   Modal,
   Form,
   Input,
@@ -14,16 +11,11 @@ import {
   Select,
   message,
   Popconfirm,
-  Row,
-  Col,
-  Statistic,
-  Breadcrumb,
   Progress,
   Avatar,
-  Alert,
   Typography,
 } from "antd";
-const { Title, Text } = Typography;
+const { Title } = Typography;
 import { useThemeStore } from "@/lib/stores/themeStore";
 import {
   PlusOutlined,
@@ -32,11 +24,9 @@ import {
   CheckCircleOutlined,
   StarOutlined,
   UserOutlined,
-  BookOutlined,
   FileTextOutlined,
   SolutionOutlined,
   TrophyOutlined,
-  SearchOutlined,
   BarChartOutlined
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,10 +45,9 @@ export default function MarksPage() {
   // Pagination and Filters
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [searchText, setSearchText] = useState("");
 
   // Fetch Marks
-  const { data: marksData, isLoading, error } = useQuery({
+  const { data: marksData, isLoading } = useQuery({
     queryKey: ["marks", page, pageSize],
     queryFn: () => marksApi.getMarks(page, pageSize),
   });

@@ -165,8 +165,6 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const { id } = use(params);
   const queryClient = useQueryClient();
   const { theme } = useThemeStore();
-  const [isApproving, setIsApproving] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [scoreForm] = Form.useForm();
   const [form] = Form.useForm();

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  Card,
   Button,
   Row,
   Col,
@@ -12,12 +11,10 @@ import {
   message,
   Space,
   Alert,
-  Breadcrumb,
-  Statistic,
   List,
   Avatar,
 } from "antd";
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 import { useThemeStore } from "@/lib/stores/themeStore";
 import {
   FilePdfOutlined,

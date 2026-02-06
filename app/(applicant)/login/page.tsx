@@ -5,11 +5,9 @@ import { MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGet, usePatch } from "@/lib/hooks";
 import { tokenStorage } from "@/lib/utils";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import Link from "next/link";
-import { useState } from "react";
 import { User } from "@/lib/api/auth";
 import Image from "next/image";
 

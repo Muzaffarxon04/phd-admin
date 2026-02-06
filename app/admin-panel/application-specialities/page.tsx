@@ -24,7 +24,6 @@ import { useGet } from "@/lib/hooks"; import type {
 } from "@/lib/api/app-speciality";
 import type { ApplicationListResponse, ApplicationDetail } from "@/lib/api/admin";
 import type { SpecialityListResponse } from "@/lib/api/speciality";
-import { formatDate } from "@/lib/utils";
 
 import { Typography } from "antd";
 const { Title } = Typography;

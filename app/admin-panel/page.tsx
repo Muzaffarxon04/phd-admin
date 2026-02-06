@@ -1,104 +1,21 @@
 "use client";
 
-import { Button, Typography, Tag } from "antd";
+import { Typography } from "antd";
 const { Title } = Typography;
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  DollarOutlined,
-  UserOutlined,
-  BookOutlined,
-  ExportOutlined,
-} from "@ant-design/icons";
-import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
-import type { ApplicationListResponse, ApplicationSubmissionListResponse } from "@/lib/api";
-import { DashboardSkeleton } from "@/components/LoadingSkeleton";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { formatDate } from "@/lib/utils";
-import Link from "next/link";
 
 
 
 export default function AdminPanelPage() {
   const { theme } = useThemeStore();
-  const { data: applications, isLoading: isLoadingApps } = useGet<ApplicationListResponse>("/admin/application/");
-  const { data: submissions, isLoading: isLoadingSubs } = useGet<ApplicationSubmissionListResponse>("/admin/application/submissions/");
-  console.log(applications, submissions);
-  const totalApplications = applications?.results?.length || 0;
-  const totalSubmissions = submissions?.count || 0;
-  const submissionsList = submissions?.results || [];
-
-  // Arizalar holati boyicha statistika
-  const approvedCount = submissionsList.filter((s) => s.status === "approved").length;
-  const rejectedCount = submissionsList.filter((s) => s.status === "rejected").length;
-  const pendingCount = submissionsList.filter((s) => s.status === "under_review" || s.status === "submitted").length;
-  const draftCount = submissionsList.filter((s) => s.status === "draft").length;
-
-  // Tolovlar boyicha statistika
-  const paidCount = 0;
-  const pendingPaymentCount = 0;
-  const failedPaymentCount = 0;
-
-  // Foiz ozgarishlar
-  const calculatePercentage = (current: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((current / total) * 100);
-  };
-
-  // Oylik statistika
-  const currentMonth = new Date().getMonth();
-  const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
-  const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const monthIndex = (currentMonth - 5 + i + 12) % 12;
-    const monthSubmissions = submissionsList.filter((s) => {
-      if (!s.created_at) return false;
-      const date = new Date(s.created_at);
-      return date.getMonth() === monthIndex;
-    });
-    return {
-      month: months[monthIndex],
-      arizalar: monthSubmissions.length,
-      qabul: monthSubmissions.filter((s) => s.status === "approved").length,
-    };
-  });
-
-  // Oxirgi arizalar (5 ta)
-  const recentSubmissions = [...submissionsList]
-    .sort((a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return dateB - dateA;
-    })
-    .slice(0, 5);
 
   // Chart data
-  const statusData = [
-    { name: "Qabul qilingan", value: approvedCount, color: "#52c41a" },
-    { name: "Rad etilgan", value: rejectedCount, color: "#ff4d4f" },
-    { name: "Tekshirilmoqda", value: pendingCount, color: "#faad14" },
-    { name: "Qoralama", value: draftCount, color: "#8b8b8b" },
-  ].filter((item) => item.value > 0);
 
-  const approvalRate = totalSubmissions > 0 ? calculatePercentage(approvedCount, totalSubmissions) : 0;
+
+  // const approvalRate = totalSubmissions > 0 ? calculatePercentage(approvedCount, totalSubmissions) : 0;
 
 
 
-
-  if (isLoadingApps || isLoadingSubs) {
-    return <DashboardSkeleton />;
-  }
 
 
 

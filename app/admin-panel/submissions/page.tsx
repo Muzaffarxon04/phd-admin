@@ -49,14 +49,16 @@ export default function AdminSubmissionsPage() {
   const { data: submissionsData, isLoading, error } = useGet<{ data: { data: Submission[] } }>("/admin/application/submissions/");
 
   // Handle different response formats
-  let submissions: Submission[] = [];
-  if (submissionsData) {
-    if (Array.isArray(submissionsData?.data?.data)) {
-      submissions = submissionsData.data.data;
-    } else if (submissionsData.data && Array.isArray(submissionsData.data.data)) {
-      submissions = submissionsData.data.data;
+  const submissions = useMemo(() => {
+    if (submissionsData) {
+      if (Array.isArray(submissionsData?.data?.data)) {
+        return submissionsData.data.data;
+      } else if (submissionsData.data && Array.isArray(submissionsData.data.data)) {
+        return submissionsData.data.data;
+      }
     }
-  }
+    return [];
+  }, [submissionsData]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
