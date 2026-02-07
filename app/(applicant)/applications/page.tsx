@@ -14,7 +14,7 @@ import {
   Table,
   Segmented,
   Tooltip,
-  Progress,
+  // Progress,
   ConfigProvider,
 } from "antd";
 import {
