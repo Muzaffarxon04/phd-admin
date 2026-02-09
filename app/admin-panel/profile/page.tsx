@@ -296,12 +296,12 @@ export default function AdminProfilePage() {
           text-transform: uppercase !important;
           letter-spacing: 0.5px !important;
           border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
-          padding: 0 24px !important;
+          padding: 8px 24px !important;
         }
         
         .user-info-table .ant-table-tbody > tr > td {
           background: transparent !important;
-          padding: 0 24px !important;
+          padding: 8px 24px !important;
           border-bottom: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
         }
         

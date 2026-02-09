@@ -1,0 +1,31 @@
+
+> phd-client@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.9
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.0s
+   Linting and checking validity of types ...
+
+./app/admin-panel/application-specialities/page.tsx
+9:3  Warning: 'InputNumber' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/admin-panel/applications/[id]/page.tsx
+1:7  Warning: 'getStatusColor' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/admin/Sidebar.tsx
+3:24  Warning: 'Avatar' is defined but never used.  @typescript-eslint/no-unused-vars
+3:32  Warning: 'Dropdown' is defined but never used.  @typescript-eslint/no-unused-vars
+91:10  Warning: 'userName' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+92:10  Warning: 'role' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+119:9  Warning: 'userMenuItems' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+Failed to compile.
+
+app/admin-panel/applications/[id]/page.tsx
+Type error: File '/Users/muzaffarxonabdusalomov/Desktop/phd-client/app/admin-panel/applications/[id]/page.tsx' is not a module.
+
+Next.js build worker exited with code: 1 and signal: null

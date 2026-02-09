@@ -48,7 +48,7 @@ interface AvailableApplication {
   can_apply: boolean;
   can_apply_message: string;
   requires_oneid_verification?: boolean;
-  max_submissions?: number;
+  // max_submissions?: number;
   instructions?: string;
   required_documents?: unknown[];
   user_submission_count?: number;
@@ -167,14 +167,7 @@ function ApplicationsPage() {
       render: (date: string) => <span className="text-xs whitespace-nowrap">{date ? formatDate(date) : "-"}</span>,
       width: 90,
     },
-    {
-      title: "Max. arizalar",
-      dataIndex: "max_submissions",
-      key: "max_submissions",
-      render: (count: number) => <span className="text-xs">{count || 0}</span>,
-      width: 145,
-    },
-
+   
     {
       title: "Holat",
       dataIndex: "status",
@@ -452,10 +445,7 @@ function ApplicationsPage() {
                             <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{formatDate(app.end_date)}</span>
                           </div>
 
-                          <div className="flex items-center justify-between text-sm py-1">
-                            <span style={{ color: "rgb(120, 120, 120)" }}>Max. arizalar:</span>
-                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{app.max_submissions || 1}</span>
-                          </div>
+                      
                         </div>
 
                         {!app.can_apply && (
@@ -481,24 +471,8 @@ function ApplicationsPage() {
                         className="px-6 py-5"
                         style={{ background: theme === "dark" ? "rgba(0, 0, 0, 0.1)" : "rgba(0, 0, 0, 0.02)", borderTop: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)" }}
                       >
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Jarayon</span>
-                          <span className="text-sm font-black" style={{ color: "#7367f0" }}>
-                            {Math.round(app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0)}%
-                          </span>
-                        </div>
-                        <div
-                          className="w-full rounded-full h-2 overflow-hidden"
-                          style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}
-                        >
-                          <div
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
-                            style={{
-                              width: `${app.user_submission_count ? (app.user_submission_count / (app.max_submissions || 1)) * 100 : 0}%`,
-                              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))"
-                            }}
-                          />
-                        </div>
+                  
+                   
                         <Button
                           type="primary"
                           block
@@ -568,7 +542,7 @@ function ApplicationsPage() {
                   className: "px-6 py-4 mb-0",
                 }}
                 className={`custom-redesigned-table ${theme === "dark" ? "dark-table" : ""}`}
-                scroll={{ x: 1400 }}
+                scroll={{ x: 1200 }}
               />
             </div>
           </ConfigProvider>

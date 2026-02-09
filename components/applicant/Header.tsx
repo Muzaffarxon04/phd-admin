@@ -19,13 +19,14 @@ export default function ApplicantHeader() {
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
   const [userName, setUserName] = useState<string>("Foydalanuvchi");
-
+  const [role, setRole] = useState<string>("Ariza beruvchi");
   useEffect(() => {
-    const user = tokenStorage.getUser() as { full_name?: string } | null;
+    const user = tokenStorage.getUser() as { full_name?: string, role?: string } | null;
     const fullName = user?.full_name;
     if (fullName) {
       setTimeout(() => {
-        setUserName(fullName.split(" ").pop() || "Foydalanuvchi");
+        setUserName(fullName || "Foydalanuvchi");
+        setRole(user?.role || "Ariza beruvchi");
       }, 0);
     }
   }, []);
@@ -40,7 +41,7 @@ export default function ApplicantHeader() {
       key: "profile",
       icon: <UserOutlined />,
       label: "Profil",
-      onClick: () => router.push("/dashboard"),
+      onClick: () => router.push(role === "SUPER_ADMIN" ? "/admin-panel/profile" : "/dashboard"),
     },
     {
       key: "logout",
@@ -109,17 +110,24 @@ export default function ApplicantHeader() {
 
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
 
-            <span
+    <div className="flex flex-col gap-1">
+    <span
               style={{
                 fontWeight: 700,
                 color: theme === "dark" ? "#ffffff" : "#333",
                 fontSize: "14px",
-                textTransform: "uppercase"
+                textTransform: "uppercase",
+                margin:0,
+                padding:0,
+                lineHeight:1,
               }}
             >
               {userName}
             </span>
-
+<span className="leading-none text-[12px] text-right">
+  {role}
+</span>
+    </div>
             <Dropdown
               menu={{
                 items: userMenuItems,

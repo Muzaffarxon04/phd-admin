@@ -14,6 +14,7 @@ const { Option } = Select;
 interface Application {
     id: number;
     title: string;
+    application_specialities: Speciality[];
 }
 
 export default function GuvohnomaPage() {
@@ -21,19 +22,15 @@ export default function GuvohnomaPage() {
     const [selectedApplication, setSelectedApplication] = useState<string | undefined>(undefined);
     const [selectedSpeciality, setSelectedSpeciality] = useState<string | undefined>(undefined);
     const [isDownloading, setIsDownloading] = useState(false);
-
+    const [selectedApplications, setSelectedApplications] = useState<Speciality[] | []>([]);
     // Fetch applications
     const { data: applicationsData, isLoading: isAppsLoading } = useGet<{
-        data: { data: Application[] };
-    }>("/admin/application/?page_size=100");
+        data:  Application[] ;
+    }>("/admin/application/approved/submissions/");
 
-    // Fetch specialities
-    const { data: specialitiesData, isLoading: isSpecsLoading } = useGet<{
-        data: { data: Speciality[] };
-    }>("/speciality/list/?page_size=100");
 
-    const applications = applicationsData?.data?.data || [];
-    const specialities = specialitiesData?.data?.data || [];
+
+    const applications = applicationsData?.data || [];
 
     const handleDownload = async () => {
         if (!selectedApplication && !selectedSpeciality) {
@@ -101,7 +98,11 @@ export default function GuvohnomaPage() {
                                 className="w-full h-[42px] premium-select"
                                 loading={isAppsLoading}
                                 allowClear
-                                onChange={setSelectedApplication}
+                                onChange={(value) => {
+                                    setSelectedApplication(value);
+                                    setSelectedSpeciality(undefined);
+                                    setSelectedApplications(applications?.find(spec => spec.id  == value)?.application_specialities || []);
+                                }}
                                 dropdownStyle={{
                                     backgroundColor: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"
                                 }}
@@ -121,18 +122,21 @@ export default function GuvohnomaPage() {
                             <Select
                                 placeholder="Mutaxassislikni tanlang"
                                 className="w-full h-[42px] premium-select"
-                                loading={isSpecsLoading}
+                                loading={isAppsLoading}
                                 allowClear
-                                onChange={setSelectedSpeciality}
+                                onChange={(value) => {
+                                    setSelectedSpeciality(value);
+                                 
+                                }}
                                 showSearch
                                 optionFilterProp="children"
                                 dropdownStyle={{
                                     backgroundColor: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"
                                 }}
                             >
-                                {specialities.map((spec) => (
+                                {selectedApplications.map((spec) => (
                                     <Option key={spec.id} value={spec.id.toString()}>
-                                        {spec.code} - {spec.name}
+                                        {spec.speciality_code} - {spec.speciality_name}
                                     </Option>
                                 ))}
                             </Select>

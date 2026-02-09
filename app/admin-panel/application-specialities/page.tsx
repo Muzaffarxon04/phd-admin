@@ -88,22 +88,6 @@ export default function ApplicationSpecialitiesPage() {
     {
       title: (
         <div className="flex items-center gap-2 py-3">
-          <UserOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Abituriyentlar</span>
-        </div>
-      ),
-      dataIndex: "max_applicants",
-      key: "max_applicants",
-      render: (value: number | null) => (
-        <div className="font-bold text-sm" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
-          {value ? `${value} ta` : "Cheklanmagan"}
-        </div>
-      ),
-      width: 150,
-    },
-    {
-      title: (
-        <div className="flex items-center gap-2 py-3">
           <SolutionOutlined className="text-[#7367f0]" />
           <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Imtihonchilar</span>
         </div>
@@ -319,16 +303,7 @@ export default function ApplicationSpecialitiesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="max_applicants"
-            label="Maksimal abituriyentlar soni"
-          >
-            <InputNumber
-              placeholder="Cheklanmagan uchun bo'sh qoldiring"
-              style={{ width: '100%' }}
-              min={0}
-            />
-          </Form.Item>
+     
         </Form>
       </Modal>
     </div>

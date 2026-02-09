@@ -31,6 +31,7 @@ export interface Specialization {
 // Examiner Types
 export interface Examiner {
   id: string;
+  full_name: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -60,6 +61,8 @@ export interface Speciality {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  speciality_code?: string;
+  speciality_name?: string;
 }
 
 // Language Types

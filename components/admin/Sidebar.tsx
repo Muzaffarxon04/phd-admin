@@ -1,19 +1,12 @@
 "use client";
 
-import { Layout, Menu, Avatar, Dropdown } from "antd";
+import { Layout, Menu } from "antd";
 import {
   DashboardOutlined,
   FileTextOutlined,
-  UserOutlined,
   TeamOutlined,
   BookOutlined,
-  // DollarOutlined,
-  // StarOutlined,
-  // FilePdfOutlined,
-  // BarChartOutlined,
-  // LinkOutlined,
-  // SettingOutlined,
-  LogoutOutlined,
+
   FileWordOutlined
 } from "@ant-design/icons";
 import Image from "next/image";
@@ -21,7 +14,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import type { MenuProps } from "antd";
 
 const { Sider } = Layout;
 
@@ -111,34 +103,8 @@ export default function Sidebar() {
     }
   };
 
-  const handleLogout = () => {
-    tokenStorage.removeTokens();
-    router.push("/login");
-  };
 
-  const userMenuItems: MenuProps["items"] = [
-    {
-      key: "profile",
-      icon: <UserOutlined />,
-      label: "Profil",
-      onClick: () => router.push("/admin-panel/profile"),
-    },
-    // {
-    //   key: "settings",
-    //   icon: <SettingOutlined />,
-    //   label: "Sozlamalar",
-    // },
-    {
-      type: "divider",
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: "Chiqish",
-      onClick: handleLogout,
-      danger: true,
-    },
-  ];
+
 
   return (
     <Sider
@@ -194,73 +160,6 @@ export default function Sidebar() {
         className="custom-menu-admin-new"
       />
 
-      {/* User Profile Section */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: "16px 24px",
-          borderTop: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-        }}
-      >
-        <Dropdown
-          menu={{ items: userMenuItems }}
-          trigger={["click"]}
-          placement="topLeft"
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              cursor: "pointer",
-              padding: "8px",
-              borderRadius: "8px",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <Avatar
-              size={36}
-              icon={<UserOutlined />}
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  color: theme === "dark" ? "#ffffff" : "#1a1a1a",
-                  fontSize: "14px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {userName}
-              </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: theme === "dark" ? "#8b8b8b" : "#666",
-                  marginTop: 2,
-                }}
-              >
-                {role}
-              </div>
-            </div>
-          </div>
-        </Dropdown>
-      </div>
       <style jsx global>{`
         .custom-menu-admin-new {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

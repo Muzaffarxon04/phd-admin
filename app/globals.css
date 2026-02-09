@@ -149,3 +149,8 @@ td, th {
 .admin-page-container .text-xs {
   font-size: 11px !important;
 }
+
+.profile-card tr, .profile-card th, .profile-card td {
+  padding:  12px 0 !important;
+}
+

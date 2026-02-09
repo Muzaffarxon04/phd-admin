@@ -11,10 +11,12 @@ import type { Speciality, Examiner } from "@/types";
 
 interface ApplicationSpeciality {
   speciality_id: string | number;
-  examiner_ids: (string | number)[];
-  max_applicants: number;
+  examiners: Array<{
+    examiner_id: string | number;
+    role: "CHAIRMAN" | "SECRETARY" | "MEMBER" | "OPPONENT";
+  }>;
+  // max_applicants: number;
 }
-
 interface ApplicationField {
   label: string;
   field_type: "TEXT" | "TEXTAREA" | "EMAIL" | "PHONE" | "NUMBER" | "DATE" | "SELECT" | "RADIO" | "CHECKBOX" | "FILE" | "URL";
@@ -37,7 +39,6 @@ interface CreateApplicationData {
   start_date: string;
   end_date: string;
   status?: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
-  max_submissions?: number;
   requires_oneid_verification?: boolean;
   exam_date?: string;
   application_fee?: string;
@@ -93,7 +94,6 @@ export default function CreateApplicationPage() {
     start_date: Dayjs;
     end_date: Dayjs;
     status?: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
-    max_submissions?: number;
     requires_oneid_verification?: boolean;
     exam_date?: Dayjs;
     application_fee?: number;
@@ -107,7 +107,6 @@ export default function CreateApplicationPage() {
       start_date: values.start_date.format("YYYY-MM-DDTHH:mm:ss[Z]"),
       end_date: values.end_date.format("YYYY-MM-DDTHH:mm:ss[Z]"),
       status: values.status || "DRAFT",
-      ...(values.max_submissions && { max_submissions: values.max_submissions }),
       requires_oneid_verification: values.requires_oneid_verification || false,
       ...(values.exam_date && { exam_date: values.exam_date.format("YYYY-MM-DD") }),
       ...(values.application_fee && { application_fee: values.application_fee.toString() }),
@@ -186,15 +185,7 @@ export default function CreateApplicationPage() {
             <DatePicker className="w-full" format="YYYY-MM-DD" />
           </Form.Item>
 
-          <Form.Item
-            name="max_submissions"
-            label="Maksimal arizalar soni"
-            rules={[
-              { type: "number", min: 1, message: "Maksimal arizalar soni 1 dan katta bolishi kerak!" },
-            ]}
-          >
-            <InputNumber className="w-full" placeholder="Maksimal arizalar soni" min={1} />
-          </Form.Item>
+        
 
           <Form.Item
             name="application_fee"
@@ -292,7 +283,7 @@ export default function CreateApplicationPage() {
                 {fields.map(({ key, name, ...restField }) => (
                   <Card key={key} size="small" style={{ marginBottom: 16 }}>
                     <div className="flex justify-end">
-                      <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer" />
+                      <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer text-[20px]" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <Form.Item
@@ -317,34 +308,65 @@ export default function CreateApplicationPage() {
 
                       <Form.Item
                         {...restField}
-                        name={[name, "examiner_ids"]}
-                        label="Imtihonchilar"
-                        rules={[{ required: true, message: "Imtihonchilarni tanlang!" }]}
+                        name={[name, "examiners"]}
+                        label="Imtihonchilar va rollari"
+                        rules={[{ required: true, message: "Imtihonchilarni va rollarini kiriting!" }]}
                       >
-                        <Select
-                          mode="multiple"
-                          placeholder="Imtihonchilarni tanlang"
-                          showSearch
-                          optionFilterProp="children"
-                          className="premium-select"
-                        >
-                          {examinersList.map((e: Examiner) => (
-                            <Select.Option key={e.id} value={e.id}>
-                              {e.first_name} {e.last_name}
-                            </Select.Option>
-                          ))}
-                        </Select>
+                        <Form.List name={[name, "examiners"]}>
+                          {(examinerFields, { add: addExaminer, remove: removeExaminer }) => (
+                            <>
+                              {examinerFields.map((examinerField) => (
+                                <div key={examinerField.key} className="flex items-start gap-2 ">
+                                  <Form.Item
+                                    {...examinerField}
+                                    name={[examinerField.name, "examiner_id"]}
+                                    rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
+                                    className="flex-1"
+                                  >
+                                    <Select
+                                    className="w-[400px]!"
+                                      placeholder="Imtihonchini tanlang"
+                                      showSearch
+                                      optionFilterProp="children"
+                                    >
+                                      {examinersList.map((e: Examiner) => (
+                                        <Select.Option key={e.id} value={e.id}>
+                                          {e.full_name} 
+                                        </Select.Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                  <Form.Item
+                                    {...examinerField}
+                                    name={[examinerField.name, "role"]}
+                                    rules={[{ required: true, message: "Rolni tanlang!" }]}
+                                  >
+                                    <Select className="w-[200px]!" placeholder="Rol">
+                                      <Select.Option value="CHAIRMAN">CHAIRMAN</Select.Option>
+                                      <Select.Option value="SECRETARY">SECRETARY</Select.Option>
+                                      <Select.Option value="MEMBER">MEMBER</Select.Option>
+                                      <Select.Option value="OPPONENT">OPPONENT</Select.Option>
+                                    </Select>
+                                  </Form.Item>
+                                  <MinusCircleOutlined
+                                    onClick={() => removeExaminer(examinerField.name)}
+                                    className="text-red-500 cursor-pointer "
+                                  />
+                                </div>
+                              ))}
+                              <Button
+                                type="dashed"
+                                onClick={() => addExaminer()}
+                                block
+                                icon={<PlusOutlined />}
+                              >
+                                Imtihonchi qo&apos;shish
+                              </Button>
+                            </>
+                          )}
+                        </Form.List>
                       </Form.Item>
-
-                      <Form.Item
-                        {...restField}
-                       className="w-full"
-                        name={[name, "max_applicants"]}
-                        label="Maksimal talabgorlar"
-                        rules={[{ required: true, message: "Soni kiriting!" }]}
-                      >
-                        <InputNumber min={1} className="!w-full"  placeholder="Maksimal talabgorlar" />
-                      </Form.Item>
+                     
                     </div>
                   </Card>
                 ))}

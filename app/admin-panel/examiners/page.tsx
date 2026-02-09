@@ -158,8 +158,7 @@ export default function ExaminersPage() {
   const handleEdit = (examiner: Examiner) => {
     setEditingExaminer(examiner);
     form.setFieldsValue({
-      first_name: examiner.first_name,
-      last_name: examiner.last_name,
+      full_name: examiner.full_name,
       title: examiner.title,
       specialization_ids: examiner.specialization_ids
         ? [examiner.specialization_ids]
@@ -204,7 +203,8 @@ export default function ExaminersPage() {
           />
           <div className="flex flex-col">
             <span className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-              {record.first_name} {record.last_name}
+              {record.full_name
+              } 
             </span>
             <span className="text-xs text-gray-400 font-medium">#{record.id}</span>
           </div>
@@ -222,11 +222,11 @@ export default function ExaminersPage() {
       dataIndex: "title",
       key: "title",
       render: (title: string) => (
-        <span className="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-500 text-[10px] font-bold uppercase border border-purple-500/20">
+        <span className="px-2 py-1  rounded-lg bg-purple-500/10 text-purple-500 text-[10px] font-bold uppercase border border-purple-500/20">
           {title}
         </span>
       ),
-      width: 150,
+      width: 340,
     },
     {
       title: (
@@ -391,8 +391,7 @@ export default function ExaminersPage() {
         <Table
           columns={columns}
           dataSource={examiners.filter(examiner =>
-            examiner.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            examiner.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            examiner?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             examiner.department?.toLowerCase().includes(searchTerm.toLowerCase()) || examiner.title?.toLowerCase().includes(searchTerm.toLowerCase())
           )}
           loading={isLoading}
@@ -481,20 +480,12 @@ export default function ExaminersPage() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
-              name="first_name"
-              label="Ism"
-              rules={[{ required: true, message: "Ismni kiriting" }]}
+              name="full_name"
+              label="To'liq ism"
+              rules={[{ required: true, message: "To'liq ismni kiriting" }]}
             >
-              <Input placeholder="Ism" />
+              <Input placeholder="To'liq ism" />
             </Form.Item>
-            <Form.Item
-              name="last_name"
-              label="Familiya"
-              rules={[{ required: true, message: "Familiyani kiriting" }]}
-            >
-              <Input placeholder="Familiya" />
-            </Form.Item>
-
             <Form.Item
               name="title"
               label="Ilmiy unvon"

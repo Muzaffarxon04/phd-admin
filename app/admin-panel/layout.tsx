@@ -2,7 +2,7 @@
 
 import { Layout } from "antd";
 import Sidebar from "@/components/admin/Sidebar";
-import Header from "@/components/admin/Header";
+import Header from "@/components/applicant/Header";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";

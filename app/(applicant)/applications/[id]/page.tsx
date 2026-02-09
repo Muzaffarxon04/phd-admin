@@ -75,7 +75,7 @@ interface Application {
     reason: string;
   };
   requires_oneid_verification?: boolean;
-  max_submissions?: number;
+  // max_submissions?: number;
   required_documents?: unknown[];
   user_submission_count?: number;
   fields: ApplicationField[];
@@ -500,7 +500,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Arizalar soni</Text>
                   <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-                    {application.user_submission_count || 0} / {application.max_submissions || "Cheksiz"}
+                    {application.user_submission_count || 0}
                   </div>
                 </div>
               </div>
