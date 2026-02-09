@@ -37,7 +37,7 @@ export const wordsApi = {
       ? `/words/guvohnoma-template/bulk/?${queryString}`
       : "/words/guvohnoma-template/bulk/";
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1${url}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
