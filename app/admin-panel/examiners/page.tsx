@@ -26,8 +26,10 @@ import {
   ClockCircleOutlined,
   StarOutlined,
   LineChartOutlined,
-  ProjectOutlined
+  ProjectOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
+import { formatDate } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import type { Examiner, Speciality } from "@/types";
@@ -84,8 +86,9 @@ export default function ExaminersPage() {
 
   const examiners = examinersData?.data?.data || [];
   const specialitiesList = specialities?.data?.data
-  const workloadStats = workloadData?.data?.workload;
-  const recentAssignments = workloadData?.data?.assignments;
+  const workloadDataContent = workloadData?.data;
+  const workloadStats = workloadDataContent?.workload;
+  const workloadAssignments = workloadDataContent?.assignments;
 
   // Mutations
   const createExaminer = usePost("/examiner/create/", {
@@ -555,39 +558,111 @@ export default function ExaminersPage() {
           setStatsExaminerId(null);
         }}
         footer={null}
-        width={500}
+        width={700}
         className="premium-modal"
       >
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto max-h-[650px]">
           {isStatsLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
             </div>
           ) : examinerStats?.data ? (
             <div className="space-y-6">
+              {/* Examiner Info */}
+              <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                <div className="text-gray-400 text-xs mb-1">Imtihonchi</div>
+                <div className="font-medium text-sm">{examinerStats.data.examiner.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{examinerStats.data.examiner.department}</div>
+              </Card>
+
+              {/* Period Info */}
               <div className="grid grid-cols-2 gap-4">
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                  <div className="text-gray-400 text-xs mb-1">Jami arizalar</div>
-                  <div className="text-xl font-bold text-[#7367f0]">{examinerStats.data.total_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
-                  <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
-                  <div className="text-xl font-bold text-[#28c76f]">{examinerStats.data.approved_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
-                  <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
-                  <div className="text-xl font-bold text-[#ea5455]">{examinerStats.data.rejected_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
-                  <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
-                  <div className="text-xl font-bold text-[#ff9f43]">{examinerStats.data.pending_submissions || 0}</div>
-                </Card>
+            { !!examinerStats.data.period.start_date &&  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Boshlanish</div>
+                  <div className="text-sm font-medium">
+                    {examinerStats.data.period.start_date ? formatDate(examinerStats.data.period.start_date) : "-"}
+                  </div>
+                </Card>}
+              { !!examinerStats.data.period.end_date &&  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Tugash</div>
+                  <div className="text-sm font-medium">
+                    {examinerStats.data.period.end_date ? formatDate(examinerStats.data.period.end_date) : "-"}
+                  </div>
+                </Card>}
               </div>
 
-              <div className="rounded-xl p-4 text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
-                <div className="text-gray-400 text-xs mb-1">O&apos;rtacha ball</div>
-                <div className="text-2xl font-bold text-[#7367f0]">{examinerStats.data.average_score || "0.0"}</div>
+              {/* Assignments Statistics */}
+              <div>
+                <div className="text-sm font-medium mb-3 text-center">Topshiriqlar</div>
+                <div className="grid grid-cols-1 gap-3">
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Jami topshiriqlar</div>
+                    <div className="text-xl font-bold text-[#7367f0]">{examinerStats.data.assignments.total}</div>
+                  </Card>
+
+                  {examinerStats.data.assignments.by_speciality?.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-xs text-gray-500 mb-2">{"Mutaxassisliklar bo'yicha:"}</div>
+                      {examinerStats.data.assignments.by_speciality.map((spec, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center py-2 px-3 rounded text-sm mb-2"
+                          style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)" }}
+                        >
+                          <span>
+                            <BookOutlined className="mr-2" />
+                            {spec.speciality__code} - {spec.speciality__name}
+                          </span>
+                          <Tag color="blue">{spec.count}</Tag>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Reviews Statistics */}
+              <div>
+                <div className="text-sm font-medium mb-3 text-center">Ko&apos;rib chiqishlar</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                    <div className="text-gray-400 text-xs mb-1">Jami</div>
+                    <div className="text-lg font-bold text-[#28c76f]">{examinerStats.data.reviews.total}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                    <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
+                    <div className="text-lg font-bold text-[#ff9f43]">{examinerStats.data.reviews.pending}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Jarayonda</div>
+                    <div className="text-lg font-bold text-[#7367f0]">{examinerStats.data.reviews.in_progress}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                    <div className="text-gray-400 text-xs mb-1">Tugagan</div>
+                    <div className="text-lg font-bold text-[#28c76f]">{examinerStats.data.reviews.completed}</div>
+                  </Card>
+                </div>
+
+           { !!examinerStats.data.reviews.average_score &&     <div className="rounded-xl p-4 text-center mt-4" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
+                  <div className="text-gray-400 text-xs mb-1">{"O'rtacha ball"}</div>
+                  <div className="text-2xl font-bold text-[#7367f0]">
+                    {examinerStats.data.reviews.average_score != null ? (
+                      typeof examinerStats.data.reviews.average_score === "number"
+                        ? examinerStats.data.reviews.average_score.toFixed(1)
+                        : examinerStats.data.reviews.average_score
+                    ) : "-"}
+                  </div>
+                </div>}
+              </div>
+
+              {/* Filters Info */}
+              {(examinerStats.data.filters.application_id || examinerStats.data.filters.speciality_id) && (
+                <div className="text-xs text-gray-500 text-center">
+                  Filtrlar: {examinerStats.data.filters.application_id && `Ariza ID: ${examinerStats.data.filters.application_id}`}
+                  {examinerStats.data.filters.application_id && examinerStats.data.filters.speciality_id && " | "}
+                  {examinerStats.data.filters.speciality_id && `Mutaxassislik ID: ${examinerStats.data.filters.speciality_id}`}
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400">
@@ -602,7 +677,7 @@ export default function ExaminersPage() {
         title={
           <div className="flex items-center gap-2">
             <ProjectOutlined className="text-[#7367f0]" />
-            <span>Imtihonchi Yuklamasi</span>
+            <span>{"Imtihonchi Yuklamasi"}</span>
           </div>
         }
         open={isWorkloadModalOpen}
@@ -611,47 +686,66 @@ export default function ExaminersPage() {
           setWorkloadExaminerId(null);
         }}
         footer={null}
-        width={600}
+        width={700}
         className="premium-modal"
       >
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto max-h-[650px]">
           {isWorkloadLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
             </div>
-          ) : workloadStats ? (
+          ) : workloadDataContent ? (
             <div className="space-y-6">
+              {/* Examiner Info */}
+              <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff", marginBottom:16 }}>
+                <div className="text-gray-400 text-xs mb-1">Imtihonchi</div>
+                <div className="font-medium text-sm">{workloadDataContent.examiner.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{workloadDataContent.examiner.department}</div>
+              </Card>
+
+              {/* Workload Stats */}
               <div className="grid grid-cols-2 gap-4">
                 <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Jami biriktirilgan</div>
-                  <div className="text-xl font-bold text-[#7367f0]">{workloadStats.total_assignments || 0}</div>
+                  <div className="text-xl font-bold text-[#7367f0]">{workloadStats?.total_assignments || 0}</div>
                 </Card>
                 <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
                   <div className="text-gray-400 text-xs mb-1">Yakunlangan</div>
-                  <div className="text-xl font-bold text-[#28c76f]">{workloadStats.completed_reviews || 0}</div>
+                  <div className="text-xl font-bold text-[#28c76f]">{workloadStats?.completed_reviews || 0}</div>
                 </Card>
                 <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
                   <div className="text-gray-400 text-xs mb-1">Jarayonda</div>
-                  <div className="text-xl font-bold text-[#ff9f43]">{workloadStats.in_progress_reviews || 0}</div>
+                  <div className="text-xl font-bold text-[#ff9f43]">{workloadStats?.in_progress_reviews || 0}</div>
                 </Card>
                 <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
                   <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
-                  <div className="text-xl font-bold text-[#ea5455]">{workloadStats.pending_reviews || 0}</div>
+                  <div className="text-xl font-bold text-[#ea5455]">{workloadStats?.pending_reviews || 0}</div>
+                </Card>
+                <Card size="small" className="text-center col-span-2" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Jami ko&apos;rib chiqishlar</div>
+                  <div className="text-xl font-bold text-[#7367f0]">{workloadStats?.total_reviews || 0}</div>
                 </Card>
               </div>
 
-              {recentAssignments && recentAssignments.length > 0 && (
+              {/* Assignments List */}
+              {workloadAssignments && workloadAssignments.length > 0 && (
                 <div>
-                  <div className="font-bold mb-3 text-sm">So&apos;nggi biriktirilganlar</div>
+                  <div className="font-bold mb-3 text-sm">Biriktirilganlar</div>
                   <div className="space-y-2">
-                    {recentAssignments.map((assignment) => (
+                    {workloadAssignments.map((assignment) => (
                       <div
                         key={assignment.id}
-                        className="p-3 rounded-xl flex items-center justify-between"
+                        className="p-3 rounded-xl flex flex-col gap-2"
                         style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "#f8f9fa" }}
                       >
-                        <span className="font-medium text-sm">{assignment.submission_number}</span>
-                        <Tag>{assignment.status}</Tag>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm">{assignment.application.title}</span>
+                          <Tag color="blue">{assignment.speciality.name}</Tag>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>Biriktirilgan: {formatDate(assignment.assigned_at)}</span>
+                          <span>Kutilmoqda: {assignment.pending_reviews}</span>
+                        </div>
                       </div>
                     ))}
                   </div>

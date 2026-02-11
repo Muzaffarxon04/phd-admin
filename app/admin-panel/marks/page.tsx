@@ -27,7 +27,11 @@ import {
   FileTextOutlined,
   SolutionOutlined,
   TrophyOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  RiseOutlined,
+  FallOutlined,
+  ClockCircleOutlined,
+  PercentageOutlined
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { marksApi, ApplicantMark, ApplicantMarkCreate, ApplicantMarkUpdate } from "@/lib/api/marks";
@@ -350,7 +354,7 @@ export default function MarksPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          <Title level={4} className="mb-1!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Baholar Boshqaruvi
           </Title>
           <div className="text-gray-400 text-sm font-medium">Abituriyentlarga baho qoyish va natijalarni boshqarish</div>
@@ -404,35 +408,82 @@ export default function MarksPage() {
         className="premium-modal"
       >
         {statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 py-4">
-            {[
-              { title: "Jami baholar", value: statistics.total_marks || 0, icon: <StarOutlined />, color: "#7367f0" },
-              { title: "O'rtacha ball", value: statistics.average_score || "0", icon: <TrophyOutlined />, color: "#28c76f" },
-              { title: "O'tganlar", value: statistics.passed_count || 0, icon: <CheckCircleOutlined />, color: "#00cfe8" },
-              { title: "Yiqilganlar", value: statistics.failed_count || 0, icon: <DeleteOutlined />, color: "#ea5455" },
-            ].map((stat, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl p-6 transition-all duration-300"
+          <div className="space-y-6">
+            {/* Main Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 py-4 ">
+              {[
+         
+                { title: "O'rtacha ball", value: statistics.average_score || "0", icon: <TrophyOutlined />, color: "#28c76f" },
+                { title: "O'rtacha foiz", value: statistics.average_percentage ? `${statistics.average_percentage}%` : "0%", icon: <PercentageOutlined />, color: "#ff9f43" },
+                { title: "Eng yuqori ball", value: statistics.highest_score || "0", icon: <RiseOutlined />, color: "#28c76f" },
+                { title: "Eng past ball", value: statistics.lowest_score || "0", icon: <FallOutlined />, color: "#ea5455" },
+                { title: "Tasdiqlangan baholar", value: statistics.approved_marks || 0, icon: <CheckCircleOutlined />, color: "#00cfe8" },
+                { title: "Kutilayotgan baholar", value: statistics.pending_marks || 0, icon: <ClockCircleOutlined />, color: "#ff9f43" },
+                { title: "Jami baholar", value: statistics.total_marks || 0, icon: <StarOutlined />, color: "#7367f0" },
+              ].map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl p-6 transition-all duration-300"
+                  style={{
+                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                      style={{ background: `${stat.color}15`, color: stat.color }}
+                    >
+                      {stat.icon}
+                    </div>
+                    <div>
+                      <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
+                      <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+      
+
+
+            {/* By Mark Type */}
+            {statistics.by_mark_type && Object.keys(statistics.by_mark_type).length > 0 && (
+              <div className="rounded-xl p-6 transition-all duration-300"
                 style={{
                   background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
                   border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
                 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-4">
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                    style={{ background: `${stat.color}15`, color: stat.color }}
+                    style={{ background: "#7367f015", color: "#7367f0" }}
                   >
-                    {stat.icon}
+                    <BarChartOutlined />
                   </div>
                   <div>
-                    <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
-                    <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
+                    <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">Baholar turi bo&apos;yicha</div>
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  {Object.entries(statistics.by_mark_type).map(([markType, count]) => (
+                    <div
+                      key={markType}
+                      className="rounded-lg p-4"
+                      style={{
+                        background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid #e5e7eb",
+                      }}
+                    >
+                      <div className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">{markType}</div>
+                      <div className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{count}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </Modal>

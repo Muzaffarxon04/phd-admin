@@ -43,9 +43,14 @@ export interface ApplicantMarkListResponse {
 export interface MarksStatistics {
   total_marks: number;
   average_score: string;
+  average_percentage: string;
+  highest_score: string;
+  lowest_score: string;
   passed_count: number;
   failed_count: number;
+  approved_marks: number;
   pending_marks: number;
+  by_mark_type: Record<string, number>;
 }
 
 // Marks API Service

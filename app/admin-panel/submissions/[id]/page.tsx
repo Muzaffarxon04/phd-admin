@@ -372,7 +372,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   {
                     key: "card",
                     label: (
-                      <span>
+                      <span className="flex items-center gap-2">
                         <InfoCircleOutlined />
                         Karta ko&apos;rinishi
                       </span>
@@ -382,7 +382,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   {
                     key: "table",
                     label: (
-                      <span>
+                      <span className="flex items-center gap-2">
                         <TableOutlined />
                         Jadval ko&apos;rinishi
                       </span>

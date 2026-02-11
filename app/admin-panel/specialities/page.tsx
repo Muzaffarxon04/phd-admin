@@ -12,6 +12,11 @@ import {
   Popconfirm,
   Typography,
   Card,
+  Tag,
+  Divider,
+  Space,
+  List,
+  Avatar,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,8 +29,11 @@ import {
   CheckCircleOutlined,
   FileTextOutlined,
   LineChartOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  UserOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
+import { formatDate } from "@/lib/utils";
 import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
 import type { Speciality, SpecialityStatistics } from "@/types";
 
@@ -489,39 +497,161 @@ export default function SpecialitiesPage() {
           setStatsSpecialityId(null);
         }}
         footer={null}
-        width={500}
+        width={800}
         className="premium-modal"
       >
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto max-h-[650px]">
           {isStatsLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
             </div>
           ) : specialityStats?.data ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                  <div className="text-gray-400 text-xs mb-1">Jami arizalar</div>
-                  <div className="text-xl font-bold text-[#7367f0]">{specialityStats.data.total_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
-                  <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
-                  <div className="text-xl font-bold text-[#28c76f]">{specialityStats.data.approved_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
-                  <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
-                  <div className="text-xl font-bold text-[#ea5455]">{specialityStats.data.rejected_submissions || 0}</div>
-                </Card>
-                <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
-                  <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
-                  <div className="text-xl font-bold text-[#ff9f43]">{specialityStats.data.pending_submissions || 0}</div>
-                </Card>
+              {/* Speciality Info */}
+              <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                <div className="text-gray-400 text-xs mb-1">Mutaxassislik</div>
+                <div className="font-medium text-sm">{specialityStats.data.speciality.code} - {specialityStats.data.speciality.name}</div>
+              </Card>
+
+              {/* Period Info */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+            {!!specialityStats.data.period.start_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                  <div className="text-gray-400 text-xs mb-1">Boshlanish sanasi</div>
+                  <div className="text-sm font-medium">
+                    {specialityStats.data.period.start_date ? formatDate(specialityStats.data.period.start_date) : "-"}
+                  </div>
+                </Card>}
+               {!!specialityStats.data.period.end_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Tugash sanasi</div>
+                    <div className="text-sm font-medium">
+                      {specialityStats.data.period.end_date ? formatDate(specialityStats.data.period.end_date) : "-"}
+                  </div>
+                </Card>}
               </div>
 
-              <div className="rounded-xl p-4 text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
-                <div className="text-gray-400 text-xs mb-1">O&apos;rtacha ball</div>
-                <div className="text-2xl font-bold text-[#7367f0]">{specialityStats.data.average_score || "0.0"}</div>
+              {/* Submissions Statistics */}
+              <div>
+                <div className="text-sm font-medium mb-3 text-center">Topshiriqlar</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Jami</div>
+                    <div className="text-xl font-bold text-[#7367f0]">{specialityStats.data.submissions.total}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                    <div className="text-gray-400 text-xs mb-1">Qoralama</div>
+                    <div className="text-lg font-bold text-[#ff9f43]">{specialityStats.data.submissions.draft}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Yuborilgan</div>
+                    <div className="text-lg font-bold text-[#7367f0]">{specialityStats.data.submissions.submitted}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                    <div className="text-gray-400 text-xs mb-1">{"Ko'rib"} chiqilmoqda</div>
+                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.submissions.under_review}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                    <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
+                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.submissions.approved}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
+                    <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
+                    <div className="text-lg font-bold text-[#ea5455]">{specialityStats.data.submissions.rejected}</div>
+                  </Card>
+                </div>
               </div>
+
+              {/* Reviews Statistics */}
+              <div>
+                <div className="text-sm font-medium mb-3 text-center">{"Ko'rib chiqishlar"}</div>
+                <div className="grid grid-cols-4 gap-4">
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
+                    <div className="text-gray-400 text-xs mb-1">Jami</div>
+                    <div className="text-lg font-bold text-[#7367f0]">{specialityStats.data.reviews.total}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
+                    <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
+                    <div className="text-lg font-bold text-[#ff9f43]">{specialityStats.data.reviews.pending}</div>
+                  </Card>
+                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
+                    <div className="text-gray-400 text-xs mb-1">Tugagan</div>
+                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.reviews.completed}</div>
+                  </Card>
+                </div>
+
+                {/* Average Score */}
+                <div className="rounded-xl p-4 text-center mt-4" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
+                  <div className="text-gray-400 text-xs mb-1">{"O'rtacha ball"}</div>
+                  <div className="text-2xl font-bold text-[#7367f0]">
+                    {specialityStats.data.reviews.average_score ? (
+                      typeof specialityStats.data.reviews.average_score === "number"
+                        ? specialityStats.data.reviews.average_score.toFixed(2)
+                        : specialityStats.data.reviews.average_score
+                    ) : "-"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Examiners List */}
+              {specialityStats.data.examiners.total > 0 && (
+                <div>
+                  <Divider orientation="left">
+                    <Space>
+                      <TeamOutlined />
+                      <span>Imtihonchilar ({specialityStats.data.examiners.total})</span>
+                    </Space>
+                  </Divider>
+                  <List
+                    dataSource={specialityStats.data.examiners.list}
+                    renderItem={(examiner) => (
+                      <List.Item>
+                        <List.Item.Meta
+                          avatar={<Avatar icon={<UserOutlined />} />}
+                          title={examiner.name}
+                          description={
+                            <Space direction="vertical" size="small">
+                              <div><strong>Unvon:</strong> {examiner.title}</div>
+                              <div><strong>Kafedra:</strong> {examiner.department}</div>
+                              <div className="text-xs text-gray-500">
+                                <CalendarOutlined /> Tayinlangan: {formatDate(examiner.assigned_at)}
+                              </div>
+                            </Space>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Applications List */}
+              {specialityStats.data.applications.total > 0 && (
+                <div>
+                  <Divider orientation="left">
+                    <Space>
+                      <FileTextOutlined />
+                      <span>Arizalar ({specialityStats.data.applications.total})</span>
+                    </Space>
+                  </Divider>
+                  <List
+                    dataSource={specialityStats.data.applications.list}
+                    renderItem={(app) => (
+                      <List.Item>
+                        <List.Item.Meta
+                          avatar={<Avatar icon={<FileTextOutlined />} />}
+                          title={app.title}
+                          description={
+                            <Space>
+                              <Tag color={app.status === "PUBLISHED" ? "green" : app.status === "DRAFT" ? "orange" : app.status === "CLOSED" ? "red" : "default"}>
+                                {app.status}
+                              </Tag>
+                            </Space>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400">

@@ -7,7 +7,8 @@ import {
   TeamOutlined,
   BookOutlined,
 
-  FileWordOutlined
+  FileWordOutlined,
+  StarOutlined
 } from "@ant-design/icons";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,16 +49,17 @@ const menuItems = [
     icon: <FileWordOutlined />,
     label: "Guvohnoma",
   },
+ { key: "/admin-panel/marks",
+  icon: <StarOutlined />,
+  label: "Baholar",
+},
   // {
   //   key: "/admin-panel/application-specialities",
   //   icon: <LinkOutlined />,
   //   label: "Ariza-Mutaxassislik",
   // },
   // {
-  //   key: "/admin-panel/marks",
-  //   icon: <StarOutlined />,
-  //   label: "Baholar",
-  // },
+
   // {
   //   key: "/admin-panel/payments",
   //   icon: <DollarOutlined />,

@@ -51,17 +51,48 @@ export interface ExaminerDetail {
 }
 
 export interface ExaminerStatistics {
-  total_submissions: number;
-  approved_submissions: number;
-  rejected_submissions: number;
-  pending_submissions: number;
-  average_score: string;
+  examiner: {
+    id: number;
+    title: string;
+    department: string;
+  };
+  period: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+  filters: {
+    application_id: number | null;
+    speciality_id: number | null;
+  };
+  assignments: {
+    total: number;
+    by_speciality: Array<{
+      speciality__name: string;
+      speciality__code: string;
+      count: number;
+    }>;
+  };
+  reviews: {
+    total: number;
+    pending: number;
+    in_progress: number;
+    completed: number;
+    average_score: number | string | null;
+  };
 }
 
-export interface Assignment {
+export interface WorkloadAssignment {
   id: number;
-  submission_number: string;
-  status: string;
+  application: {
+    id: number;
+    title: string;
+  };
+  speciality: {
+    id: number;
+    name: string;
+  };
+  assigned_at: string;
+  pending_reviews: number;
 }
 
 export interface ExaminerWorkloadData {
@@ -77,7 +108,7 @@ export interface ExaminerWorkloadData {
     completed_reviews: number;
     total_reviews: number;
   };
-  assignments: Assignment[];
+  assignments: WorkloadAssignment[];
 }
 
 export interface ExaminerWorkloadResponse {

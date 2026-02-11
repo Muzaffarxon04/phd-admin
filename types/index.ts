@@ -205,11 +205,47 @@ export interface MonthlyStat {
 }
 
 export interface SpecialityStatistics {
-  total_submissions: number;
-  approved_submissions: number;
-  rejected_submissions: number;
-  pending_submissions: number;
-  average_score: number | string;
+  speciality: {
+    id: number;
+    name: string;
+    code: string;
+  };
+  period: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+  submissions: {
+    total: number;
+    draft: number;
+    submitted: number;
+    under_review: number;
+    approved: number;
+    rejected: number;
+  };
+  reviews: {
+    total: number;
+    pending: number;
+    completed: number;
+    average_score: number | string | null;
+  };
+  examiners: {
+    total: number;
+    list: Array<{
+      id: number;
+      name: string;
+      title: string;
+      department: string;
+      assigned_at: string;
+    }>;
+  };
+  applications: {
+    total: number;
+    list: Array<{
+      id: number;
+      title: string;
+      status: string;
+    }>;
+  };
 }
 
 // Settings Types
