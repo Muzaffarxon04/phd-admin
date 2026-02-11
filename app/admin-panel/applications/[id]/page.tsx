@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { Card, Spin, Tag, Button, Descriptions, Tabs, Modal, Form, Input, InputNumber, Select, Switch, Space, App, Row, Col, DatePicker, Radio, Checkbox, Upload } from "antd";
+import { Card, Spin, Tag, Button, Descriptions, Modal, Form, Input, InputNumber, Select, Switch, Space, App, Row, Col, DatePicker, Radio, Checkbox, Upload } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useGet, usePut, usePost } from "@/lib/hooks";
