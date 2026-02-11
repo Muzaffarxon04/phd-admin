@@ -57,6 +57,7 @@ export interface Speciality {
   code: string; // Masalan: "03.00.01"
   name: string; // Masalan: "Biokimyo"
   description?: string;
+  speciality:string|number;
   field_of_science: string; // Fan sohasi
   is_active: boolean;
   created_at: string;

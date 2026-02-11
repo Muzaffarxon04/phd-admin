@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Form,
   Input,
@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { tokenStorage } from "@/lib/utils";
-import { useAuthStore } from "@/lib/stores/authStore";
+// import { useAuthStore } from "@/lib/stores/authStore";
 import Link from "next/link";
 import { User } from "@/lib/api/auth";
 import Image from "next/image";
@@ -33,20 +33,84 @@ import Image from "next/image";
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
 
   const router = useRouter();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
-  const { resendOTP } = useAuthStore();
+  // Extract minutes from "5 min" format
+  const extractMinutes = (timeString: string): number => {
+    const match = timeString.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  // Start countdown timer
+  const startTimer = (minutes: number) => {
+    const totalSeconds = minutes * 60;
+    setTimeLeft(totalSeconds);
+    setIsTimerActive(true);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setIsTimerActive(false);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Format time display (MM:SS)
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  const { mutate: resendOTP, isPending: isResending } = usePost(
+    "/auth/otp/resend/",
+    {
+      onSuccess: (response: { data?: { expires_in_minutes: string } }) => {
+        message.success("OTP kod yuborildi");
+        if (response.data?.expires_in_minutes) {
+          const minutes = extractMinutes(response.data.expires_in_minutes);
+          startTimer(minutes);
+        }
+      },
+    }
+  );
 
   const { mutate: register, isPending: isRegistering } = usePost(
     "/auth/register/",
     {
-      onSuccess: () => {
+      onSuccess: (response: { data?: { expires_in_minutes: string } }) => {
         setCurrentStep(1);
         message.success("OTP kod yuborildi");
+        if (response.data?.expires_in_minutes) {
+          const minutes = extractMinutes(response.data.expires_in_minutes);
+          startTimer(minutes);
+        }
       },
     }
   );
@@ -217,9 +281,19 @@ export default function RegisterPage() {
               </Button>
 
               <div className="text-center mt-4">
-                <Button type="link" onClick={() => resendOTP({ phone: phoneNumber })}>
-                  OTP qayta yuborish
-                </Button>
+                {isTimerActive ? (
+                  <div className="text-sm" style={{ color: isDark ? "#9CA3AF" : "#6B7280" }}>
+                    OTP qayta yuborish: <span className="font-mono font-semibold text-[#5B5BEA]">{formatTime(timeLeft)}</span>
+                  </div>
+                ) : (
+                  <Button 
+                    type="link" 
+                    onClick={() => resendOTP({ phone_number: phoneNumber })} 
+                    loading={isResending}
+                  >
+                    OTP qayta yuborish
+                  </Button>
+                )}
               </div>
             </Form>
           )}
@@ -238,6 +312,9 @@ export default function RegisterPage() {
               </Form.Item>
 
               <Form.Item name="last_name" rules={[{ required: true }]}>
+                <Input prefix={<UserOutlined />} placeholder="Familiya" />
+              </Form.Item>
+              <Form.Item name="middle_name" rules={[{ required: true }]}>
                 <Input prefix={<UserOutlined />} placeholder="Familiya" />
               </Form.Item>
 

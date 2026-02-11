@@ -74,7 +74,21 @@ export interface CompleteRegistrationRequest {
 }
 
 export interface ResendOTPRequest {
-  phone: string;
+  phone_number: string;
+}
+
+export interface ResendOTPResponse {
+  message: string;
+  data?: {
+    expires_in_minutes: string;
+  };
+}
+
+export interface RegisterResponse {
+  message: string;
+  data?: {
+    expires_in_minutes: string;
+  };
 }
 
 export interface PasswordResetRequest {
@@ -159,8 +173,8 @@ export const authApi = {
    * POST /auth/otp/resend/
    * Resend OTP code
    */
-  resendOTP: async (data: ResendOTPRequest): Promise<{ message: string }> => {
-    return apiRequest<{ message: string }>("/auth/otp/resend/", {
+  resendOTP: async (data: ResendOTPRequest): Promise<ResendOTPResponse> => {
+    return apiRequest<ResendOTPResponse>("/auth/otp/resend/", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -203,8 +217,8 @@ export const authApi = {
    * POST /auth/register/
    * Register with phone number
    */
-  register: async (data: RegisterRequest): Promise<{ message: string }> => {
-    return apiRequest<{ message: string }>("/auth/register/", {
+  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
+    return apiRequest<RegisterResponse>("/auth/register/", {
       method: "POST",
       body: JSON.stringify(data),
     });

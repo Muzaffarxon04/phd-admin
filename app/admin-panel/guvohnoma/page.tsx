@@ -71,7 +71,7 @@ export default function GuvohnomaPage() {
         <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
             {/* Page Header */}
             <div>
-                <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                <Title level={4} className="mb-1!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
                     Guvohnoma Yuklash
                 </Title>
                 <div className="text-gray-400 text-sm font-medium">
@@ -101,8 +101,9 @@ export default function GuvohnomaPage() {
                                 onChange={(value) => {
                                     setSelectedApplication(value);
                                     setSelectedSpeciality(undefined);
-                                    setSelectedApplications(applications?.find(spec => spec.id  == value)?.application_specialities || []);
+                                    setSelectedApplications(applications?.find(app => app.id.toString() === value)?.application_specialities || []);
                                 }}
+                                value={selectedApplication}
                                 dropdownStyle={{
                                     backgroundColor: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"
                                 }}
@@ -124,10 +125,11 @@ export default function GuvohnomaPage() {
                                 className="w-full h-[42px] premium-select"
                                 loading={isAppsLoading}
                                 allowClear
+                                value={selectedSpeciality}
                                 onChange={(value) => {
                                     setSelectedSpeciality(value);
-                                 
                                 }}
+                                disabled={!selectedApplication}
                                 showSearch
                                 optionFilterProp="children"
                                 dropdownStyle={{
@@ -135,8 +137,8 @@ export default function GuvohnomaPage() {
                                 }}
                             >
                                 {selectedApplications.map((spec) => (
-                                    <Option key={spec.id} value={spec.id.toString()}>
-                                        {spec.speciality_code} - {spec.speciality_name}
+                                    <Option key={spec.id} value={spec.speciality?.toString()}>
+                                        {spec.speciality_code || spec.code} - { spec.speciality_name || spec.name}
                                     </Option>
                                 ))}
                             </Select>

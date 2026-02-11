@@ -12,8 +12,7 @@ import {
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
-import { tokenStorage } from "@/lib/utils";
-import { useState, useEffect } from "react";
+
 
 const { Sider } = Layout;
 
@@ -80,22 +79,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useThemeStore();
-  const [userName, setUserName] = useState<string>("Admin");
-  const [role, setRole] = useState<string>("Admin");
 
-  useEffect(() => {
-    const loadUser = () => {
-      const user = tokenStorage.getUser() as { full_name?: string, role?: string } | null;
-      const fullName = user?.full_name;
-      setTimeout(() => {
-        setRole(user?.role || "Admin");
-        if (fullName) {
-          setUserName(fullName);
-        }
-      }, 0);
-    };
-    loadUser();
-  }, []);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key !== "swagger") {

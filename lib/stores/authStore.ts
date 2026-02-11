@@ -332,7 +332,7 @@ export const useAuthStore = create<AuthState>()(
       resendOTP: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          await authApi.resendOTP(data);
+          await authApi.resendOTP({ phone_number: data.phone });
           set({ isLoading: false });
         } catch (error: unknown) {
           set({
