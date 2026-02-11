@@ -176,7 +176,7 @@ export default function AdminApplicationsPage() {
     return (
       <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
         <div className="flex justify-between items-center mb-6">
-          <Title level={4} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          <Title level={4} className="mb-0!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Arizalar tizimi
           </Title>
         </div>
@@ -194,7 +194,7 @@ export default function AdminApplicationsPage() {
 
     return (
       <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-        <Title level={4} className="!mb-6" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+        <Title level={4} className="mb-6!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
           Arizalar tizimi
         </Title>
         <ErrorState
@@ -210,7 +210,7 @@ export default function AdminApplicationsPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          <Title level={4} className="mb-1!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Arizalar tizimi
           </Title>
           <div className="text-gray-400 text-sm font-medium">Barcha e&apos;lon qilingan arizalar va loyihalar boshqaruvi</div>
