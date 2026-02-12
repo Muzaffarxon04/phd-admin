@@ -19,10 +19,13 @@ import Image from "next/image";
 export default function ApplicantHome() {
   const { theme, toggleTheme } = useThemeStore();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+const [userRole, setUserRole] = useState<string | null>('applicant');
   useEffect(() => {
     const checkLogin = () => {
       setIsLoggedIn(!!tokenStorage.getAccessToken());
+      const user = tokenStorage.getUser() as { role?: string } | null;
+     setUserRole(user?.role || 'applicant');
+      
     };
     checkLogin();
   }, []);
@@ -68,7 +71,7 @@ export default function ApplicantHome() {
 
             {isLoggedIn ? (
               <Link
-                href="/dashboard"
+                href={userRole  === 'SUPER_ADMIN' ? "/admin-panel" : "/dashboard"}
                 className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
               >
                 <DashboardOutlined />
@@ -102,7 +105,7 @@ export default function ApplicantHome() {
             <h1 className={`text-4xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1] ${theme === "dark" ? "text-white" : "text-slate-900"
               }`}>
               Kelajak ilmini <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+              <span className="text-transparent bg-clip-text  from-blue-400 to-indigo-400">
                 biz bilan boshlang
               </span>
             </h1>
@@ -114,7 +117,7 @@ export default function ApplicantHome() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
               <Link
-                href={isLoggedIn ? "/applications" : "/login"}
+                href={isLoggedIn ? (userRole  === 'SUPER_ADMIN' ? "/admin-panel" : "/applications") : "/login"}
                 className={`group relative inline-flex items-center justify-center gap-3 px-10 py-4 font-bold rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto ${theme === "dark"
                   ? "bg-white text-slate-900 hover:bg-slate-100 shadow-white/5"
                   : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200"
@@ -272,11 +275,11 @@ export default function ApplicantHome() {
               </p>
 
               <Link
-                href={isLoggedIn ? "/dashboard" : "/register"}
+                href={isLoggedIn ? (userRole  === 'SUPER_ADMIN' ? "/admin-panel" : "/dashboard") : "/login"}
                 className="group relative inline-flex items-center justify-center gap-4 px-12 py-5 bg-white text-blue-700 font-extrabold text-xl rounded-2xl shadow-2xl hover:bg-blue-50 transition-all duration-500 transform hover:scale-105 active:scale-95 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center gap-3 text-white">
-                  {isLoggedIn ? "Kabinetga o'tish" : "Hoziroq ro'yxatdan o'tish"}
+                  {isLoggedIn ? (userRole  === 'SUPER_ADMIN' ? "Admin panelga o'tish" : "Kabinetga o'tish") : "Hoziroq ro'yxatdan o'tish"}
                   <ArrowRightOutlined className="transition-transform duration-300 group-hover:translate-x-2" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-100/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
