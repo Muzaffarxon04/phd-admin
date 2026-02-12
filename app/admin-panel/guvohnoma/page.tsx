@@ -49,7 +49,7 @@ export default function GuvohnomaPage() {
 
             // Set filename
             const date = new Date().toISOString().split('T')[0];
-            link.setAttribute("download", `guvohnomalar_${date}.zip`); // Assuming it returns a zip or docx
+            link.setAttribute("download", `guvohnomalar_${date}.docx`);
 
             document.body.appendChild(link);
             link.click();
