@@ -33,11 +33,11 @@ export const wordsApi = {
     if (specialityId) params.append("speciality_id", specialityId);
 
     const queryString = params.toString();
-    const url = queryString
+    const urlString = queryString
       ? `/words/guvohnoma-template/bulk/?${queryString}`
       : "/words/guvohnoma-template/bulk/";
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://api-doktarant.tashmeduni.uz/api/v1"}${urlString}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
