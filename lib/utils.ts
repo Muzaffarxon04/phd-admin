@@ -75,17 +75,25 @@ export function validatePhone(phone: string): boolean {
   return /^998\d{9}$/.test(cleaned);
 }
 
-// Get application status label
+// Get application status label (ariza holati va topshiriq holati)
 export function getApplicationStatusLabel(status: string): string {
   const labels: Record<string, string> = {
+    // Ariza (announcement) holati
     DRAFT: "Qoralama",
+    PUBLISHED: "Nashr qilingan",
+    CLOSED: "Yopilgan",
+    ARCHIVED: "Arxivlangan",
+    // Topshiriq (submission) holati
     SUBMITTED: "Topshirilgan",
     UNDER_REVIEW: "Ko'rib chiqilmoqda",
     APPROVED: "Qabul qilingan",
     REJECTED: "Rad etilgan",
     WITHDRAWN: "Bekor qilingan",
-    // Legacy statuses
+    // Kichik harf
     draft: "Qoralama",
+    published: "Nashr qilingan",
+    closed: "Yopilgan",
+    archived: "Arxivlangan",
     submitted: "Topshirilgan",
     under_review: "Ko'rib chiqilmoqda",
     accepted: "Qabul qilingan",
@@ -99,13 +107,18 @@ export function getApplicationStatusLabel(status: string): string {
 export function getApplicationStatusColor(status: string): string {
   const colors: Record<string, string> = {
     DRAFT: "gray",
+    PUBLISHED: "green",
+    CLOSED: "red",
+    ARCHIVED: "default",
     SUBMITTED: "blue",
     UNDER_REVIEW: "yellow",
     APPROVED: "green",
     REJECTED: "red",
     WITHDRAWN: "gray",
-    // Legacy statuses
     draft: "gray",
+    published: "green",
+    closed: "red",
+    archived: "default",
     submitted: "blue",
     under_review: "yellow",
     accepted: "green",
@@ -113,6 +126,17 @@ export function getApplicationStatusColor(status: string): string {
     revision_required: "orange",
   };
   return colors[status] || "gray";
+}
+
+// Get examiner role label (imtihonchi roli)
+export function getExaminerRoleLabel(role: string): string {
+  const labels: Record<string, string> = {
+    CHAIRMAN: "Rais",
+    PRE_CHAIRMAN: "Rais yordamchisi",
+    SECRETARY: "Kotib",
+    MEMBER: "A'zo",
+  };
+  return labels[role] || role;
 }
 
 // Get payment status color

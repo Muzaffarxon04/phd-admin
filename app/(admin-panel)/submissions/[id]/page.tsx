@@ -288,7 +288,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   #{submission.submission_number}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ariza ID">
-                  {submission.application}
+                  {typeof submission.application === "object" && submission.application !== null
+                    ? String((submission.application as { id?: number }).id ?? (submission.application as { title?: string }).title ?? "-")
+                    : submission.application}
                 </Descriptions.Item>
                 <Descriptions.Item label="Yaratilgan sana">
                   {formatDate(submission.created_at)}

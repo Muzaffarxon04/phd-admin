@@ -10,8 +10,9 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel } from "@/lib/utils";
 import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
 interface ApplicationField {
   id: number;
@@ -37,7 +38,7 @@ interface Examiner {
   department: string;
   academic_degree: string;
   position: string;
-  role: "CHAIRMAN" | "SECRETARY" | "MEMBER" | "OPPONENT";
+  role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
   role_display: string;
 }
 
@@ -85,6 +86,14 @@ interface CreateFieldData {
   allowed_file_types?: string[];
   max_file_size?: number;
   order?: number;
+}
+
+interface ApplicationSpecialityForm {
+  speciality_id: string | number;
+  examiners: Array<{
+    examiner_id: string | number;
+    role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
+  }>;
 }
 
 const renderFieldInput = (field: ApplicationField) => {
@@ -217,28 +226,36 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const queryClient = useQueryClient();
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [isSpecialitiesModalOpen, setIsSpecialitiesModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<ApplicationField | null>(null);
   const [form] = Form.useForm();
   const [applicationForm] = Form.useForm();
+  const [specialitiesForm] = Form.useForm();
   const { message, modal } = App.useApp();
   const fieldType = Form.useWatch("field_type", form);
 
   const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
 
-  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<{ data: Application }, Partial<Application>>(
-    `/admin/application/${id}/update/`,
-    {
-      onSuccess: () => {
-        message.success("Ariza muvaffaqiyatli yangilandi!");
-        setIsApplicationModalOpen(false);
-        queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
-      },
-      onError: (error) => {
-        message.error(error.message || "Arizani yangilashda xatolik");
-      },
-    }
-  );
+  const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/");
+  const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true");
+  const specialitiesList = specialitiesData?.data?.data || [];
+  const examinersList = examinersData?.data?.data || [];
+
+  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<
+    { data: Application },
+    Partial<Omit<Application, "specialities">> & { specialities?: ApplicationSpecialityForm[] }
+  >(`/admin/application/${id}/update/`, {
+    onSuccess: () => {
+      message.success("Ariza muvaffaqiyatli yangilandi!");
+      setIsApplicationModalOpen(false);
+      setIsSpecialitiesModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
+    },
+    onError: (error) => {
+      message.error(error.message || "Arizani yangilashda xatolik");
+    },
+  });
 
   const { mutate: createField, isPending: isCreatingField } = usePost<{ data: ApplicationField }, CreateFieldData>(
     `/admin/application/${id}/fields/create/`,
@@ -390,19 +407,19 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const handlePublish = () => {
     if (application) {
-      updateApplication({
-        ...application,
-        status: "PUBLISHED",
-      });
+      const rest = Object.fromEntries(
+        Object.entries(application).filter(([key]) => key !== "specialities")
+      ) as Omit<Application, "specialities">;
+      updateApplication({ ...rest, status: "PUBLISHED" });
     }
   };
 
   const handleClose = () => {
     if (application) {
-      updateApplication({
-        ...application,
-        status: "CLOSED",
-      });
+      const rest = Object.fromEntries(
+        Object.entries(application).filter(([key]) => key !== "specialities")
+      ) as Omit<Application, "specialities">;
+      updateApplication({ ...rest, status: "CLOSED" });
     }
   };
 
@@ -451,7 +468,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   }) => {
     if (!application) return;
 
-    const updateData: Partial<Application> = {
+    const updateData: Partial<Omit<Application, "specialities">> = {
       title: values.title,
       description: values.description,
       start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : application.start_date,
@@ -460,6 +477,42 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     };
 
     updateApplication(updateData);
+  };
+
+  const handleOpenSpecialitiesModal = () => {
+    if (application?.specialities && application.specialities.length > 0) {
+      const formValues: ApplicationSpecialityForm[] = application.specialities.map((spec) => {
+        const specWithId = spec as { id?: number; speciality_id?: number; speciality?: number };
+        const specialityId = specWithId.speciality_id ?? specWithId.speciality ?? spec.id;
+        return {
+          speciality_id: specialityId,
+          examiners: (spec.examiners || []).map((ex) => ({
+            examiner_id: ex.id,
+            role: ex.role,
+          })),
+        };
+      });
+      specialitiesForm.setFieldsValue({ specialities: formValues });
+    } else {
+      specialitiesForm.setFieldsValue({ specialities: [] });
+    }
+    setIsSpecialitiesModalOpen(true);
+  };
+
+  const handleUpdateSpecialities = (values: { specialities?: ApplicationSpecialityForm[] }) => {
+    const list = values.specialities || [];
+    if (list.length === 0) {
+      message.warning("Kamida bitta mutaxassislik qo'shishingiz kerak");
+      return;
+    }
+    if (!application) return;
+    updateApplication({
+      title: application.title,
+      description: application.description,
+      start_date: application.start_date,
+      end_date: application.end_date,
+      specialities: list,
+    });
   };
 
   // Update form when application data changes
@@ -538,8 +591,8 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           <Descriptions.Item label="Nomi">{application.title}</Descriptions.Item>
           <Descriptions.Item label="Tavsif">{application.description}</Descriptions.Item>
           <Descriptions.Item label="Holati">
-            <Tag color={application.status === "PUBLISHED" ? "green" : application.status === "DRAFT" ? "orange" : application.status === "CLOSED" ? "red" : "default"}>
-              {application.status}
+            <Tag color={getApplicationStatusColor(application.status)}>
+              {getApplicationStatusLabel(application.status)}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="OneID tekshiruvi">
@@ -547,9 +600,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
               {application.requires_oneid_verification ? "Talab qilinadi" : "Talab qilinmaydi"}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Maksimal topshiriqlar">
+          {/* <Descriptions.Item label="Maksimal topshiriqlar">
             {application.max_submissions || "Cheklanmagan"}
-          </Descriptions.Item>
+          </Descriptions.Item> */}
           <Descriptions.Item label="Boshlanish sanasi">{formatDate(application.start_date)}</Descriptions.Item>
           <Descriptions.Item label="Tugash sanasi">{formatDate(application.end_date)}</Descriptions.Item>
           <Descriptions.Item label="Imtihon sanasi">
@@ -575,6 +628,19 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   </div>
 
   <div className="space-y-4 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}>
+                    Mutaxassisliklar va Imtihonchilar
+                  </span>
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={handleOpenSpecialitiesModal}
+                    className={theme === "dark" ? "bg-[#7367f0]/20 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white" : ""}
+                  >
+                    Qo&apos;shish / Tahrirlash
+                  </Button>
+                </div>
                   {application.specialities && application.specialities.length > 0 ? (
                     <div className="space-y-4">
                       {application.specialities.map((speciality) => (
@@ -596,7 +662,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                           }}
                         >
                           {speciality.examiners && speciality.examiners.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="space-y-3!">
                               <h5 className="font-semibold mb-3" style={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}>Imtihonchilar:</h5>
                               {speciality.examiners.map((examiner) => (
                                 <Card
@@ -612,8 +678,8 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                                       {examiner.full_name || "Noma&apos;lum"}
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Rol">
-                                      <Tag color={examiner.role === "CHAIRMAN" ? "gold" : examiner.role === "SECRETARY" ? "blue" : examiner.role === "MEMBER" ? "green" : "red"}>
-                                        {examiner.role_display} ({examiner.role})
+                                      <Tag color={examiner.role === "CHAIRMAN" ? "gold" : examiner.role === "PRE_CHAIRMAN" ? "orange" : examiner.role === "SECRETARY" ? "blue" : "green"}>
+                                        {getExaminerRoleLabel(examiner.role)}
                                       </Tag>
                                     </Descriptions.Item>
                                     <Descriptions.Item label="Unvon">
@@ -1034,10 +1100,10 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
             rules={[{ required: true, message: "Holatni tanlang!" }]}
           >
             <Select placeholder="Holatni tanlang">
-              <Select.Option value="DRAFT">DRAFT</Select.Option>
-              <Select.Option value="PUBLISHED">PUBLISHED</Select.Option>
-              <Select.Option value="CLOSED">CLOSED</Select.Option>
-              <Select.Option value="ARCHIVED">ARCHIVED</Select.Option>
+              <Select.Option value="DRAFT">{getApplicationStatusLabel("DRAFT")}</Select.Option>
+              <Select.Option value="PUBLISHED">{getApplicationStatusLabel("PUBLISHED")}</Select.Option>
+              <Select.Option value="CLOSED">{getApplicationStatusLabel("CLOSED")}</Select.Option>
+              <Select.Option value="ARCHIVED">{getApplicationStatusLabel("ARCHIVED")}</Select.Option>
             </Select>
           </Form.Item>
 
@@ -1050,6 +1116,148 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                 onClick={() => {
                   setIsApplicationModalOpen(false);
                   applicationForm.resetFields();
+                }}
+              >
+                Bekor qilish
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Mutaxassisliklar va Imtihonchilarni tahrirlash"
+        open={isSpecialitiesModalOpen}
+        onCancel={() => {
+          setIsSpecialitiesModalOpen(false);
+          specialitiesForm.resetFields();
+        }}
+        footer={null}
+        width={900}
+      >
+        <Form
+          form={specialitiesForm}
+          layout="vertical"
+          onFinish={handleUpdateSpecialities}
+          autoComplete="off"
+          initialValues={{ specialities: [] }}
+        >
+          <Form.List name="specialities">
+            {(fields, { add, remove }) => (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-base font-medium">Mutaxassisliklar va Imtihonchilar</span>
+                  <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+                    Mutaxassislik qo&apos;shish
+                  </Button>
+                </div>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Card key={key} size="small" style={{ marginBottom: 16 }}>
+                    <div className="flex justify-end">
+                      <MinusCircleOutlined
+                        onClick={() => remove(name)}
+                        className="text-red-500 cursor-pointer text-[20px]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Form.Item
+                        {...restField}
+                        name={[name, "speciality_id"]}
+                        label="Mutaxassislik"
+                        rules={[{ required: true, message: "Mutaxassislikni tanlang!" }]}
+                      >
+                        <Select
+                          placeholder="Mutaxassislikni tanlang"
+                          showSearch
+                          optionFilterProp="children"
+                        >
+                          {specialitiesList.map((s: SpecialityType) => (
+                            <Select.Option key={s.id} value={s.id}>
+                              {s.code} - {s.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "examiners"]}
+                        label="Imtihonchilar va rollari"
+                        rules={[{ required: true, message: "Imtihonchilarni va rollarini kiriting!" }]}
+                      >
+                        <Form.List name={[name, "examiners"]}>
+                          {(examinerFields, { add: addExaminer, remove: removeExaminer }) => (
+                            <>
+                              {examinerFields.map((examinerField) => {
+                                const { key: fieldKey, ...restExaminerField } = examinerField;
+                                return (
+                                  <div key={fieldKey} className="flex items-start gap-2 mb-2">
+                                    <Form.Item
+                                      {...restExaminerField}
+                                      name={[examinerField.name, "examiner_id"]}
+                                      rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
+                                      className="flex-1"
+                                    >
+                                      <Select
+                                        placeholder="Imtihonchini tanlang"
+                                        showSearch
+                                        optionFilterProp="children"
+                                        style={{ minWidth: 200 }}
+                                      >
+                                        {examinersList.map((e: ExaminerType) => (
+                                          <Select.Option key={e.id} value={e.id}>
+                                            {e.full_name}
+                                          </Select.Option>
+                                        ))}
+                                      </Select>
+                                    </Form.Item>
+                                    <Form.Item
+                                      {...restExaminerField}
+                                      name={[examinerField.name, "role"]}
+                                      rules={[{ required: true, message: "Rolni tanlang!" }]}
+                                    >
+                                        <Select placeholder="Rol" style={{ minWidth: 140 }}>
+                                        <Select.Option value="CHAIRMAN">{getExaminerRoleLabel("CHAIRMAN")}</Select.Option>
+                                        <Select.Option value="PRE_CHAIRMAN">{getExaminerRoleLabel("PRE_CHAIRMAN")}</Select.Option>
+                                        <Select.Option value="SECRETARY">{getExaminerRoleLabel("SECRETARY")}</Select.Option>
+                                        <Select.Option value="MEMBER">{getExaminerRoleLabel("MEMBER")}</Select.Option>
+                                      </Select>
+                                    </Form.Item>
+                                  <MinusCircleOutlined
+                                    onClick={() => removeExaminer(examinerField.name)}
+                                    className="text-red-500 cursor-pointer mt-1"
+                                  />
+                                </div>
+                                );
+                              })}
+                              <Button
+                                type="dashed"
+                                onClick={() => addExaminer()}
+                                block
+                                icon={<PlusOutlined />}
+                              >
+                                Imtihonchi qo&apos;shish
+                              </Button>
+                            </>
+                          )}
+                        </Form.List>
+                      </Form.Item>
+                    </div>
+                  </Card>
+                ))}
+              </>
+            )}
+          </Form.List>
+
+          <Form.Item className="mt-6">
+            <Space>
+              <Button type="primary" htmlType="submit" loading={isUpdatingApplication}>
+                Saqlash
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsSpecialitiesModalOpen(false);
+                  specialitiesForm.resetFields();
                 }}
               >
                 Bekor qilish

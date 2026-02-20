@@ -127,7 +127,9 @@ export default function SubmissionsPage() {
             {text}
           </div>
           <div className="text-xs text-gray-500">
-            #{record.application}
+            #{typeof record.application === "object" && record.application !== null
+              ? (record.application as { id?: number }).id ?? "-"
+              : record.application}
           </div>
         </div>
       ),

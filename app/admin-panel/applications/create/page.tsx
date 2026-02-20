@@ -8,12 +8,13 @@ import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import Link from "next/link";
 import type { Speciality, Examiner } from "@/types";
+import { getExaminerRoleLabel } from "@/lib/utils";
 
 interface ApplicationSpeciality {
   speciality_id: string | number;
   examiners: Array<{
     examiner_id: string | number;
-    role: "CHAIRMAN" | "SECRETARY" | "MEMBER" | "OPPONENT";
+    role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
   }>;
   // max_applicants: number;
 }
@@ -188,6 +189,7 @@ export default function CreateApplicationPage() {
         
 
           <Form.Item
+          className="w-[400px]!"
             name="application_fee"
             label="Ariza tolovi (UZS)"
             rules={[
@@ -315,45 +317,48 @@ export default function CreateApplicationPage() {
                         <Form.List name={[name, "examiners"]}>
                           {(examinerFields, { add: addExaminer, remove: removeExaminer }) => (
                             <>
-                              {examinerFields.map((examinerField) => (
-                                <div key={examinerField.key} className="flex items-start gap-2 ">
-                                  <Form.Item
-                                    {...examinerField}
-                                    name={[examinerField.name, "examiner_id"]}
-                                    rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
-                                    className="flex-1"
-                                  >
-                                    <Select
-                                    className="w-[400px]!"
-                                      placeholder="Imtihonchini tanlang"
-                                      showSearch
-                                      optionFilterProp="children"
+                              {examinerFields.map((examinerField) => {
+                                const { key: fieldKey, ...restExaminerField } = examinerField;
+                                return (
+                                  <div key={fieldKey} className="flex items-start gap-2 ">
+                                    <Form.Item
+                                      {...restExaminerField}
+                                      name={[examinerField.name, "examiner_id"]}
+                                      rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
+                                      className="flex-1"
                                     >
-                                      {examinersList.map((e: Examiner) => (
-                                        <Select.Option key={e.id} value={e.id}>
-                                          {e.full_name} 
-                                        </Select.Option>
-                                      ))}
-                                    </Select>
-                                  </Form.Item>
-                                  <Form.Item
-                                    {...examinerField}
-                                    name={[examinerField.name, "role"]}
-                                    rules={[{ required: true, message: "Rolni tanlang!" }]}
-                                  >
-                                    <Select className="w-[200px]!" placeholder="Rol">
-                                      <Select.Option value="CHAIRMAN">CHAIRMAN</Select.Option>
-                                      <Select.Option value="SECRETARY">SECRETARY</Select.Option>
-                                      <Select.Option value="MEMBER">MEMBER</Select.Option>
-                                      <Select.Option value="OPPONENT">OPPONENT</Select.Option>
-                                    </Select>
-                                  </Form.Item>
-                                  <MinusCircleOutlined
-                                    onClick={() => removeExaminer(examinerField.name)}
-                                    className="text-red-500 cursor-pointer "
-                                  />
-                                </div>
-                              ))}
+                                      <Select
+                                        className="w-[400px]!"
+                                        placeholder="Imtihonchini tanlang"
+                                        showSearch
+                                        optionFilterProp="children"
+                                      >
+                                        {examinersList.map((e: Examiner) => (
+                                          <Select.Option key={e.id} value={e.id}>
+                                            {e.full_name} 
+                                          </Select.Option>
+                                        ))}
+                                      </Select>
+                                    </Form.Item>
+                                    <Form.Item
+                                      {...restExaminerField}
+                                      name={[examinerField.name, "role"]}
+                                      rules={[{ required: true, message: "Rolni tanlang!" }]}
+                                    >
+                                      <Select className="w-[200px]!" placeholder="Rol">
+                                        <Select.Option value="CHAIRMAN">{getExaminerRoleLabel("CHAIRMAN")}</Select.Option>
+                                        <Select.Option value="SECRETARY">{getExaminerRoleLabel("SECRETARY")}</Select.Option>
+                                        <Select.Option value="MEMBER">{getExaminerRoleLabel("MEMBER")}</Select.Option>
+                                        <Select.Option value="OPPONENT">{getExaminerRoleLabel("OPPONENT")}</Select.Option>
+                                      </Select>
+                                    </Form.Item>
+                                    <MinusCircleOutlined
+                                      onClick={() => removeExaminer(examinerField.name)}
+                                      className="text-red-500 cursor-pointer "
+                                    />
+                                  </div>
+                                );
+                              })}
                               <Button
                                 type="dashed"
                                 onClick={() => addExaminer()}
