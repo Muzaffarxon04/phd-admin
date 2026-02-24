@@ -128,12 +128,30 @@ export function getApplicationStatusColor(status: string): string {
   return colors[status] || "gray";
 }
 
+// Get field type label (maydon turi)
+export function getFieldTypeLabel(fieldType: string): string {
+  const labels: Record<string, string> = {
+    TEXT: "Matn",
+    TEXTAREA: "Ko'p qatorli matn",
+    EMAIL: "Elektron pochta",
+    PHONE: "Telefon",
+    NUMBER: "Raqam",
+    DATE: "Sana",
+    SELECT: "Tanlash ro'yxati",
+    RADIO: "Bitta tanlash",
+    CHECKBOX: "Bir nechta tanlash",
+    FILE: "Fayl",
+    URL: "Havola",
+  };
+  return labels[fieldType] || fieldType;
+}
+
 // Get examiner role label (imtihonchi roli)
 export function getExaminerRoleLabel(role: string): string {
   const labels: Record<string, string> = {
     CHAIRMAN: "Rais",
-    PRE_CHAIRMAN: "Rais yordamchisi",
-    SECRETARY: "Kotib",
+    PRE_CHAIRMAN: "Rais o'rinbosari",
+    SECRETARY: "Ilmiy kotib",
     MEMBER: "A'zo",
   };
   return labels[role] || role;

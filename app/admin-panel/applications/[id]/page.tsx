@@ -10,7 +10,7 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel } from "@/lib/utils";
+import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
 import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
@@ -90,7 +90,7 @@ interface CreateFieldData {
 
 interface ApplicationSpecialityForm {
   speciality_id: string | number;
-  examiners: Array<{
+  examiner_ids: Array<{
     examiner_id: string | number;
     role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
   }>;
@@ -244,7 +244,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<
     { data: Application },
-    Partial<Omit<Application, "specialities">> & { specialities?: ApplicationSpecialityForm[] }
+    Partial<Omit<Application, "specialities">> & { speciality_examiners?: ApplicationSpecialityForm[] }
   >(`/admin/application/${id}/update/`, {
     onSuccess: () => {
       message.success("Ariza muvaffaqiyatli yangilandi!");
@@ -486,7 +486,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         const specialityId = specWithId.speciality_id ?? specWithId.speciality ?? spec.id;
         return {
           speciality_id: specialityId,
-          examiners: (spec.examiners || []).map((ex) => ({
+          examiner_ids: (spec.examiners || []).map((ex) => ({
             examiner_id: ex.id,
             role: ex.role,
           })),
@@ -511,7 +511,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       description: application.description,
       start_date: application.start_date,
       end_date: application.end_date,
-      specialities: list,
+      speciality_examiners: list,
     });
   };
 
@@ -784,7 +784,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="font-semibold text-base" style={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}>{field.label}</span>
                                 {field.required && <Tag color="red">Majburiy</Tag>}
-                                <Tag>{field.field_type}</Tag>
+                                <Tag>{getFieldTypeLabel(field.field_type)}</Tag>
                                 {field.order !== undefined && field.order !== null && (
                                   <Tag color="blue">Tartib: {field.order}</Tag>
                                 )}
@@ -912,17 +912,17 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                 }
               }}
             >
-              <Select.Option value="TEXT">TEXT</Select.Option>
-              <Select.Option value="TEXTAREA">TEXTAREA</Select.Option>
-              <Select.Option value="EMAIL">EMAIL</Select.Option>
-              <Select.Option value="PHONE">PHONE</Select.Option>
-              <Select.Option value="NUMBER">NUMBER</Select.Option>
-              <Select.Option value="DATE">DATE</Select.Option>
-              <Select.Option value="SELECT">SELECT</Select.Option>
-              <Select.Option value="RADIO">RADIO</Select.Option>
-              <Select.Option value="CHECKBOX">CHECKBOX</Select.Option>
-              <Select.Option value="FILE">FILE</Select.Option>
-              <Select.Option value="URL">URL</Select.Option>
+              <Select.Option value="TEXT">{getFieldTypeLabel("TEXT")}</Select.Option>
+              <Select.Option value="TEXTAREA">{getFieldTypeLabel("TEXTAREA")}</Select.Option>
+              <Select.Option value="EMAIL">{getFieldTypeLabel("EMAIL")}</Select.Option>
+              <Select.Option value="PHONE">{getFieldTypeLabel("PHONE")}</Select.Option>
+              <Select.Option value="NUMBER">{getFieldTypeLabel("NUMBER")}</Select.Option>
+              <Select.Option value="DATE">{getFieldTypeLabel("DATE")}</Select.Option>
+              <Select.Option value="SELECT">{getFieldTypeLabel("SELECT")}</Select.Option>
+              <Select.Option value="RADIO">{getFieldTypeLabel("RADIO")}</Select.Option>
+              <Select.Option value="CHECKBOX">{getFieldTypeLabel("CHECKBOX")}</Select.Option>
+              <Select.Option value="FILE">{getFieldTypeLabel("FILE")}</Select.Option>
+              <Select.Option value="URL">{getFieldTypeLabel("URL")}</Select.Option>
             </Select>
           </Form.Item>
 
@@ -1181,11 +1181,11 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
                       <Form.Item
                         {...restField}
-                        name={[name, "examiners"]}
+                        name={[name, "examiner_ids"]}
                         label="Imtihonchilar va rollari"
                         rules={[{ required: true, message: "Imtihonchilarni va rollarini kiriting!" }]}
                       >
-                        <Form.List name={[name, "examiners"]}>
+                        <Form.List name={[name, "examiner_ids"]}>
                           {(examinerFields, { add: addExaminer, remove: removeExaminer }) => (
                             <>
                               {examinerFields.map((examinerField) => {

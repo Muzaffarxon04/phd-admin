@@ -8,7 +8,7 @@ import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import Link from "next/link";
 import type { Speciality, Examiner } from "@/types";
-import { getExaminerRoleLabel } from "@/lib/utils";
+import { getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
 
 interface ApplicationSpeciality {
   speciality_id: string | number;
@@ -243,17 +243,17 @@ export default function CreateApplicationPage() {
                       style={{ width: 150 }}
                     >
                       <Select placeholder="Turi">
-                        <Select.Option value="TEXT">TEXT</Select.Option>
-                        <Select.Option value="TEXTAREA">TEXTAREA</Select.Option>
-                        <Select.Option value="EMAIL">EMAIL</Select.Option>
-                        <Select.Option value="PHONE">PHONE</Select.Option>
-                        <Select.Option value="NUMBER">NUMBER</Select.Option>
-                        <Select.Option value="DATE">DATE</Select.Option>
-                        <Select.Option value="SELECT">SELECT</Select.Option>
-                        <Select.Option value="RADIO">RADIO</Select.Option>
-                        <Select.Option value="CHECKBOX">CHECKBOX</Select.Option>
-                        <Select.Option value="FILE">FILE</Select.Option>
-                        <Select.Option value="URL">URL</Select.Option>
+                        <Select.Option value="TEXT">{getFieldTypeLabel("TEXT")}</Select.Option>
+                        <Select.Option value="TEXTAREA">{getFieldTypeLabel("TEXTAREA")}</Select.Option>
+                        <Select.Option value="EMAIL">{getFieldTypeLabel("EMAIL")}</Select.Option>
+                        <Select.Option value="PHONE">{getFieldTypeLabel("PHONE")}</Select.Option>
+                        <Select.Option value="NUMBER">{getFieldTypeLabel("NUMBER")}</Select.Option>
+                        <Select.Option value="DATE">{getFieldTypeLabel("DATE")}</Select.Option>
+                        <Select.Option value="SELECT">{getFieldTypeLabel("SELECT")}</Select.Option>
+                        <Select.Option value="RADIO">{getFieldTypeLabel("RADIO")}</Select.Option>
+                        <Select.Option value="CHECKBOX">{getFieldTypeLabel("CHECKBOX")}</Select.Option>
+                        <Select.Option value="FILE">{getFieldTypeLabel("FILE")}</Select.Option>
+                        <Select.Option value="URL">{getFieldTypeLabel("URL")}</Select.Option>
                       </Select>
                     </Form.Item>
                     <Form.Item
@@ -347,9 +347,9 @@ export default function CreateApplicationPage() {
                                     >
                                       <Select className="w-[200px]!" placeholder="Rol">
                                         <Select.Option value="CHAIRMAN">{getExaminerRoleLabel("CHAIRMAN")}</Select.Option>
+                                        <Select.Option value="PRE_CHAIRMAN">{getExaminerRoleLabel("PRE_CHAIRMAN")}</Select.Option>
                                         <Select.Option value="SECRETARY">{getExaminerRoleLabel("SECRETARY")}</Select.Option>
                                         <Select.Option value="MEMBER">{getExaminerRoleLabel("MEMBER")}</Select.Option>
-                                        <Select.Option value="OPPONENT">{getExaminerRoleLabel("OPPONENT")}</Select.Option>
                                       </Select>
                                     </Form.Item>
                                     <MinusCircleOutlined
