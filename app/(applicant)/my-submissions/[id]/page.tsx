@@ -659,6 +659,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                           size="large"
                           block
                           className="h-[40px] rounded-lg shadow-none"
+                          onClick={() => submitSubmission({})}
+                          loading={isSubmitting}
                         >
                           Qayta topshirish
                         </Button>
