@@ -123,6 +123,15 @@ interface Application {
   // Add other fields if necessary based on your API usage
 }
 
+function formatAnswerValue(val: unknown): string {
+  if (val == null) return "—";
+  if (typeof val === "string") return val;
+  if (typeof val === "number") return String(val);
+  if (Array.isArray(val)) return val.join(", ");
+  if (typeof val === "object") return JSON.stringify(val) || "—";
+  return String(val);
+}
+
 const statusTimeline = [
   {
     status: "DRAFT",
@@ -238,15 +247,28 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             uid: '-1',
             name: 'Fayl yuklangan',
             status: 'done',
-            url: BASE_URL?.replace("/api/v1", "") + (ans.answer || ans.answer_text || ""),
+            url: BASE_URL?.replace("/api/v1", "") + (typeof ans.answer === "string" ? ans.answer : typeof ans.answer_text === "string" ? ans.answer_text : ""),
           }];
-        } else if (fieldDef.field_type === "DATE" && ans.answer) {
-          initialValues[`field_${ans.field}`] = dayjs(ans.answer);
+        } else if (fieldDef.field_type === "DATE") {
+          const dateVal = typeof ans.answer === "string" ? ans.answer : typeof ans.answer_text === "string" ? ans.answer_text : null;
+          const parsed = dateVal ? dayjs(dateVal) : null;
+          initialValues[`field_${ans.field}`] = parsed?.isValid?.() ? parsed : undefined;
         } else if (fieldDef.field_type === "CHECKBOX" && ans.answer) {
           // Assuming checkbox answer is stored as comma separated string or similar
-          initialValues[`field_${ans.field}`] = ans.answer.split(",").map((s: string) => s.trim());
+          const val = ans.answer;
+          initialValues[`field_${ans.field}`] = typeof val === "string"
+            ? val.split(",").map((s: string) => s.trim())
+            : Array.isArray(val)
+              ? val
+              : [];
+        } else if (fieldDef.field_type === "SELECT" || fieldDef.field_type === "RADIO") {
+          const val = ans.answer_text ?? ans.answer;
+          initialValues[`field_${ans.field}`] =
+            typeof val === "string" || typeof val === "number" ? val : Array.isArray(val) ? val : "";
         } else {
-          initialValues[`field_${ans.field}`] = ans.answer || ans.answer_text;
+          const val = ans.answer ?? ans.answer_text;
+          initialValues[`field_${ans.field}`] =
+            typeof val === "string" || typeof val === "number" ? val : Array.isArray(val) ? val : "";
         }
       }
     });
@@ -532,7 +554,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                           <div className="text-base" style={{ color: theme === 'dark' ? '#e5e7eb' : '#1f2937' }}>
                             {answer.field_type === "FILE" ? (
                               <a
-                                href={BASE_URL?.replace("/api/v1", "") + (answer.answer || answer.answer_text || "")}
+                                href={BASE_URL?.replace("/api/v1", "") + (typeof answer.answer === "string" ? answer.answer : typeof answer.answer_text === "string" ? answer.answer_text : "")}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:underline"
@@ -540,7 +562,11 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                                 Faylni ko&apos;rish
                               </a>
                             ) : (
-                              answer.answer || answer.answer_text || "—"
+                              formatAnswerValue(
+                                answer.field_type === "SELECT" || answer.field_type === "RADIO"
+                                  ? answer.answer_text
+                                  : answer.answer ?? answer.answer_text
+                              )
                             )}
                           </div>
                         </div>
@@ -671,6 +697,10 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     return e;
                   }
                   return e?.fileList;
+                } : undefined}
+                getValueProps={field.field_type === "DATE" ? (value: unknown) => {
+                  const d = dayjs.isDayjs(value) ? value : (typeof value === "string" ? dayjs(value) : null);
+                  return { value: d?.isValid?.() ? d : undefined };
                 } : undefined}
               >
                 {(() => {
