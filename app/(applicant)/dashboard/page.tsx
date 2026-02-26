@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 
 import { useGet, usePatch } from "@/lib/hooks";
-import { tokenStorage } from "@/lib/utils";
+import { tokenStorage, getRoleDisplayLabel } from "@/lib/utils";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title } = Typography;
@@ -87,7 +87,7 @@ export default function DashboardPage() {
     {
       key: "3",
       label: "Rol",
-      value: currentUser?.role || "Ariza beruvchi",
+      value: getRoleDisplayLabel(currentUser?.role),
     },
     {
       key: "4",

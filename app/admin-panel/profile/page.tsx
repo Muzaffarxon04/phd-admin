@@ -16,6 +16,7 @@ import { useState } from "react";
 import { EditOutlined, SaveOutlined } from "@ant-design/icons";
 
 import { useGet, usePatch } from "@/lib/hooks";
+import { getRoleDisplayLabel } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
@@ -94,7 +95,7 @@ export default function AdminProfilePage() {
     {
       key: "3",
       label: "Rol",
-      value: profile?.role || authUser?.role || "Boshqaruvchi",
+      value: getRoleDisplayLabel(profile?.role || authUser?.role || "admin"),
     },
     {
       key: "4",

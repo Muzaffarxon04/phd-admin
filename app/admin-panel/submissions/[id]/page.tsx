@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import {
   Spin,
   Tag,
@@ -67,15 +67,28 @@ interface DataObject {
   field_label: string;
   field_type: string;
   answer: string | null;
+  answer_text: string | null;
 }
 
 const { Text, Title } = Typography;
 
-const formatAnswer = (item: DataObject) => {
+const formatAnswer = (item: DataObject, onPreviewFile?: (path: string) => void) => {
   if (item.field_type === "FILE" && item.answer) {
+    const path = typeof item.answer === "string" ? item.answer : typeof item.answer_text === "string" ? item.answer_text : "";
+    if (path && onPreviewFile) {
+      return (
+        <button
+          type="button"
+          onClick={() => onPreviewFile(path)}
+          className="text-[#7367f0] hover:underline font-bold flex items-center gap-2 bg-transparent border-0 cursor-pointer p-0"
+        >
+          📎 Hujjatni ko&apos;rish
+        </button>
+      );
+    }
     return (
       <a
-        href={API_BASE_URL?.replace("/api/v1", "") + item.answer || ""}
+        href={API_BASE_URL?.replace("/api/v1", "") + path}
         target="_blank"
         rel="noopener noreferrer"
         className="text-[#7367f0] hover:underline font-bold flex items-center gap-2"
@@ -85,10 +98,10 @@ const formatAnswer = (item: DataObject) => {
     );
   }
 
-  return <span className="font-medium">{item.answer || "—"}</span>;
+  return <span className="font-medium">{item.answer_text || item.answer || "—"}</span>;
 };
 
-const CardView = ({ answers, theme }: { answers: DataObject[]; theme: string }) => (
+const CardView = ({ answers, theme, onPreviewFile }: { answers: DataObject[]; theme: string; onPreviewFile?: (path: string) => void }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
     {answers.map((item: DataObject) => (
       <div
@@ -103,14 +116,14 @@ const CardView = ({ answers, theme }: { answers: DataObject[]; theme: string }) 
           {item.field_label}
         </div>
         <div style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-          {formatAnswer(item)}
+          {formatAnswer(item, onPreviewFile)}
         </div>
       </div>
     ))}
   </div>
 );
 
-const TableView = ({ answers, theme }: { answers: DataObject[]; theme: string }) => {
+const TableView = ({ answers, theme, onPreviewFile }: { answers: DataObject[]; theme: string; onPreviewFile?: (path: string) => void }) => {
   const columns = [
     {
       title: "№",
@@ -137,7 +150,7 @@ const TableView = ({ answers, theme }: { answers: DataObject[]; theme: string })
       key: "answer",
       render: (_: unknown, record: DataObject) => (
         <div style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-          {formatAnswer(record)}
+          {formatAnswer(record, onPreviewFile)}
         </div>
       ),
     },
@@ -174,6 +187,91 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
   const [reviewForm] = Form.useForm();
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+
+  // File preview modal state
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const getFilePreviewUrl = (path: string) =>
+    path.startsWith("http") ? path : (API_BASE_URL?.replace("/api/v1", "") || "") + (path.startsWith("/") ? path : `/${path}`);
+
+  const handleOpenPreview = (path: string) => {
+    const p = typeof path === "string" ? path.trim() : "";
+    if (!p || p === "/") return;
+    const url = getFilePreviewUrl(p);
+    setPreviewFileName("");
+    setPreviewFileUrl(url);
+    setPreviewLoading(true);
+  };
+
+  const handleClosePreview = () => {
+    if (previewFileUrl && previewFileUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setPreviewFileUrl(null);
+    setPreviewFileName("");
+    setPreviewLoading(false);
+  };
+
+  const handlePreviewLoad = () => setPreviewLoading(false);
+
+  const getProxyUrl = (url: string) => `/api/proxy-file?url=${encodeURIComponent(url)}`;
+
+  const getFileExt = (url: string) => {
+    const pathPart = url.split("?")[0];
+    return pathPart.split(".").pop()?.toLowerCase() || "";
+  };
+
+  useEffect(() => {
+    if (!previewFileUrl || !previewLoading) return;
+    const ext = getFileExt(previewFileName || previewFileUrl);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    if (!imageExts.includes(ext) && ext !== "pdf") {
+      const id = setTimeout(() => setPreviewLoading(false), 0);
+      return () => clearTimeout(id);
+    }
+    const t = setTimeout(() => setPreviewLoading(false), 15000);
+    return () => clearTimeout(t);
+  }, [previewFileUrl, previewLoading, previewFileName]);
+
+  const renderFilePreview = (displayUrl: string, originalUrl: string, fileName?: string) => {
+    const ext = getFileExt(fileName || originalUrl);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    if (imageExts.includes(ext)) {
+      // eslint-disable-next-line @next/next/no-img-element -- Dynamic file preview (blob/proxy URLs)
+      return <img src={displayUrl} alt="Preview" className="max-w-full max-h-[70vh] object-contain" onLoad={handlePreviewLoad} />;
+    }
+    if (ext === "pdf") {
+      return (
+        <object
+          data={displayUrl}
+          type="application/pdf"
+          className="w-full h-[70vh] rounded"
+          title="PDF preview"
+          onLoad={handlePreviewLoad}
+        >
+          <p className="py-8 text-center" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+            PDF ko&apos;rish uchun{" "}
+            <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              yangi tabda oching
+            </a>
+          </p>
+        </object>
+      );
+    }
+    return (
+      <div className="text-center py-8">
+        <FileTextOutlined style={{ fontSize: 48, color: theme === "dark" ? "#6b7280" : "#9ca3af" }} />
+        <p className="mt-4 mb-4" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+          Ushbu fayl formatida oldindan ko&apos;rish mumkin emas
+        </p>
+        <a href={displayUrl} target="_blank" rel="noopener noreferrer" download={fileName} className="text-blue-500 hover:underline">
+          Yuklab olish
+        </a>
+      </div>
+    );
+  };
 
   const { data: submissionData, isLoading } = useGet<{ data: SubmissionDetail }>(
     `/admin/application/submissions/${id}/`
@@ -377,7 +475,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                         Karta ko&apos;rinishi
                       </span>
                     ),
-                    children: <CardView answers={submission.answers} theme={theme} />,
+                    children: <CardView answers={submission.answers} theme={theme} onPreviewFile={handleOpenPreview} />,
                   },
                   {
                     key: "table",
@@ -387,7 +485,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                         Jadval ko&apos;rinishi
                       </span>
                     ),
-                    children: <TableView answers={submission.answers} theme={theme} />,
+                    children: <TableView answers={submission.answers} theme={theme} onPreviewFile={handleOpenPreview} />,
                   },
                 ]}
               />
@@ -565,6 +663,10 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           height: 3px;
           border-radius: 3px 3px 0 0;
         }
+        .premium-table .ant-table-tbody > tr > td {
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
+        }
         .dark-table .ant-table {
           background: transparent !important;
           color: #ffffff !important;
@@ -580,7 +682,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         }
         .dark-table .ant-table-tbody > tr > td {
           border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
+Jadval ko'rinishi        }
         .dark-table .ant-table-tbody > tr:hover > td {
           background: rgba(115, 103, 240, 0.05) !important;
         }
@@ -725,6 +827,33 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
               </Form.Item>
             </Form>
           </>
+        )}
+      </Modal>
+
+      <Modal
+        title="Fayl ko'rinishi"
+        open={!!previewFileUrl}
+        onCancel={handleClosePreview}
+        footer={<Button onClick={handleClosePreview}>Yopish</Button>}
+        width={800}
+        destroyOnClose
+        zIndex={1100}
+        styles={{ wrapper: { zIndex: 1100 } }}
+      >
+        {previewFileUrl && (
+          <div className="relative flex justify-center" style={{ minHeight: 300 }}>
+            {previewLoading && (
+              <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/80 dark:bg-gray-900/80 rounded z-10">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7367f0] mb-4" />
+                <Text style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>Fayl yuklanmoqda...</Text>
+              </div>
+            )}
+            {renderFilePreview(
+              previewFileUrl.startsWith("blob:") ? previewFileUrl : getProxyUrl(previewFileUrl),
+              previewFileUrl,
+              previewFileName
+            )}
+          </div>
         )}
       </Modal>
     </div>

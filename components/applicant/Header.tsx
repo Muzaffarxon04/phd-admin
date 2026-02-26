@@ -7,7 +7,7 @@ import {
   SunOutlined,
   MoonOutlined,
 } from "@ant-design/icons";
-import { tokenStorage } from "@/lib/utils";
+import { tokenStorage, getRoleDisplayLabel } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useState, useEffect } from "react";
@@ -19,14 +19,14 @@ export default function ApplicantHeader() {
   const router = useRouter();
   const { theme, toggleTheme } = useThemeStore();
   const [userName, setUserName] = useState<string>("Foydalanuvchi");
-  const [role, setRole] = useState<string>("Ariza beruvchi");
+  const [role, setRole] = useState<string>("applicant");
   useEffect(() => {
     const user = tokenStorage.getUser() as { full_name?: string, role?: string } | null;
     const fullName = user?.full_name;
     if (fullName) {
       setTimeout(() => {
         setUserName(fullName || "Foydalanuvchi");
-        setRole(user?.role || "Ariza beruvchi");
+        setRole(user?.role || "applicant");
       }, 0);
     }
   }, []);
@@ -125,7 +125,7 @@ export default function ApplicantHeader() {
               {userName}
             </span>
 <span className="leading-none text-[12px] text-right">
-  {role}
+  {getRoleDisplayLabel(role)}
 </span>
     </div>
             <Dropdown

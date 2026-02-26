@@ -146,6 +146,18 @@ export function getFieldTypeLabel(fieldType: string): string {
   return labels[fieldType] || fieldType;
 }
 
+// Get user role display label (foydalanuvchi roli)
+export function getRoleDisplayLabel(role: string | undefined): string {
+  if (!role) return "Ariza beruvchi";
+  const r = role.toUpperCase();
+  const labels: Record<string, string> = {
+    APPLICANT: "Ariza beruvchi",
+    ADMIN: "Boshqaruvchi",
+    SUPER_ADMIN: "Super administrator",
+  };
+  return labels[r] || role;
+}
+
 // Get examiner role label (imtihonchi roli)
 export function getExaminerRoleLabel(role: string): string {
   const labels: Record<string, string> = {

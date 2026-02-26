@@ -15,6 +15,7 @@ import {
   Typography,
   message,
   Alert,
+  Modal,
 } from "antd";
 import {
   useGet,
@@ -24,8 +25,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  UploadOutlined,
   CheckCircleOutlined,
+  DownloadOutlined,
+  EyeOutlined,
+  FileTextOutlined,
   // ClockCircleOutlined,
   ExclamationCircleOutlined,
   DollarOutlined,
@@ -37,7 +40,7 @@ import {
 } from "@ant-design/icons";
 import { formatDate, parseMoneyAmount } from "@/lib/utils";
 import { type Dayjs } from "dayjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title, Text, Paragraph } = Typography;
@@ -90,7 +93,12 @@ interface ApplicationResponse {
 }
 
 
-const renderFieldInput = (field: ApplicationField, theme: string) => {
+interface FileHandlers {
+  onFilePreview?: (file: { originFileObj?: File; url?: string; name: string }) => void;
+  onFileDownload?: (file: { originFileObj?: File; url?: string; name: string }) => void;
+}
+
+const renderFieldInput = (field: ApplicationField, theme: string, handlers?: FileHandlers) => {
   const options = field.options || [];
   const inputStyle = {
     background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
@@ -200,16 +208,101 @@ const renderFieldInput = (field: ApplicationField, theme: string) => {
 
     case "FILE":
       return (
-        <Upload
-          beforeUpload={() => false}
+        <Upload.Dragger
           accept={field.allowed_file_types?.map((type) => `.${type}`).join(",")}
           maxCount={1}
-          className="w-full premium-upload"
+          listType="text"
+          className="w-full premium-upload file-upload-success"
+          showUploadList={{ showRemoveIcon: false }}
+          locale={{
+            removeFile: "O'chirish",
+            downloadFile: "Yuklab olish",
+            previewFile: "Ko'rish",
+          }}
+          style={{ minHeight: 36, height: 36 }}
+          customRequest={({ onProgress, onSuccess }) => {
+            let percent = 0;
+            const timer = setInterval(() => {
+              percent += 10;
+              onProgress?.({ percent });
+              if (percent >= 100) {
+                clearInterval(timer);
+                onSuccess?.({});
+              }
+            }, 80);
+          }}
+          itemRender={(originNode, file, fileList, actions) => {
+            const { download } = actions;
+            const isDark = theme === "dark";
+            const borderColor = "rgba(34, 197, 94, 0.5)";
+            const separatorColor = "rgba(34, 197, 94, 0.35)";
+            const iconColor = "#7367f0";
+            const textColor = isDark ? "#9ca3af" : "#6b7280";
+            const bgColor = isDark ? "rgb(40, 48, 70)" : "#ffffff";
+            const hasFile = !!file.originFileObj || !!file.url;
+            const handleDownload = handlers?.onFileDownload
+              ? () => handlers.onFileDownload!(file)
+              : () => download();
+            const handlePreview = handlers?.onFilePreview
+              ? () => handlers.onFilePreview!(file)
+              : undefined;
+
+            if (file.status === "uploading") {
+              const percent = file.percent ?? 0;
+              return (
+                <div className="mt-2 file-upload-progress relative h-9 overflow-hidden rounded-full" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }}>
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-150"
+                    style={{ width: `${percent}%`, background: "#22c55e" }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">{percent}%</span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="file-upload-list-item-custom flex items-center rounded-lg overflow-hidden" style={{ border: `1px solid ${borderColor}`, background: bgColor, minHeight: 36, marginTop: 8 }}>
+                <div className="flex items-center justify-center w-9 min-w-[36px] shrink-0 cursor-pointer hover:opacity-80" style={{ borderRight: `1px solid ${separatorColor}` }} onClick={handleDownload}>
+                  <DownloadOutlined style={{ fontSize: 16, color: iconColor }} />
+                </div>
+                <div
+                  className="flex items-center justify-center w-9 min-w-[36px] shrink-0"
+                  style={{ borderRight: `1px solid ${separatorColor}`, cursor: handlePreview && hasFile ? "pointer" : "default" }}
+                  onClick={handlePreview && hasFile ? handlePreview : undefined}
+                >
+                  {hasFile ? (
+                    <EyeOutlined style={{ fontSize: 16, color: handlePreview ? iconColor : "rgba(156, 163, 175, 0.6)" }} />
+                  ) : (
+                    <EyeOutlined style={{ fontSize: 16, color: "rgba(156, 163, 175, 0.6)" }} />
+                  )}
+                </div>
+                <div className="flex-1 px-3 py-1.5 truncate text-sm" style={{ color: textColor, fontWeight: 500 }}>
+                  {file.name}
+                </div>
+              </div>
+            );
+          }}
         >
-          <Button icon={<UploadOutlined />} size="large" block className="rounded-xl" style={inputStyle}>
-            Fayl tanlash
-          </Button>
-        </Upload>
+          <div className="flex items-center justify-between w-full h-9 pl-3">
+            <span className="flex-1 text-left truncate text-sm" style={{ color: theme === "dark" ? "rgba(255,255,255,0.45)" : "#9ca3af" }}>
+              Faylni tanlang yoki bu yerga tashlang...
+            </span>
+            <div
+              className="shrink-0 h-full flex items-center px-3 rounded-r-[7px] border-l font-medium text-sm self-stretch"
+              style={{
+                borderColor: theme === "dark" ? "rgb(59, 66, 83)" : "rgb(235, 233, 241)",
+                background: theme === "dark" ? "rgba(255,255,255,0.05)" : "#f9fafb",
+                color: theme === "dark" ? "rgba(255,255,255,0.8)" : "#6b7280",
+                marginRight: 0,
+                marginLeft: 8,
+              }}
+            >
+              Browse
+            </div>
+          </div>
+        </Upload.Dragger>
       );
 
     case "URL":
@@ -239,6 +332,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   // Custom states
   const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = applicationResponse?.data;
@@ -262,8 +358,104 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     }
   );
 
+  const getProxyUrl = (url: string) => `/api/proxy-file?url=${encodeURIComponent(url)}`;
 
+  const getFileExt = (urlOrName: string) => {
+    const pathPart = urlOrName.split("?")[0];
+    return pathPart.split(".").pop()?.toLowerCase() || "";
+  };
 
+  const handleFileDownload = (file: { originFileObj?: File; url?: string; name: string }) => {
+    if (file.originFileObj) {
+      const blobUrl = URL.createObjectURL(file.originFileObj);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = file.name || "file";
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } else if (file.url) {
+      const a = document.createElement("a");
+      a.href = file.url.startsWith("/api/") ? file.url : getProxyUrl(file.url);
+      a.download = file.name || "file";
+      a.target = "_blank";
+      a.click();
+    }
+  };
+
+  const handleFilePreview = (file: { originFileObj?: File; url?: string; name: string }) => {
+    if (file.originFileObj) {
+      const blobUrl = URL.createObjectURL(file.originFileObj);
+      setPreviewFileName(file.name || "");
+      setPreviewFileUrl(blobUrl);
+      setPreviewLoading(true);
+    } else if (file.url) {
+      setPreviewFileName(file.name || "");
+      setPreviewFileUrl(file.url);
+      setPreviewLoading(true);
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (previewFileUrl && previewFileUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setPreviewFileUrl(null);
+    setPreviewFileName("");
+    setPreviewLoading(false);
+  };
+
+  const handlePreviewLoad = () => setPreviewLoading(false);
+
+  useEffect(() => {
+    if (!previewFileUrl || !previewLoading) return;
+    const ext = getFileExt(previewFileName || previewFileUrl);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    if (!imageExts.includes(ext) && ext !== "pdf") {
+      const id = setTimeout(() => setPreviewLoading(false), 0);
+      return () => clearTimeout(id);
+    }
+    const t = setTimeout(() => setPreviewLoading(false), 15000);
+    return () => clearTimeout(t);
+  }, [previewFileUrl, previewLoading, previewFileName]);
+
+  const renderFilePreview = (url: string, fileName: string, isBlob: boolean) => {
+    const ext = getFileExt(fileName || url);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    const displayUrl = isBlob ? url : getProxyUrl(url);
+    if (imageExts.includes(ext)) {
+      // eslint-disable-next-line @next/next/no-img-element -- Dynamic file preview (blob/proxy URLs)
+      return <img src={displayUrl} alt="Preview" className="max-w-full max-h-[70vh] object-contain" onLoad={handlePreviewLoad} />;
+    }
+    if (ext === "pdf") {
+      return (
+        <object
+          data={displayUrl}
+          type="application/pdf"
+          className="w-full h-[70vh] rounded"
+          title="PDF preview"
+          onLoad={handlePreviewLoad}
+        >
+          <p className="py-8 text-center" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+            PDF ko&apos;rish uchun{" "}
+            <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              yangi tabda oching
+            </a>
+          </p>
+        </object>
+      );
+    }
+    return (
+      <div className="text-center py-8">
+        <FileTextOutlined style={{ fontSize: 48, color: theme === "dark" ? "#6b7280" : "#9ca3af" }} />
+        <p className="mt-4 mb-4" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+          Ushbu fayl formatida oldindan ko&apos;rish mumkin emas
+        </p>
+        <a href={displayUrl} target="_blank" rel="noopener noreferrer" download={fileName} className="text-blue-500 hover:underline">
+          Yuklab olish
+        </a>
+      </div>
+    );
+  };
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!application) return;
@@ -374,7 +566,36 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const canApply = true
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen" data-theme={theme}>
+      <style jsx global>{`
+        .file-upload-success .ant-upload-list-item-container {
+          margin-top: 0 !important;
+        }
+        .premium-form .ant-form-item-has-error .file-upload-success .ant-upload-drag {
+          border-color: rgb(239, 68, 68) !important;
+        }
+        .file-upload-success .ant-upload,
+        .file-upload-success .ant-upload-btn,
+        .file-upload-success .ant-upload-drag {
+          padding: 0 !important;
+        }
+        .file-upload-success .ant-upload-drag {
+          border: 1px solid rgb(235, 233, 241) !important;
+          border-radius: 8px !important;
+          background: #ffffff !important;
+          padding: 0 !important;
+          overflow: hidden;
+          min-height: 36px !important;
+          height: auto !important;
+        }
+        .min-h-screen[data-theme="dark"] .file-upload-success .ant-upload-drag {
+          border-color: rgb(59, 66, 83) !important;
+          background: rgb(40, 48, 70) !important;
+        }
+        .file-upload-success .ant-upload-drag:hover {
+          border-color: rgba(34, 197, 94, 0.5) !important;
+        }
+      `}</style>
       {/* Page Title & Breadcrumb */}
       <div className="mb-4 flex items-center gap-4">
         <Title level={4} className="!text-[24px] mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
@@ -630,15 +851,23 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                       <Form.Item
                         name={`field_${field.id}`}
                         label={
-                          <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center flex-wrap">
                             <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "inherit", fontWeight: 500 }}>
                               {field.label}
                               {field.required && <span className="text-red-500 ml-1">*</span>}
                             </span>
-                            {completedFields.has(field.id) && (
-                              <CheckCircleOutlined className="text-green-500" />
+                            {field.field_type === "FILE" && (
+                              <span className="ml-1" style={{ color: "#7367f0" }}>
+                                {field.max_file_size != null && field.max_file_size > 0 && (
+                                  <>(Maksimal fayl hajmi {field.max_file_size >= 1024 * 1024 ? Math.round(field.max_file_size / (1024 * 1024)) : field.max_file_size} MB) </>
+                                )}
+                                ({field.required ? "Majburiy" : "Majburiy Emas"})
+                              </span>
                             )}
-                          </div>
+                            {completedFields.has(field.id) && (
+                              <CheckCircleOutlined className="text-green-500 ml-1" />
+                            )}
+                          </span>
                         }
                         help={<span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.45)" : "inherit", fontSize: "12px" }}>{field.help_text}</span>}
                         rules={[
@@ -650,7 +879,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                         valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
                         getValueFromEvent={field.field_type === "FILE" ? (e) => (Array.isArray(e) ? e : e?.fileList) : undefined}
                       >
-                        {renderFieldInput(field, theme)}
+                        {renderFieldInput(field, theme, {
+                          onFilePreview: handleFilePreview,
+                          onFileDownload: handleFileDownload,
+                        })}
                       </Form.Item>
                     </div>
                   ))}
@@ -678,6 +910,27 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           </div>
         )}
       </div>
+
+      <Modal
+        title="Fayl ko'rinishi"
+        open={!!previewFileUrl}
+        onCancel={handleClosePreview}
+        footer={<Button onClick={handleClosePreview}>Yopish</Button>}
+        width={800}
+        destroyOnClose
+      >
+        {previewFileUrl && (
+          <div className="relative flex justify-center" style={{ minHeight: 300 }}>
+            {previewLoading && (
+              <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/80 dark:bg-gray-900/80 rounded z-10">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7367f0] mb-4" />
+                <Text style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>Fayl yuklanmoqda...</Text>
+              </div>
+            )}
+            {renderFilePreview(previewFileUrl, previewFileName, previewFileUrl.startsWith("blob:"))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

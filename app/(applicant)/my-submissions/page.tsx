@@ -7,13 +7,15 @@ import {
   Tooltip,
   Input,
   Breadcrumb,
-  ConfigProvider
+  ConfigProvider,
+  Modal,
 } from "antd";
 import {
   EyeOutlined,
   DownloadOutlined,
   PlusOutlined,
   HomeOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -21,6 +23,7 @@ import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
 import React, { useState, useMemo, cloneElement, isValidElement } from "react";
 
@@ -55,10 +58,12 @@ interface SubmissionsResponse {
 }
 
 export default function MySubmissionsPage() {
+  const router = useRouter();
   const { theme } = useThemeStore();
   const { data: submissionsData, isLoading, error } = useGet<SubmissionsResponse | Submission[]>("/applicant/my-submissions/");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [draftModalSubmission, setDraftModalSubmission] = useState<Submission | null>(null);
 
   // Handle different response formats
   const submissions = useMemo(() => {
@@ -134,17 +139,23 @@ export default function MySubmissionsPage() {
       key: "status",
       render: (status: string) => {
         const label = getApplicationStatusLabel(status);
-        return (
+        const badge = (
           <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
               status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                status === "DRAFT" ? "bg-gray-500/10 text-gray-500 border-gray-500/20" :
+                status === "DRAFT" ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
                   "bg-purple-500/10 text-purple-500 border-purple-500/20"
               }`}
           >
+            {status === "DRAFT" && <ExclamationCircleOutlined style={{ fontSize: 12 }} />}
             {label}
           </span>
         );
+        return status === "DRAFT" ? (
+          <Tooltip title="Arizangiz hali qoralama holatida. Tekshirib chiqib uni yuboring.">
+            {badge}
+          </Tooltip>
+        ) : badge;
       },
       width: 140,
     },
@@ -179,7 +190,7 @@ export default function MySubmissionsPage() {
       fixed: "right" as const,
       width: 80,
       render: (_: unknown, record: Submission) => (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Link href={`/my-submissions/${record.id}`}>
             <Tooltip title="Ko'rish">
               <Button
@@ -244,6 +255,16 @@ export default function MySubmissionsPage() {
 
   return (
     <div style={{ minHeight: "100vh" }}>
+      <style jsx global>{`
+        .draft-row-warning {
+          border-left: 3px solid #f59e0b !important;
+          background: rgba(245, 158, 11, 0.06) !important;
+        }
+        .custom-redesigned-table [data-theme="dark"] .draft-row-warning,
+        [data-theme="dark"] .draft-row-warning {
+          background: rgba(245, 158, 11, 0.08) !important;
+        }
+      `}</style>
       <div className="mx-auto">
         {/* Page Title & Breadcrumb */}
         <div className="mb-8 flex items-center gap-4">
@@ -429,6 +450,17 @@ export default function MySubmissionsPage() {
                 }}
               >
                 <Table
+                  rowClassName={(record) => (record.status === "DRAFT" ? "draft-row-warning" : "")}
+                  onRow={(record) => ({
+                    onClick: () => {
+                      if (record.status === "DRAFT") {
+                        setDraftModalSubmission(record);
+                      } else {
+                        router.push(`/my-submissions/${record.id}`);
+                      }
+                    },
+                    style: { cursor: "pointer" },
+                  })}
                   columns={columns.map(col => ({
                     ...col,
                     title: typeof col.title === 'string' ? (
@@ -466,6 +498,36 @@ export default function MySubmissionsPage() {
             )}
           </div>
         </div>
+
+        <Modal
+          title="Ogohlantirish"
+          open={!!draftModalSubmission}
+          onCancel={() => setDraftModalSubmission(null)}
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setDraftModalSubmission(null)}>Yopish</Button>
+              <Button
+                type="primary"
+                onClick={() => {
+                  if (draftModalSubmission) {
+                    router.push(`/my-submissions/${draftModalSubmission.id}`);
+                    setDraftModalSubmission(null);
+                  }
+                }}
+                style={{
+                  background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                  border: "none",
+                }}
+              >
+                Ko&apos;rib chiqish
+              </Button>
+            </div>
+          }
+        >
+          <p style={{ margin: 0, fontSize: 15 }}>
+            Arizangiz hali qoralama holatida turibdi, tekshirib chiqib uni yuboring.
+          </p>
+        </Modal>
 
         {/* Recent Activities Section */}
         {/* <div className="mt-12 bg-transparent">

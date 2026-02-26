@@ -213,7 +213,7 @@ export default function ExaminersPage() {
           </div>
         </div>
       ),
-      width: 250,
+     
     },
     {
       title: (
@@ -229,7 +229,7 @@ export default function ExaminersPage() {
           {title}
         </span>
       ),
-      width: 340,
+      width: 360,
     },
     {
       title: (
