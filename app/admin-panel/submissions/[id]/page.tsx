@@ -36,6 +36,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   TableOutlined,
+  RollbackOutlined,
 } from "@ant-design/icons";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
@@ -51,6 +52,8 @@ interface SubmissionDetail {
   applicant_phone: string;
   status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+  avg_marks?: number | string | null;
+  mark?: number | string | null;
   review_notes?: string;
   reviewed_by?: number | null;
   reviewed_by_name?: string;
@@ -184,8 +187,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
 
   // Drawer review state
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
-  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
-  const [reviewForm] = Form.useForm();
+  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | "withdrawn" | null>(null);
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
   // File preview modal state
@@ -285,16 +287,19 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
     try {
       const endpoint = reviewAction === "approve"
         ? `/admin/application/submissions/${id}/approve/`
-        : `/admin/application/submissions/${id}/reject/`;
+        : reviewAction === "reject"
+          ? `/admin/application/submissions/${id}/reject/`
+          : `/admin/application/submissions/${id}/withdrawn/`;
 
       await apiRequest(endpoint, {
         method: "POST",
         body: JSON.stringify({ notes: values.notes }),
       });
 
-      message.success(reviewAction === "approve" ? "Ariza tasdiqlandi" : "Ariza rad etildi");
+      const successMsg = reviewAction === "approve" ? "Ariza tasdiqlandi" : reviewAction === "reject" ? "Ariza rad etildi" : "Ariza qayta topshirishga qaytarildi";
+      message.success(successMsg);
       setReviewDrawerOpen(false);
-      reviewForm.resetFields();
+      form.resetFields();
       queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
     } catch (error) {
       console.error(error);
@@ -305,7 +310,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
     }
   };
 
-  const openReviewDrawer = (action: "approve" | "reject") => {
+  const openReviewDrawer = (action: "approve" | "reject" | "withdrawn") => {
     setReviewAction(action);
     setReviewDrawerOpen(true);
   };
@@ -411,6 +416,18 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 Rad etish
               </Button>
               <Button
+                icon={<RollbackOutlined />}
+                onClick={() => openReviewDrawer("withdrawn")}
+                className="h-[42px] px-6 !text-white rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+                style={{
+                  background: "linear-gradient(118deg, #f59e0b, rgba(245, 158, 11, 0.7))",
+                  boxShadow: "0 8px 25px -8px #f59e0b",
+                  color: "white",
+                }}
+              >
+                Qayta topshirish
+              </Button>
+              <Button
                 type="primary"
                 icon={<CheckOutlined />}
                 onClick={() => openReviewDrawer("approve")}
@@ -424,20 +441,31 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
               </Button>
             </>
           )}
-          {submission.status === "APPROVED" && (
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => setIsScoreModalOpen(true)}
-              className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-              style={{
-                background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))",
-                boxShadow: "0 8px 25px -8px #28c76f",
-              }}
-            >
-              Baho qo&apos;yish
-            </Button>
-          )}
+          {submission.status === "APPROVED" &&
+            (submission.mark != null && submission.mark !== "" ? (
+              <span
+                className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30"
+                style={{
+                  background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
+                  color: "#28c76f",
+                }}
+              >
+                Qo&apos;yilgan Baho: {Number(submission.avg_marks)}
+              </span>
+            ) : (
+              <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                onClick={() => setIsScoreModalOpen(true)}
+                className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+                style={{
+                  background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))",
+                  boxShadow: "0 8px 25px -8px #28c76f",
+                }}
+              >
+                Baho qo&apos;yish
+              </Button>
+            ))}
         </div>
       </div>
 
@@ -682,14 +710,14 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         }
         .dark-table .ant-table-tbody > tr > td {
           border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-Jadval ko'rinishi        }
+        }
         .dark-table .ant-table-tbody > tr:hover > td {
           background: rgba(115, 103, 240, 0.05) !important;
         }
       `}</style>
 
    <Drawer
-        title={reviewAction === "approve" ? "Arizani Tasdiqlash" : "Arizani Rad Etish"}
+        title={reviewAction === "approve" ? "Arizani Tasdiqlash" : reviewAction === "reject" ? "Arizani Rad Etish" : "Qayta topshirishga qaytarish"}
         placement="right"
         onClose={() => {
           setReviewDrawerOpen(false);
@@ -744,14 +772,18 @@ Jadval ko'rinishi        }
               style={{
                 background: reviewAction === "approve"
                   ? "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))"
-                  : "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
-                borderColor: reviewAction === "approve" ? "#28c76f" : "#ea5455",
+                  : reviewAction === "reject"
+                    ? "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))"
+                    : "linear-gradient(118deg, #f59e0b, rgba(245, 158, 11, 0.7))",
+                borderColor: reviewAction === "approve" ? "#28c76f" : reviewAction === "reject" ? "#ea5455" : "#f59e0b",
                 boxShadow: reviewAction === "approve"
                   ? "0 8px 25px -8px #28c76f"
-                  : "0 8px 25px -8px #ea5455",
+                  : reviewAction === "reject"
+                    ? "0 8px 25px -8px #ea5455"
+                    : "0 8px 25px -8px #f59e0b",
               }}
             >
-              {reviewAction === "approve" ? "Tasdiqlash" : "Rad etish"}
+              {reviewAction === "approve" ? "Tasdiqlash" : reviewAction === "reject" ? "Rad etish" : "Qaytarish"}
             </Button>
           </div>
         </Form>

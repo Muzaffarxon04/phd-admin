@@ -453,6 +453,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         description: application.description,
         start_date: application.start_date ? dayjs(application.start_date) : null,
         end_date: application.end_date ? dayjs(application.end_date) : null,
+        exam_date: application.exam_date ? dayjs(application.exam_date) : null,
         status: application.status,
       });
       setIsApplicationModalOpen(true);
@@ -464,6 +465,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     description: string;
     start_date: Dayjs | null;
     end_date: Dayjs | null;
+    exam_date?: Dayjs | null;
     status: string;
   }) => {
     if (!application) return;
@@ -473,6 +475,9 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
       description: values.description,
       start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : application.start_date,
       end_date: values.end_date ? values.end_date.format("YYYY-MM-DD") : application.end_date,
+      ...(values.exam_date != null && {
+        exam_date: values.exam_date ? values.exam_date.format("YYYY-MM-DD") : null,
+      }),
       status: values.status as Application["status"],
     };
 
@@ -523,6 +528,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
         description: application.description,
         start_date: application.start_date ? dayjs(application.start_date) : null,
         end_date: application.end_date ? dayjs(application.end_date) : null,
+        exam_date: application.exam_date ? dayjs(application.exam_date) : null,
         status: application.status,
       });
     }
@@ -584,8 +590,18 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   <Descriptions
           bordered
           column={1}
-          contentStyle={{ color: theme === "dark" ? "#e2e8f0" : "inherit" }}
-          labelStyle={{ color: theme === "dark" ? "#94a3b8" : "inherit", background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.02)" }}
+          styles={{
+            content: {
+              color: theme === "dark" ? "#e2e8f0" : "inherit"
+            },
+            label: {
+              color: theme === "dark" ? "#94a3b8" : "inherit",
+              background:
+                theme === "dark"
+                  ? "rgba(255, 255, 255, 0.02)"
+                  : "rgba(0, 0, 0, 0.02)"
+            }
+          }}
         >
           <Descriptions.Item label="ID">{application.id}</Descriptions.Item>
           <Descriptions.Item label="Nomi">{application.title}</Descriptions.Item>
@@ -1094,6 +1110,18 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
             </Col>
           </Row>
 
+          <Form.Item name="exam_date" label="Imtihon sanasi">
+            <DatePicker
+              className="w-full"
+              format="YYYY-MM-DD"
+              disabledDate={(current) =>
+                current && applicationForm.getFieldValue("end_date")
+                  ? current.isBefore(applicationForm.getFieldValue("end_date"), "day")
+                  : false
+              }
+            />
+          </Form.Item>
+
           <Form.Item
             name="status"
             label="Holati"
@@ -1173,7 +1201,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                         >
                           {specialitiesList.map((s: SpecialityType) => (
                             <Select.Option key={s.id} value={s.id}>
-                              {s.code} - {s.name}
+                              {s.code} - {s.name}{s.is_foreign ? " (Chet tili)" : ""}
                             </Select.Option>
                           ))}
                         </Select>

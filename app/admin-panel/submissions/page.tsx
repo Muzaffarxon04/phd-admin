@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Button, Typography, Input, Select, message, Modal, Descriptions, Spin, Tag, Drawer, Form } from "antd";
+import { Table, Button, Typography, Input, Select, message, Modal, Descriptions, Spin, Tag, Drawer, Form, InputNumber, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   EyeOutlined,
@@ -13,10 +13,14 @@ import {
   CalendarOutlined,
   CreditCardOutlined,
   CheckOutlined,
-  CloseOutlined
+  CloseOutlined,
+  FileExcelOutlined,
+  FileWordOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
-import { useGet } from "@/lib/hooks";
+import { useGet, usePost, API_BASE_URL } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import { tokenStorage } from "@/lib/utils";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import Link from "next/link";
@@ -37,16 +41,40 @@ interface Submission {
   applicant_phone: string;
   status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+  avg_marks?: number | string | null;
   created_at: string;
   updated_at: string;
   submitted_at?: string | null;
+}
+
+interface ApplicationItem {
+  id: number;
+  title: string;
 }
 
 export default function AdminSubmissionsPage() {
   const { theme } = useThemeStore();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
-  const { data: submissionsData, isLoading, error } = useGet<{ data: { data: Submission[] } }>("/admin/application/submissions/");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Submission["status"] | "all">("all");
+  const [applicationFilter, setApplicationFilter] = useState<number | "all">("all");
+
+  const searchParams = new URLSearchParams();
+  if (statusFilter !== "all") {
+    searchParams.set("status", statusFilter);
+  }
+  if (applicationFilter !== "all") {
+    searchParams.set("application_id", String(applicationFilter));
+  }
+  if (searchTerm.trim()) {
+    searchParams.set("search", searchTerm.trim());
+  }
+  const submissionsUrl = `/admin/application/submissions/${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+  const { data: submissionsData, isLoading, error } = useGet<{ data: { data: Submission[] } }>(submissionsUrl);
+
+  const { data: applicationsData } = useGet<{ data: { data: ApplicationItem[] } }>("/admin/application/");
 
   // Handle different response formats
   const submissions = useMemo(() => {
@@ -60,8 +88,6 @@ export default function AdminSubmissionsPage() {
     return [];
   }, [submissionsData]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentCheckId, setPaymentCheckId] = useState<number | null>(null);
 
@@ -70,6 +96,10 @@ export default function AdminSubmissionsPage() {
   const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+
+  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [scoreModalSubmission, setScoreModalSubmission] = useState<Submission | null>(null);
+  const [scoreForm] = Form.useForm();
 
   const handleReviewSubmit = async (values: { notes: string }) => {
     if (!selectedSubmissionId || !reviewAction) return;
@@ -104,6 +134,34 @@ export default function AdminSubmissionsPage() {
     setReviewDrawerOpen(true);
   };
 
+  const openScoreModal = (record: Submission) => {
+    setScoreModalSubmission(record);
+    scoreForm.resetFields();
+    setIsScoreModalOpen(true);
+  };
+
+  const { mutate: submitScore, isPending: isSubmittingScore } = usePost("/admin/application/marks/", {
+    onSuccess: () => {
+      message.success("Baho muvaffaqiyatli qo'yildi");
+      setIsScoreModalOpen(false);
+      setScoreModalSubmission(null);
+      scoreForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: ["/admin/application/submissions/"] });
+    },
+    onError: (error) => {
+      message.error(error.message || "Baho qo'yishda xatolik");
+    },
+  });
+
+  const handleScoreSubmit = (values: { score: number; comments?: string }) => {
+    if (!scoreModalSubmission) return;
+    submitScore({
+      submission: scoreModalSubmission.id,
+      score: String(values.score),
+      comments: values.comments,
+    });
+  };
+
   const { data: paymeStatusData, isLoading: isPaymeStatusLoading } = useGet<{
     status: string;
     transaction_id?: string;
@@ -116,18 +174,59 @@ export default function AdminSubmissionsPage() {
     { enabled: !!paymentCheckId }
   );
 
-  const filteredSubmissions = useMemo(() => {
-    return submissions.filter(item => {
-      const matchesSearch =
-        item.submission_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.applicant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.application_title.toLowerCase().includes(searchTerm.toLowerCase());
+  const buildExportUrl = (type: "word" | "excel") => {
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    }
+    if (applicationFilter !== "all") {
+      params.set("application_id", String(applicationFilter));
+    }
+    const query = params.toString();
+    return `${API_BASE_URL}/admin/application/submissions/export/${type}/${query ? `?${query}` : ""}`;
+  };
 
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+  const getFilenameFromContentDisposition = (header: string | null): string | null => {
+    if (!header) return null;
+    const match = /filename\*?=(?:UTF-8'')?"?([^";\n]+)"?/i.exec(header);
+    return match ? decodeURIComponent(match[1].trim()) : null;
+  };
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [submissions, searchTerm, statusFilter]);
+  const handleExport = async (type: "word" | "excel") => {
+    try {
+      const url = buildExportUrl(type);
+      const headers: Record<string, string> = {};
+      if (typeof window !== "undefined") {
+        const token = tokenStorage.getAccessToken();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      }
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error("Faylni yuklab olib bo'lmadi");
+      const blob = await res.blob();
+      const cd = res.headers.get("Content-Disposition");
+      const selectedAppTitle =
+        applicationFilter !== "all"
+          ? applicationsData?.data?.data?.find((a) => a.id === applicationFilter)?.title
+          : undefined;
+      const safeTitle = selectedAppTitle
+        ? selectedAppTitle.replace(/[^a-zA-Z0-9_\-]+/g, "_").slice(0, 80)
+        : null;
+      const fallbackBase = safeTitle || "submissions";
+      const fallback = type === "word" ? `${fallbackBase}.docx` : `${fallbackBase}.xlsx`;
+      const filename = getFilenameFromContentDisposition(cd) || fallback;
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error(e);
+      message.error("Eksport faylini yuklashda xatolik yuz berdi");
+    }
+  };
 
   const columns: ColumnsType<Submission> = [
     {
@@ -180,7 +279,7 @@ export default function AdminSubmissionsPage() {
       ),
       dataIndex: "status",
       key: "status",
-      width: 250,
+      width: 260,
       render: (status: string) => {
         const label = getApplicationStatusLabel(status);
         return (
@@ -227,6 +326,24 @@ export default function AdminSubmissionsPage() {
         );
       },
       width: 130,
+    },
+    {
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <StarOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">O&apos;rtacha ball</span>
+        </div>
+      ),
+      dataIndex: "avg_marks",
+      key: "avg_marks",
+      width: 120,
+      render: (val: number | string | null | undefined) => (
+        <div className="py-2">
+          <span className={`font-semibold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+            {val != null && val !== "" ? Number(val) : "—"}
+          </span>
+        </div>
+      ),
     },
     {
       title: (
@@ -296,27 +413,22 @@ export default function AdminSubmissionsPage() {
               />
             </>
           )}
+          {record.status === "APPROVED" && (record.avg_marks == null || record.avg_marks === "") && (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
+                ? "bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white"
+                : "bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white"
+                }`}
+              icon={<StarOutlined style={{ fontSize: "18px" }} />}
+              title="Baho qo'yish"
+              onClick={() => openScoreModal(record)}
+            />
+          )}
         </div>
       ),
       width: 180,
     },
   ];
-
-  if (isLoading) {
-    return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{
-          fontSize: "24px",
-          fontWeight: 700,
-          marginBottom: 24,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Qabul Hujjatlari
-        </h1>
-        <TableSkeleton />
-      </div>
-    );
-  }
 
   if (error) {
     // Handle array error format from backend
@@ -356,24 +468,21 @@ export default function AdminSubmissionsPage() {
           <div className="text-gray-400 text-sm font-medium">Barcha talabgorlar arizalari ro&apos;yxati</div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-
-            <Input
-              placeholder="Qidirish..."
-              className="pl-9 pr-4 py-2 w-64 rounded-xl transition-all duration-300"
-              style={{
-                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                color: theme === "dark" ? "#ffffff" : "#484650",
-              }}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="flex items-start gap-3">
+          <Input
+            placeholder="Qidirish..."
+            className="pl-9 pr-4 py-2 w-64 h-[40px] rounded-xl transition-all duration-300"
+            style={{
+              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+              color: theme === "dark" ? "#ffffff" : "#484650",
+            }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
           <Select
-            className="w-48 h-[40px] premium-select"
+            className="w-48 premium-select"
             placeholder="Holat bo&apos;yicha"
             onChange={setStatusFilter}
             value={statusFilter}
@@ -384,8 +493,51 @@ export default function AdminSubmissionsPage() {
               { value: "UNDER_REVIEW", label: "Tekshirilmoqda" },
               { value: "APPROVED", label: "Tasdiqlangan" },
               { value: "REJECTED", label: "Rad etilgan" },
+              { value: "WITHDRAWN", label: "Qaytarilgan" },
             ]}
           />
+
+          <Select
+            allowClear
+            className="w-56 premium-select"
+            placeholder="Ariza (campaign) bo'yicha"
+            value={applicationFilter === "all" ? undefined : applicationFilter}
+            onChange={(value) => setApplicationFilter(value ?? "all")}
+            options={[
+              { value: "all", label: "Barcha arizalar" },
+              ...(applicationsData?.data?.data || []).map((app: ApplicationItem) => ({
+                value: app.id,
+                label: app.title,
+              })),
+            ]}
+          />
+
+          <div className="flex gap-2">
+            <Button
+              icon={<FileWordOutlined />}
+              className="h-[40px] px-3 rounded-xl border-0 shadow-sm font-medium flex items-center gap-2"
+              style={{
+                background: theme === "dark" ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.08)",
+                color: "#2563eb",
+              }}
+              disabled={applicationFilter === "all"}
+              onClick={() => handleExport("word")}
+            >
+              Word
+            </Button>
+            <Button
+              icon={<FileExcelOutlined />}
+              className="h-[40px] px-3 rounded-xl border-0 shadow-sm font-medium flex items-center gap-2"
+              style={{
+                background: theme === "dark" ? "rgba(34, 197, 94, 0.15)" : "rgba(34, 197, 94, 0.08)",
+                color: "#16a34a",
+              }}
+              disabled={applicationFilter === "all"}
+              onClick={() => handleExport("excel")}
+            >
+              Excel
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -399,8 +551,9 @@ export default function AdminSubmissionsPage() {
       >
         <Table
           columns={columns}
-          dataSource={filteredSubmissions}
+          dataSource={submissions}
           rowKey="id"
+          loading={isLoading}
           locale={{ emptyText: "Arizalar mavjud emas" }}
           className="custom-admin-table"
           pagination={{
@@ -497,6 +650,90 @@ export default function AdminSubmissionsPage() {
             </div>
           )}
         </div>
+      </Modal>
+
+      <Modal
+        title="Ariza Baholash"
+        open={isScoreModalOpen}
+        onCancel={() => {
+          setIsScoreModalOpen(false);
+          setScoreModalSubmission(null);
+          scoreForm.resetFields();
+        }}
+        footer={null}
+        className="premium-modal"
+      >
+        {scoreModalSubmission && (
+          <>
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-400 font-medium">Ariza raqami:</span>
+                <span className="font-bold text-[#7367f0]">#{scoreModalSubmission.submission_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 font-medium">Arizachi:</span>
+                <span className="font-bold">{scoreModalSubmission.applicant_name}</span>
+              </div>
+            </div>
+
+            <Form
+              form={scoreForm}
+              layout="vertical"
+              onFinish={handleScoreSubmit}
+            >
+              <Form.Item
+                name="score"
+                label="Imtihon bali"
+                rules={[{ required: true, message: "Ballni kiriting" }]}
+              >
+                <InputNumber
+                  className="!w-full flex items-center"
+                  placeholder="Masalan: 85"
+                  min={0}
+                  max={100}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="comments"
+                label="Eslatmalar"
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Imtihon natijalari bo'yicha qo'shimcha ma'lumotlar"
+                  className="rounded-xl"
+                />
+              </Form.Item>
+
+              <Form.Item className="mb-0 text-right">
+                <Space>
+                  <Button
+                    onClick={() => {
+                      setIsScoreModalOpen(false);
+                      setScoreModalSubmission(null);
+                      scoreForm.resetFields();
+                    }}
+                    className="rounded-xl"
+                  >
+                    Bekor qilish
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isSubmittingScore}
+                    className="rounded-xl h-[40px] px-6 border-0"
+                    style={{
+                      background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+                      boxShadow: "0 8px 25px -8px #7367f0",
+                    }}
+                  >
+                    Saqlash
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </>
+        )}
       </Modal>
 
       <Drawer

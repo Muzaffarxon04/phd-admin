@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import {
+  App,
   Button,
   Form,
   Input,
@@ -13,7 +14,6 @@ import {
   Upload,
   Breadcrumb,
   Typography,
-  message,
   Alert,
   Modal,
 } from "antd";
@@ -90,6 +90,18 @@ interface ApplicationResponse {
   error: string | null;
   status: number;
   data: Application;
+}
+
+// Possible shapes of create-submission response
+interface CreateSubmissionResponse {
+  id?: number;
+  submission_id?: number;
+  submission?: { id?: number };
+  data?: {
+    id?: number;
+    submission_id?: number;
+    submission?: { id?: number };
+  };
 }
 
 
@@ -326,6 +338,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const router = useRouter();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+  const { message, modal } = App.useApp();
   // const [, setSubmitting] = useState(false);
   const [completedFields] = useState<Set<number>>(new Set());
   const { theme } = useThemeStore();
@@ -344,13 +357,48 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   const specialities = application?.specialities || [];
 
-  const { mutate: createSubmission, isPending: isCreating } = useUpload<unknown>(
+  const { mutate: createSubmission, isPending: isCreating } = useUpload<CreateSubmissionResponse>(
     "/applicant/submissions/create/",
     {
-      onSuccess: () => {
-        message.success("Ariza muvaffaqiyatli yaratildi!");
+      onSuccess: (res) => {
         queryClient.invalidateQueries({ queryKey: ["/applicant/my-submissions/"] });
-        router.push("/my-submissions");
+
+        // Try to extract created submission id from different possible response shapes
+        const createdId =
+          res?.data?.id ??
+          res?.data?.submission_id ??
+          res?.data?.submission?.id ??
+          res?.submission_id ??
+          res?.submission?.id ??
+          res?.id ??
+          null;
+
+        const goToMySubmissions = () => {
+          if (createdId) {
+            router.push(`/my-submissions/${createdId}`);
+          } else {
+            router.push("/my-submissions");
+          }
+        };
+
+        modal.info({
+          title: "Ariza muvaffaqiyatli yaratildi",
+          icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+          content: (
+            <div className="space-y-3">
+              <p>
+                Arizangiz qoralama sifatida yaratildi, ammo ko&apos;rib chiqish uchun yuborilmadi.
+              </p>
+              <p>
+                Iltimos, &quot;Arizalarim&quot; bo&apos;limiga o&apos;tib xato kamchilik yo’qligiga ishoncha hosil qilib arizangizni yuboring
+              </p>
+              <Button type="primary" onClick={goToMySubmissions}>
+                Arizalarimga o&apos;tish
+              </Button>
+            </div>
+          ),
+          okButtonProps: { style: { display: "none" } },
+        });
       },
       onError: (error) => {
         message.error(error.message || "Ariza yaratishda xatolik");
@@ -458,6 +506,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleSubmit = async (values: Record<string, unknown>) => {
+ 
     if (!application) return;
 
     // Validate speciality selection if needed
@@ -804,7 +853,6 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             }}
           >
             <Title level={4} className="mb-8" style={{ color: "#7367f0" }}>Ariza to&apos;ldirish</Title>
-
             <Form
               form={form}
               layout="vertical"
@@ -833,7 +881,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     }
                     options={specialities.map((spec) => ({
                       value: spec.id,
-                      label: `${spec.code} - ${spec.name}`,
+                      label: `${spec.code} - ${spec.name}${spec.is_foreign ? " (Chet tili)" : ""}`,
                     }))}
                     dropdownStyle={{
                       background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
@@ -903,7 +951,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     boxShadow: "0 8px 25px -8px #7367f0"
                   }}
                 >
-                  Arizani topshirish
+                  Arizani yaratish
                 </Button>
               </div>
             </Form>

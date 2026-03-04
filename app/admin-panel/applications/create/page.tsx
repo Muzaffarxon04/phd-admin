@@ -1,10 +1,12 @@
 "use client";
 
-import { Form, Input, InputNumber, DatePicker, App, Button, Space, Card, Switch, Select } from "antd";
+import { useState } from "react";
+import { Form, Input, InputNumber, DatePicker, App, Button, Space, Card, Switch, Select, Upload } from "antd";
 import { useRouter } from "next/navigation";
-import { usePost, useGet } from "@/lib/hooks";
+import { useGet } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
+import { apiUpload } from "@/lib/hooks/useUniversalFetch";
 import type { Dayjs } from "dayjs";
 import Link from "next/link";
 import type { Speciality, Examiner } from "@/types";
@@ -16,7 +18,10 @@ interface ApplicationSpeciality {
     examiner_id: string | number;
     role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
   }>;
-  // max_applicants: number;
+  /** Izoh – har bir mutaxassislik uchun alohida */
+  comment?: string;
+  /** FormData da `file_${speciality_id}` kaliti bilan yuboriladi */
+  file?: File;
 }
 interface ApplicationField {
   label: string;
@@ -70,6 +75,7 @@ export default function CreateApplicationPage() {
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const queryClient = useQueryClient();
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch specialities and examiners
   const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
@@ -78,18 +84,7 @@ export default function CreateApplicationPage() {
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];
 
-  const { mutate: createApplication, isPending: isCreating } = usePost<{ data: Application }, CreateApplicationData>("/admin/application/create/", {
-    onSuccess: () => {
-      message.success("Ariza muvaffaqiyatli yaratildi!");
-      queryClient.invalidateQueries({ queryKey: ["/admin/application/"] });
-      router.push("/admin-panel/applications");
-    },
-    onError: (error) => {
-      message.error(error.message || "Ariza yaratishda xatolik");
-    },
-  });
-
-  const handleSubmit = (values: {
+  const handleSubmit = async (values: {
     title: string;
     description: string;
     start_date: Dayjs;
@@ -102,19 +97,45 @@ export default function CreateApplicationPage() {
     fields?: ApplicationField[];
     specialities?: ApplicationSpeciality[];
   }) => {
-    createApplication({
-      title: values.title,
-      description: values.description,
-      start_date: values.start_date.format("YYYY-MM-DDTHH:mm:ss[Z]"),
-      end_date: values.end_date.format("YYYY-MM-DDTHH:mm:ss[Z]"),
-      status: values.status || "DRAFT",
-      requires_oneid_verification: values.requires_oneid_verification || false,
-      ...(values.exam_date && { exam_date: values.exam_date.format("YYYY-MM-DD") }),
-      ...(values.application_fee && { application_fee: values.application_fee.toString() }),
-      ...(values.instructions && { instructions: values.instructions }),
-      ...(values.fields && values.fields.length > 0 && { fields: values.fields }),
-      ...(values.specialities && values.specialities.length > 0 && { specialities: values.specialities }),
-    });
+    setIsCreating(true);
+    try {
+      const formData = new FormData();
+      formData.set("title", values.title);
+      formData.set("description", values.description);
+      formData.set("start_date", values.start_date.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      formData.set("end_date", values.end_date.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      formData.set("status", values.status || "DRAFT");
+      formData.set("requires_oneid_verification", String(values.requires_oneid_verification ?? false));
+      if (values.exam_date) formData.set("exam_date", values.exam_date.format("YYYY-MM-DD"));
+      if (values.application_fee != null) formData.set("application_fee", values.application_fee.toString());
+      if (values.instructions) formData.set("instructions", values.instructions);
+      if (values.fields && values.fields.length > 0) {
+        formData.set("fields", JSON.stringify(values.fields));
+      }
+      const specialitiesPayload = (values.specialities || []).map(({ speciality_id, examiners, comment }) => ({
+        speciality_id,
+        examiners,
+        ...(comment && { comment }),
+      }));
+      if (specialitiesPayload.length > 0) {
+        formData.set("specialities", JSON.stringify(specialitiesPayload));
+      }
+      (values.specialities || []).forEach((item) => {
+        const sid = item.speciality_id;
+        const file = item.file;
+        if (sid != null && file instanceof File) {
+          formData.set(`file_${sid}`, file);
+        }
+      });
+      await apiUpload("/admin/application/create/", formData);
+      message.success("Ariza muvaffaqiyatli yaratildi!");
+      queryClient.invalidateQueries({ queryKey: ["/admin/application/"] });
+      router.push("/admin-panel/applications");
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "Ariza yaratishda xatolik");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -183,7 +204,15 @@ export default function CreateApplicationPage() {
             name="exam_date"
             label="Imtihon sanasi"
           >
-            <DatePicker className="w-full" format="YYYY-MM-DD" />
+            <DatePicker
+              className="w-full"
+              format="YYYY-MM-DD"
+              disabledDate={(current) =>
+                current && form.getFieldValue("end_date")
+                  ? current.isBefore(form.getFieldValue("end_date"), "day")
+                  : false
+              }
+            />
           </Form.Item>
 
         
@@ -302,7 +331,7 @@ export default function CreateApplicationPage() {
                         >
                           {specialitiesList.map((s: Speciality) => (
                             <Select.Option key={s.id} value={s.id}>
-                              {s.code} - {s.name}
+                              {s.code} - {s.name}{s.is_foreign ? " (Chet tili)" : ""}
                             </Select.Option>
                           ))}
                         </Select>
@@ -371,8 +400,35 @@ export default function CreateApplicationPage() {
                           )}
                         </Form.List>
                       </Form.Item>
-                     
                     </div>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "file"]}
+                      label="Fayl (ixtiyoriy)"
+                      className="mt-4"
+                      getValueFromEvent={(e) => e?.fileList?.[0]?.originFileObj ?? undefined}
+                      getValueProps={(value: File | undefined) => ({
+                        fileList: value
+                          ? [{ uid: "-1", name: value.name, status: "done" as const, originFileObj: value }]
+                          : [],
+                      })}
+                    >
+                      <Upload
+                        maxCount={1}
+                        beforeUpload={() => false}
+                        accept="*"
+                      >
+                        <Button icon={<UploadOutlined />}>Fayl tanlash</Button>
+                      </Upload>
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "comment"]}
+                      label="Izoh (ushbu mutaxassislik uchun)"
+                      className="mt-4"
+                    >
+                      <Input.TextArea rows={2} placeholder="Izoh (ixtiyoriy)" />
+                    </Form.Item>
                   </Card>
                 ))}
               </>

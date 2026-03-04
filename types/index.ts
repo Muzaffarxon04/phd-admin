@@ -60,6 +60,7 @@ export interface Speciality {
   speciality:string|number;
   field_of_science: string; // Fan sohasi
   is_active: boolean;
+  is_foreign?: boolean;
   created_at: string;
   updated_at: string;
   speciality_code?: string;

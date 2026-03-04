@@ -138,7 +138,7 @@ export default function GuvohnomaPage() {
                             >
                                 {selectedApplications.map((spec) => (
                                     <Option key={spec.id} value={spec.speciality?.toString()}>
-                                        {spec.speciality_code || spec.code} - { spec.speciality_name || spec.name}
+                                        {spec.speciality_code || spec.code} - {spec.speciality_name || spec.name}{spec.is_foreign ? " (Chet tili)" : ""}
                                     </Option>
                                 ))}
                             </Select>

@@ -225,7 +225,7 @@ export default function ExaminersPage() {
       dataIndex: "title",
       key: "title",
       render: (title: string) => (
-        <span className="px-2 py-1  rounded-lg bg-purple-500/10 text-purple-500 text-[10px] font-bold uppercase border border-purple-500/20">
+        <span className="inline-block px-2 py-px rounded-lg bg-purple-500/10 text-purple-500 text-[10px]! font-bold uppercase border border-purple-500/20 whitespace-normal wrap-break-word max-w-full">
           {title}
         </span>
       ),
@@ -241,7 +241,7 @@ export default function ExaminersPage() {
       dataIndex: "department",
       key: "department",
       render: (department: string) => (
-        <div className="text-xs font-medium" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
+        <div className="text-xs font-medium whitespace-normal wrap-break-word" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
           {department}
         </div>
       ),
@@ -517,7 +517,7 @@ export default function ExaminersPage() {
               >
                 {specialitiesList?.map((speciality) => (
                   <Option key={speciality.id} value={speciality.id}>
-                    {speciality.code} - {speciality.name}
+                    {speciality.code} - {speciality.name}{speciality.is_foreign ? " (Chet tili)" : ""}
                   </Option>
                 ))}
               </Select>

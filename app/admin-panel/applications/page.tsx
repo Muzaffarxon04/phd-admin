@@ -226,6 +226,7 @@ export default function AdminApplicationsPage() {
       ),
       dataIndex: "status",
       key: "status",
+      width: 170,
       render: (status: string) => {
         const labels: Record<string, string> = {
           DRAFT: "Qoralama",
@@ -237,7 +238,7 @@ export default function AdminApplicationsPage() {
         return (
           <div className="py-2">
             <span
-              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "PUBLISHED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+              className={`px-3 py-1 rounded-full text-[10px] font-bold break-words-nowrap uppercase tracking-wider border ${status === "PUBLISHED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
                 status === "CLOSED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
                   "bg-gray-500/10 text-gray-500 border-gray-500/20"
                 }`}
@@ -472,7 +473,15 @@ export default function AdminApplicationsPage() {
           </Row>
 
           <Form.Item name="exam_date" label="Imtihon sanasi">
-            <DatePicker className="w-full" format="YYYY-MM-DD" />
+            <DatePicker
+              className="w-full"
+              format="YYYY-MM-DD"
+              disabledDate={(current) =>
+                current && editForm.getFieldValue("end_date")
+                  ? current.isBefore(editForm.getFieldValue("end_date"), "day")
+                  : false
+              }
+            />
           </Form.Item>
 
           <Form.Item

@@ -42,7 +42,7 @@ export default function AdminPanelPage() {
             Hisobot yuklash
           </Button> */}
         </div>
-      </div>
+                </div>
 
       {/* Key Metrics Grid */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -108,7 +108,7 @@ export default function AdminPanelPage() {
                 {stat.icon}
               </div>
             </div>
-          </div>
+              </div>
         ))}
       </div> */}
 
@@ -128,23 +128,23 @@ export default function AdminPanelPage() {
               Arizalar holati
             </Title>
             <div className="text-gray-400 text-sm">Jami: {totalSubmissions}</div>
-          </div>
+              </div>
           <div className="relative flex flex-col items-center">
             <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
                   innerRadius={65}
                   outerRadius={95}
                   paddingAngle={8}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                  ))}
-                </Pie>
+                    ))}
+                  </Pie>
                 <Tooltip
                   contentStyle={{
                     borderRadius: '12px',
@@ -153,8 +153,8 @@ export default function AdminPanelPage() {
                     background: theme === "dark" ? "rgb(30, 38, 60)" : "#ffffff"
                   }}
                 />
-              </PieChart>
-            </ResponsiveContainer>
+                </PieChart>
+              </ResponsiveContainer>
             <div className="absolute top-[130px] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
               <div className="text-3xl font-bold" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
                 {calculatePercentage(approvedCount, totalSubmissions)}%
@@ -190,25 +190,25 @@ export default function AdminPanelPage() {
             <Title level={5} className="!m-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
               Oylik faollik
             </Title>
-            <Select
+                <Select
               defaultValue="6"
               size="small"
               className="w-32 premium-select"
-              options={[
+                  options={[
                 { value: "6", label: "Oxirgi 6 oy" },
                 { value: "12", label: "Oxirgi 12 oy" },
-              ]}
+                  ]}
               variant="borderless"
-            />
-          </div>
+                />
+              </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8b8b8b' }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#8b8b8b' }} />
-              <Tooltip
+                <Tooltip 
                 cursor={{ fill: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }}
-                contentStyle={{
+                  contentStyle={{
                   borderRadius: '12px',
                   border: 'none',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -217,20 +217,20 @@ export default function AdminPanelPage() {
               />
               <Bar dataKey="arizalar" fill="#7367f0" radius={[4, 4, 0, 0]} barSize={20} />
               <Bar dataKey="qabul" fill="#52c41a" radius={[4, 4, 0, 0]} barSize={20} />
-            </BarChart>
-          </ResponsiveContainer>
+              </BarChart>
+            </ResponsiveContainer>
           <div className="flex gap-6 mt-4 justify-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-1.5 rounded-full bg-[#7367f0]" />
               <span className="text-xs font-medium text-gray-400">Jami arizalar</span>
-            </div>
+                      </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-1.5 rounded-full bg-[#52c41a]" />
               <span className="text-xs font-medium text-gray-400">Qabul qilingan</span>
             </div>
-          </div>
+                </div>
         </div> */}
-      </div>
+              </div>
 
       {/* Recent Submissions Bottom Section */}
       {/* <div
@@ -251,8 +251,8 @@ export default function AdminPanelPage() {
                 Barchasini ko&apos;rish
               </Button>
             </Link>
-          </div>
-        </div>
+              </div>
+            </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -289,7 +289,7 @@ export default function AdminPanelPage() {
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-400">
                         {submission.created_at ? formatDate(submission.created_at) : "-"}
-                      </div>
+                    </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link href={`/admin-panel/submissions/${submission.id}`}>
@@ -305,13 +305,13 @@ export default function AdminPanelPage() {
               ) : (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-gray-400 font-medium">
-                    Hozircha arizalar mavjud emas
+                  Hozircha arizalar mavjud emas
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
+            </div>
       </div> */}
     </div>
   );

@@ -8,10 +8,12 @@ export interface SpecialityCreate {
   description?: string;
   field_of_science: string;
   is_active?: boolean;
+  is_foreign?: boolean;
 }
 
 export interface SpecialityUpdate extends Partial<SpecialityCreate> {
   is_active?: boolean;
+  is_foreign?: boolean;
 }
 
 export interface SpecialityListResponse {
@@ -28,6 +30,7 @@ export interface SpecialityDetail {
   description?: string;
   field_of_science: string;
   is_active: boolean;
+  is_foreign?: boolean;
   created_at: string;
   updated_at: string;
   applications_count: string;

@@ -33,6 +33,7 @@ import Image from "next/image";
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpId, setOtpId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -91,12 +92,17 @@ export default function RegisterPage() {
   const { mutate: resendOTP, isPending: isResending } = usePost(
     "/auth/otp/resend/",
     {
-      onSuccess: (response: { data?: { expires_in_minutes: string } }) => {
+      onSuccess: (response: { data?: { expires_in_minutes?: string; otp_id?: string }; otp_id?: string }) => {
         message.success("OTP kod yuborildi");
+        const id = response.data?.otp_id ?? response.otp_id;
+        if (id) setOtpId(id);
         if (response.data?.expires_in_minutes) {
           const minutes = extractMinutes(response.data.expires_in_minutes);
           startTimer(minutes);
         }
+      },
+      onError: (error) => {
+        message.error(error.message || "OTP yuborishda xatolik yuz berdi");
       },
     }
   );
@@ -104,13 +110,18 @@ export default function RegisterPage() {
   const { mutate: register, isPending: isRegistering } = usePost(
     "/auth/register/",
     {
-      onSuccess: (response: { data?: { expires_in_minutes: string } }) => {
+      onSuccess: (response: { data?: { expires_in_minutes?: string; otp_id?: string }; otp_id?: string }) => {
         setCurrentStep(1);
         message.success("OTP kod yuborildi");
+        const id = response.data?.otp_id ?? response.otp_id;
+        if (id) setOtpId(id);
         if (response.data?.expires_in_minutes) {
           const minutes = extractMinutes(response.data.expires_in_minutes);
           startTimer(minutes);
         }
+      },
+      onError: (error) => {
+        message.error(error.message || "Ro‘yxatdan o‘tishda xatolik yuz berdi");
       },
     }
   );
@@ -121,6 +132,9 @@ export default function RegisterPage() {
       onSuccess: () => {
         setCurrentStep(2);
         message.success("OTP tasdiqlandi");
+      },
+      onError: (error) => {
+        message.error(error.message || "OTP tasdiqlashda xatolik yuz berdi");
       },
     }
   );
@@ -134,6 +148,9 @@ export default function RegisterPage() {
         queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
         message.success("Ro‘yxatdan o‘tildi");
         router.push("/dashboard");
+      },
+      onError: (error) => {
+        message.error(error.message || "Ro‘yxatdan o‘tishni yakunlashda xatolik yuz berdi");
       },
     }
   );
@@ -260,6 +277,7 @@ export default function RegisterPage() {
                   phone_number: phoneNumber,
                   otp_code: v.otp_code,
                   purpose: "REGISTRATION",
+                  ...(otpId && { otp_id: otpId }),
                 })
               }
             >

@@ -44,6 +44,7 @@ import Image from "next/image";
 export default function ForgotPasswordPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpId, setOtpId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState("");
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
@@ -54,9 +55,14 @@ export default function ForgotPasswordPage() {
   const { mutate: requestReset, isPending: isRequesting } = usePost(
     "/auth/password/reset/",
     {
-      onSuccess: () => {
+      onSuccess: (response: { data?: { otp_id?: string }; otp_id?: string }) => {
         setCurrentStep(1);
         message.success("OTP kod yuborildi");
+        const id = response.data?.otp_id ?? response.otp_id;
+        if (id) setOtpId(id);
+      },
+      onError: (error) => {
+        message.error(error.message || "Parolni tiklash so'rovini yuborishda xatolik yuz berdi");
       },
     }
   );
@@ -68,6 +74,9 @@ export default function ForgotPasswordPage() {
         setCurrentStep(2);
         message.success("OTP tasdiqlandi");
       },
+      onError: (error) => {
+        message.error(error.message || "OTP tasdiqlashda xatolik yuz berdi");
+      },
     }
   );
 
@@ -77,6 +86,9 @@ export default function ForgotPasswordPage() {
       onSuccess: () => {
         message.success("Parol muvaffaqiyatli o‘zgartirildi");
         router.push("/login");
+      },
+      onError: (error) => {
+        message.error(error.message || "Parolni o'zgartirishda xatolik yuz berdi");
       },
     }
   );
@@ -205,6 +217,7 @@ export default function ForgotPasswordPage() {
                 verifyOTP({
                   phone_number: phoneNumber,
                   otp_code: v.otp_code,
+                  ...(otpId && { otp_id: otpId }),
                 });
               }}
             >
@@ -244,6 +257,7 @@ export default function ForgotPasswordPage() {
                   otp_code: otpCode,
                   new_password: v.new_password,
                   confirm_password: v.confirm_password,
+                  ...(otpId && { otp_id: otpId }),
                 })
               }
             >

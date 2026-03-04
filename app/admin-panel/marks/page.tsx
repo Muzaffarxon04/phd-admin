@@ -35,7 +35,7 @@ import {
 } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { marksApi, ApplicantMark, ApplicantMarkCreate, ApplicantMarkUpdate } from "@/lib/api/marks";
-import { adminApi } from "@/lib/api/admin";
+import { adminApi, type ApplicationSubmissionListResponse } from "@/lib/api/admin";
 
 const { Option } = Select;
 
@@ -62,11 +62,18 @@ export default function MarksPage() {
     queryFn: () => marksApi.getMarksStatistics(),
   });
 
-  // Fetch Submissions for Select
+  // Fetch approved submissions for Select
   const { data: submissionsData } = useQuery({
-    queryKey: ["submissions-list"],
-    queryFn: () => adminApi.getSubmissions(1, 100), // Fetch 100 for now, improvement: use search/pagination in Select
+    queryKey: ["approved-submissions-list"],
+    queryFn: () => adminApi.getApprovedSubmissions(),
   });
+
+  type SubItem = { id: number | string; status?: string; submission_number?: string; applicant_name?: string; applicant?: { full_name?: string; pinfl?: string } };
+  const submissionsList: SubItem[] = Array.isArray((submissionsData as unknown as { data?: { data?: SubItem[] } })?.data?.data)
+    ? (submissionsData as unknown as { data: { data: SubItem[] } }).data.data
+    : Array.isArray((submissionsData as ApplicationSubmissionListResponse)?.results)
+      ? ((submissionsData as ApplicationSubmissionListResponse).results as unknown as SubItem[])
+      : [];
 
   // Mutations
   const createMutation = useMutation({
@@ -303,14 +310,7 @@ export default function MarksPage() {
             }`}>
             {isActive ? "Faol" : "Bekor"}
           </span>
-          <Button
-            className={`w-6 h-6 rounded-lg flex items-center justify-center border-0 bg-transparent transition-all duration-300 ${isActive ? "text-red-400 hover:bg-red-500/10 hover:text-red-500" : "text-green-400 hover:bg-green-500/10 hover:text-green-500"
-              }`}
-            size="small"
-            loading={toggleStatusMutation.isPending}
-            onClick={() => toggleMarkStatus(record)}
-            icon={isActive ? <DeleteOutlined style={{ fontSize: "12px" }} /> : <CheckCircleOutlined style={{ fontSize: "12px" }} />}
-          />
+     
         </div>
       ),
       width: 150,
@@ -372,23 +372,6 @@ export default function MarksPage() {
             }}
           >
             Statistika
-          </Button>
-
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingRecord(null);
-              form.resetFields();
-              setIsModalOpen(true);
-            }}
-            className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-            style={{
-              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
-              boxShadow: "0 8px 25px -8px #7367f0",
-            }}
-          >
-            Baho qoyish
           </Button>
         </div>
       </div>
@@ -508,8 +491,9 @@ export default function MarksPage() {
             total: marksData?.count || 0,
             onChange: (p, ps) => {
               setPage(p);
-              setPageSize(ps);
+              setPageSize(ps ?? pageSize);
             },
+            showSizeChanger: false,
             showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} dan ${total} ta`,
             className: "px-6 py-4",
           }}
@@ -607,17 +591,18 @@ export default function MarksPage() {
             <Select
               placeholder="Arizani tanlang"
               showSearch
+              optionFilterProp="label"
               filterOption={(input, option) =>
-                (option?.children as unknown as string).toLowerCase().includes(input.toLowerCase())
+                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
               }
               disabled={!!editingRecord}
-            >
-              {submissionsData?.results?.map((sub) => (
-                <Option key={sub.id} value={parseInt(sub.id)}>
-                  {sub.applicant.full_name} ({sub.applicant.pinfl})
-                </Option>
-              ))}
-            </Select>
+              options={submissionsList.map((sub) => {
+                const label = sub.applicant?.full_name != null
+                  ? `${sub.applicant.full_name}${sub.applicant.pinfl ? ` (${sub.applicant.pinfl})` : ""}`
+                  : `${sub.applicant_name ?? "Ariza"} #${sub.submission_number ?? sub.id}`;
+                return { value: Number(sub.id), label };
+              })}
+            />
           </Form.Item>
 
           <Form.Item

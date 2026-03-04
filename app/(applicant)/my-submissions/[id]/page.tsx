@@ -213,14 +213,14 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   const { mutate: updateSubmission, isPending: isUpdating } = useUploadPatch(
     `/applicant/submissions/${id}/update/`,
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
         message.success("Ariza muvaffaqiyatli yangilandi!");
         setIsEditModalOpen(false);
-      },
-      onError: (error) => {
-        message.error(error.message || "Yangilashda xatolik");
-      },
+    },
+    onError: (error) => {
+      message.error(error.message || "Yangilashda xatolik");
+    },
     }
   );
 
@@ -228,10 +228,10 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     `/pdf/submission-marks/${submissionId}/generate-guvohnoma/`,
     `guvohnoma-${submission?.submission_number || "certificate"}.pdf`,
     {
-      onSuccess: () => {
+    onSuccess: () => {
         message.success("Guvohnoma yuklanmoqda...");
-      },
-      onError: (error) => {
+    },
+    onError: (error) => {
         message.error(error.message || "Guvohnomani yuklashda xatolik");
       },
     }
@@ -570,14 +570,14 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <Link href="/my-submissions">
+          <Link href="/my-submissions">
                 <Button
                   type="text"
                   icon={<ArrowLeftOutlined />}
                   className="hover:bg-gray-100 dark:hover:bg-gray-700"
                   style={{ color: theme === "dark" ? "#e5e7eb" : "#374151" }}
                 />
-              </Link>
+          </Link>
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-2xl font-semibold m-0" style={{ color: theme === "dark" ? "#f9fafb" : "#111827" }}>
@@ -587,9 +587,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     className="m-0 border-0 px-2 py-0.5 rounded text-xs font-medium"
                     color={submission.status === 'APPROVED' ? 'success' : submission.status === 'REJECTED' ? 'error' : 'processing'}
                   >
-                    {getApplicationStatusLabel(submission.status)}
-                  </Tag>
-                </div>
+                {getApplicationStatusLabel(submission.status)}
+              </Tag>
+            </div>
                 <p className="text-sm m-0" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
                   {submission?.application?.title}
                 </p>
@@ -611,8 +611,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               icon: step.icon,
             }))}
           />
-        </Card>
-
+          </Card>
+          
         {isLoading ? (
           <div className="flex justify-center p-12">
             <Spin />
@@ -625,11 +625,11 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 <Card className="h-full border-0" style={cardStyle}>
                   <div className="flex items-center justify-between mb-6">
                     <Title level={5} style={titleStyle}>Ariza holati</Title>
-                  </div>
+            </div>
 
                   <div className="space-y-4">
-
-                    {submission.submitted_at && (
+          
+          {submission.submitted_at && (
                       <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
                         <Text style={textStyle}>Topshirilgan</Text>
                         <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDate(submission.submitted_at)}</Text>
@@ -647,8 +647,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                         <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{submission.reviewed_by_name}</Text>
                       </div>
                     )}
-                  </div>
-                </Card>
+              </div>
+            </Card>
               </Col>
 
               <Col xs={24} md={12}>
@@ -658,7 +658,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     <Tag bordered={false} color={submission.payment_status === "PAID" ? "success" : "warning"}>
                       {submission.payment_status === "PAID" ? "TO'LANGAN" : submission.payment_status}
                     </Tag>
-                  </div>
+        </div>
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
@@ -675,7 +675,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             </Row>
 
             {/* Review Notes */}
-            {submission.review_notes && (
+        {submission.review_notes && (
               <Alert
                 message="Komissiya xulosasi"
                 description={submission.review_notes}
@@ -695,7 +695,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 <Card className="border-0 mb-6" style={cardStyle} title={
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: '16px', ...titleStyle }}>Javoblar</span>
-                    {submission.status !== "APPROVED" && (
+                    {(submission.status !== "APPROVED" && submission.status !== "REJECTED") && (
                       <Button
                         size="large"
                         type="primary"
@@ -736,11 +736,11 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                               )
                             )}
                           </div>
-                        </div>
+                </div>
                       </List.Item>
                     )}
                   />
-                </Card>
+              </Card>
               </Col>
 
               {/* Sidebar: Documents & Actions */}
@@ -767,8 +767,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                                 {doc.document_type}
                               </Text>
                               <span className="text-xs" style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}>{formatDate(doc.uploaded_at)}</span>
-                            </div>
-                          </div>
+          </div>
+        </div>
                           <DownloadOutlined style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }} />
                         </div>
                       )}
@@ -819,17 +819,26 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
                     {submission.status === "REJECTED" && (
                       <div className="flex flex-col gap-3">
-                        <Text type="danger" className="text-center">Arizangiz rad etildi</Text>
+                        <Text type="danger" className="text-center">
+                          Arizangiz rad etildi
+                        </Text>
+                      </div>
+                    )}
+
+                    {submission.status === "WITHDRAWN" && (
+                      <div className="flex flex-col gap-3">
+                        <Text type="warning" className="text-center">
+                          Arizangiz qaytarildi, xatoliklarini to&apos;g&apos;rilab qayta yuboring
+                        </Text>
                         <Button
                           type="primary"
-                          danger
                           size="large"
                           block
                           className="h-[40px] rounded-lg shadow-none"
                           onClick={() => submitSubmission({})}
                           loading={isSubmitting}
                         >
-                          Qayta topshirish
+                          Qayta yuborish
                         </Button>
                       </div>
                     )}
@@ -968,7 +977,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                                 <span className="flex-1 truncate text-sm" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
                                   {file.name || "Fayl yuklangan"}
                                 </span>
-                              </div>
+                </div>
                             );
                           }}
                         >
@@ -1004,14 +1013,14 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
               <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/80 dark:bg-gray-900/80 rounded z-10">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7367f0] mb-4" />
                 <Text style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>Fayl yuklanmoqda...</Text>
-              </div>
+        </div>
             )}
             {renderFilePreview(
               previewFileUrl.startsWith("blob:") ? previewFileUrl : getProxyUrl(previewFileUrl),
               previewFileUrl,
               previewFileName
-            )}
-          </div>
+          )}
+        </div>
         )}
       </Modal>
     </div>

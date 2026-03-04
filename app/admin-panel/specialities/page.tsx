@@ -17,6 +17,7 @@ import {
   Space,
   List,
   Avatar,
+  Switch,
 } from "antd";
 import {
   PlusOutlined,
@@ -34,29 +35,41 @@ import {
   CalendarOutlined,
 } from "@ant-design/icons";
 import { formatDate } from "@/lib/utils";
-import { useGet, usePost, usePut, useDelete } from "@/lib/hooks";
+import { useGet, usePost, useDelete } from "@/lib/hooks";
 import type { Speciality, SpecialityStatistics } from "@/types";
 
 const { Title } = Typography;
 
+interface SpecialitiesListResponse {
+  next: string | null;
+  previous: string | null;
+  total_elements: number;
+  page_size: number;
+  data: {
+    message?: string;
+    error?: string | null;
+    status?: number;
+    data: Speciality[];
+  };
+  from?: number;
+  to?: number;
+}
+
 export default function SpecialitiesPage() {
   const { theme } = useThemeStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSpeciality, setEditingSpeciality] = useState<Speciality | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [statsSpecialityId, setStatsSpecialityId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
+  const specialitiesUrl = `/speciality/list/?page=${currentPage}&page_size=${pageSize}${searchTerm.trim() ? `&search=${encodeURIComponent(searchTerm.trim())}` : ""}`;
+
   // Fetch specialities
-  const { data: specialitiesData, refetch: refetchSpecialities, isLoading } = useGet<{
-    count: number;
-    next: string | null;
-    previous: string | null;
-    data: {
-      data: Speciality[];
-    };
-  }>("/speciality/list/");
+  const { data: specialitiesData, refetch: refetchSpecialities, isLoading } = useGet<SpecialitiesListResponse>(specialitiesUrl);
 
   // Fetch speciality statistics
   const { data: specialityStats, isLoading: isStatsLoading } = useGet<{ data: SpecialityStatistics }>(
@@ -65,6 +78,7 @@ export default function SpecialitiesPage() {
   );
 
   const specialities = specialitiesData?.data?.data || [];
+  const totalElements = specialitiesData?.total_elements ?? 0;
 
   // Mutations
   const createSpeciality = usePost("/speciality/create/", {
@@ -87,7 +101,7 @@ export default function SpecialitiesPage() {
     },
   });
 
-  const updateSpeciality = usePut(`/speciality/${editingSpeciality?.id}/update/`, {
+  const updateSpeciality = usePost(`/speciality/${editingSpeciality?.id}/update/`, {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli yangilandi");
       setIsModalOpen(false);
@@ -140,6 +154,7 @@ export default function SpecialitiesPage() {
       description: speciality.description,
       field_of_science: speciality.field_of_science,
       is_active: speciality.is_active,
+      is_foreign: speciality.is_foreign ?? false,
     });
     setIsModalOpen(true);
   };
@@ -167,9 +182,14 @@ export default function SpecialitiesPage() {
       ),
       dataIndex: "name",
       key: "name",
-      render: (name: string) => (
-        <div className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
-          {name}
+      render: (name: string, record: Speciality) => (
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+            {name}
+          </span>
+          {record.is_foreign && (
+            <Tag color="blue">Chet tili</Tag>
+          )}
         </div>
       ),
       width: 300,
@@ -336,25 +356,32 @@ export default function SpecialitiesPage() {
                 color: theme === "dark" ? "#ffffff" : "#484650",
               }}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
 
         <Table
           columns={columns}
-          dataSource={specialities.filter(speciality =>
-            speciality.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            speciality.code.toLowerCase().includes(searchTerm.toLowerCase())
-          )}
+          dataSource={specialities}
           loading={isLoading}
           rowKey="id"
           className="custom-admin-table"
           pagination={{
-            total: specialitiesData?.count || 0,
-            pageSize: 20,
+            current: currentPage,
+            pageSize,
+            total: totalElements,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
             showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
             className: "px-6 py-4",
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size ?? 20);
+            },
           }}
         />
         <style jsx global>{`
@@ -434,7 +461,7 @@ export default function SpecialitiesPage() {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{ is_active: true }}
+          initialValues={{ is_active: true, is_foreign: false }}
         >
           <Form.Item
             name="code"
@@ -459,6 +486,10 @@ export default function SpecialitiesPage() {
               placeholder="Mutaxassislik haqida qisqacha ma'lumot"
               rows={3}
             />
+          </Form.Item>
+
+          <Form.Item name="is_foreign" label="Chet tili" valuePropName="checked">
+            <Switch checkedChildren="Ha" unCheckedChildren="Yo'q" />
           </Form.Item>
 
           <div className="flex justify-end gap-3 mt-6">

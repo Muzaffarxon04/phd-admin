@@ -79,8 +79,10 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  const isAuthEndpoint = endpoint.startsWith("/auth/");
   const config: RequestInit = {
     ...options,
+    cache: isAuthEndpoint ? "no-store" : options.cache,
     headers: {
       "Content-Type": "application/json",
       ...options.headers,

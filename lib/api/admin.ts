@@ -241,6 +241,14 @@ export const adminApi = {
   },
 
   /**
+   * GET /admin/application/approved/submissions/
+   * Get list of approved submissions only
+   */
+  getApprovedSubmissions: async (): Promise<ApplicationSubmissionListResponse | { data: { data: ReviewSubmission[] } }> => {
+    return apiRequest(`/admin/application/approved/submissions/`, { method: "GET" });
+  },
+
+  /**
    * GET /admin/application/submissions/
    * Get list of all submissions
    */
