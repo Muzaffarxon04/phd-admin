@@ -95,7 +95,7 @@ export default function ApplicantSidebar() {
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key === "/feedback") {
-      window.open("https://t.me/ilmiy_darajali_kadrlar", "_blank");
+      window.open("https://t.me/ScientificDepartment_TMA", "_blank");
       return;
     }
     if (key !== "documents") {
