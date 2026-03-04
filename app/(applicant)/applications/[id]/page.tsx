@@ -196,11 +196,11 @@ const renderFieldInput = (field: ApplicationField, theme: string, handlers?: Fil
       return (
         <Radio.Group className="w-full">
           <div className="flex flex-col gap-2">
-            {options.map((opt, index) => (
+          {options.map((opt, index) => (
               <Radio key={index} value={opt} className="premium-radio">
                 <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.8)" : "inherit" }}>{opt}</span>
-              </Radio>
-            ))}
+            </Radio>
+          ))}
           </div>
         </Radio.Group>
       );
@@ -209,11 +209,11 @@ const renderFieldInput = (field: ApplicationField, theme: string, handlers?: Fil
       return (
         <Checkbox.Group className="w-full">
           <div className="flex flex-col gap-2">
-            {options.map((opt, index) => (
+          {options.map((opt, index) => (
               <Checkbox key={index} value={opt} className="premium-checkbox">
                 <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.8)" : "inherit" }}>{opt}</span>
-              </Checkbox>
-            ))}
+            </Checkbox>
+          ))}
           </div>
         </Checkbox.Group>
       );
@@ -377,7 +377,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           if (createdId) {
             router.push(`/my-submissions/${createdId}`);
           } else {
-            router.push("/my-submissions");
+        router.push("/my-submissions");
           }
         };
 
@@ -529,7 +529,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
     application.fields.forEach((field) => {
       const value = values[`field_${field.id}`];
-
+      
       if (field.field_type === "FILE") {
         // Handle file upload
 
@@ -538,13 +538,13 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         }
 
         // Push empty answer for file field as per requirement
-        answers.push({
-          field_id: field.id,
-          answer_text: "",
+          answers.push({
+            field_id: field.id,
+            answer_text: "",
           answer_number: null,
           answer_date: null,
           answer_json: {},
-        });
+          });
         return;
       }
 
@@ -668,7 +668,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             { title: <span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{application.title}</span> },
           ]}
         />
-      </div>
+        </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* {!canApply && (
@@ -689,8 +689,8 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   {application?.can_apply?.reason}
                 </Text>
               </div>
-            </div>
-           
+          </div>
+          
           </div>
         )} */}
         <Title level={3} className="!text-[24px]  border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
@@ -745,9 +745,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     {parseMoneyAmount(application.application_fee)}
                   </div>
                 </div>
-              </div>
-
-              {application.exam_date && (
+          </div>
+          
+          {application.exam_date && (
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-500/10 text-orange-500">
                     <CalendarOutlined style={{ fontSize: "20px" }} />
@@ -892,17 +892,17 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-                {application.fields
-                  .sort((a, b) => (a.order || 0) - (b.order || 0))
-                  .map((field) => (
+              {application.fields
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map((field) => (
                     <div key={field.id} className="relative">
-                      <Form.Item
-                        name={`field_${field.id}`}
-                        label={
+                  <Form.Item
+                    name={`field_${field.id}`}
+                    label={
                           <span className="inline-flex items-center flex-wrap">
                             <span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.85)" : "inherit", fontWeight: 500 }}>
-                              {field.label}
-                              {field.required && <span className="text-red-500 ml-1">*</span>}
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
                             </span>
                             {field.field_type === "FILE" && (
                               <span className="ml-1" style={{ color: "#7367f0" }}>
@@ -915,25 +915,25 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                             {completedFields.has(field.id) && (
                               <CheckCircleOutlined className="text-green-500 ml-1" />
                             )}
-                          </span>
-                        }
+                      </span>
+                    }
                         help={<span style={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.45)" : "inherit", fontSize: "12px" }}>{field.help_text}</span>}
-                        rules={[
-                          {
-                            required: field.required,
+                    rules={[
+                      {
+                        required: field.required,
                             message: `${field.label} maydonini to&apos;ldirish majburiy!`,
-                          },
-                        ]}
-                        valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
-                        getValueFromEvent={field.field_type === "FILE" ? (e) => (Array.isArray(e) ? e : e?.fileList) : undefined}
-                      >
+                      },
+                    ]}
+                    valuePropName={field.field_type === "FILE" ? "fileList" : "value"}
+                    getValueFromEvent={field.field_type === "FILE" ? (e) => (Array.isArray(e) ? e : e?.fileList) : undefined}
+                  >
                         {renderFieldInput(field, theme, {
                           onFilePreview: handleFilePreview,
                           onFileDownload: handleFileDownload,
                         })}
-                      </Form.Item>
+                  </Form.Item>
                     </div>
-                  ))}
+                ))}
 
               </div>
 

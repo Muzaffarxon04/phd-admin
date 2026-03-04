@@ -1,6 +1,6 @@
 "use client";
 
-import { Layout, Avatar, Dropdown, Space, Button, MenuProps } from "antd";
+import { Layout, Avatar, Dropdown, Space, Button, MenuProps, Flex } from "antd";
 import {
   LogoutOutlined,
   UserOutlined,
@@ -85,14 +85,16 @@ export default function ApplicantHeader() {
 
         {/* Right side - Actions */}
         <Space size="middle" style={{ alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-          <Button
+      <Flex align="center" gap="1rem">
+
+      <Button
             type="text"
             icon={theme === "dark" ? <SunOutlined /> : <MoonOutlined />}
             onClick={toggleTheme}
             className="header-action-btn theme-toggle-btn"
             style={{
               fontSize: "20px",
-              color: theme === "dark" ? "#ffffff" : "#666",
+              color: theme === "dark" ? "#ffffff" : "#000000",
               height: 46,
               borderRadius: "14px",
               display: "flex",
@@ -105,6 +107,17 @@ export default function ApplicantHeader() {
           >
          
           </Button>
+
+          <span
+            className="hidden md:inline-block text-sm font-semibold tracking-wide uppercase"
+            style={{
+              color: theme === "dark" ? "#e5e7eb" : "#4b5563",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Toshkent Davlat Tibbiyot Universiteti
+          </span>
+      </Flex>
 
 
 
