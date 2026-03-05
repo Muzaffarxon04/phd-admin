@@ -52,8 +52,7 @@ interface SubmissionDetail {
   applicant_phone: string;
   status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
-  avg_marks?: number | string | null;
-  mark?: number | string | null;
+  mark?: { score: number; id: number; comments: string; marked_at?: string };
   review_notes?: string;
   reviewed_by?: number | null;
   reviewed_by_name?: string;
@@ -442,7 +441,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             </>
           )}
           {submission.status === "APPROVED" &&
-            (submission.mark != null && submission.mark !== "" ? (
+            (submission.mark  ? (
               <span
                 className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30"
                 style={{
@@ -450,7 +449,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   color: "#28c76f",
                 }}
               >
-                Qo&apos;yilgan Baho: {Number(submission.avg_marks)}
+                Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
               </span>
             ) : (
               <Button
@@ -643,6 +642,14 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 <div>
                   <Text className="text-gray-400 block mb-1">Topshirilgan:</Text>
                   <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDate(submission.submitted_at)}</Text>
+                </div>
+              )}
+              {submission.mark?.marked_at && (
+                <div>
+                  <Text className="text-gray-400 block mb-1">Baholangan:</Text>
+                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                    {formatDate(submission.mark.marked_at)}
+                  </Text>
                 </div>
               )}
             </div>

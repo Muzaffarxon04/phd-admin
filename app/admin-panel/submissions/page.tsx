@@ -41,7 +41,7 @@ interface Submission {
   applicant_phone: string;
   status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "WITHDRAWN";
   payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
-  avg_marks?: number | string | null;
+  mark?: { score: number; id: number; comments: string; marked_at?: string };
   created_at: string;
   updated_at: string;
   submitted_at?: string | null;
@@ -334,8 +334,8 @@ export default function AdminSubmissionsPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-gray-500">O&apos;rtacha ball</span>
         </div>
       ),
-      dataIndex: "avg_marks",
-      key: "avg_marks",
+      dataIndex: "mark.score",
+      key: "mark.score",
       width: 120,
       render: (val: number | string | null | undefined) => (
         <div className="py-2">
@@ -413,7 +413,7 @@ export default function AdminSubmissionsPage() {
               />
             </>
           )}
-          {record.status === "APPROVED" && (record.avg_marks == null || record.avg_marks === "") && (
+          {record.status === "APPROVED" && !record?.mark?.score && (
             <Button
               className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
                 ? "bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white"

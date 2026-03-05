@@ -228,11 +228,17 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     `/pdf/submission-marks/${submissionId}/generate-guvohnoma/`,
     `guvohnoma-${submission?.submission_number || "certificate"}.pdf`,
     {
-    onSuccess: () => {
+      onSuccess: () => {
         message.success("Guvohnoma yuklanmoqda...");
-    },
-    onError: (error) => {
-        message.error(error.message || "Guvohnomani yuklashda xatolik");
+      },
+      onError: (error) => {
+        const data = error.data as { error?: string; message?: string } | undefined;
+        const errorMessage =
+          data?.error ||
+          data?.message ||
+          error.message ||
+          "Guvohnomani yuklashda xatolik";
+        message.error(errorMessage);
       },
     }
   );
