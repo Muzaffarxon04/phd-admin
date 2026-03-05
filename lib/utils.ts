@@ -88,7 +88,7 @@ export function getApplicationStatusLabel(status: string): string {
     UNDER_REVIEW: "Ko'rib chiqilmoqda",
     APPROVED: "Qabul qilingan",
     REJECTED: "Rad etilgan",
-    WITHDRAWN: "Bekor qilingan",
+    WITHDRAWN: "Qaytarilgan",
     // Kichik harf
     draft: "Qoralama",
     published: "Nashr qilingan",

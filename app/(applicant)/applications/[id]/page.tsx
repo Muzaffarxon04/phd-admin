@@ -377,8 +377,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           if (createdId) {
             router.push(`/my-submissions/${createdId}`);
           } else {
-        router.push("/my-submissions");
+            router.push("/my-submissions");
           }
+          Modal.destroyAll();
         };
 
         modal.info({
@@ -881,7 +882,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     }
                     options={specialities.map((spec) => ({
                       value: spec.id,
-                      label: `${spec.code} - ${spec.name}${spec.is_foreign ? " (Chet tili)" : ""}`,
+                      label: `${spec.code} - ${spec.name}${spec.is_foreign ? " (chet tili)" : ""}`,
                     }))}
                     dropdownStyle={{
                       background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
@@ -889,6 +890,72 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     }}
                   />
                 </Form.Item>
+
+                {selectedSpeciality && (() => {
+                  const spec = specialities.find((s) => String(s.id) === String(selectedSpeciality));
+                  if (!spec || (!spec.comment && !spec.file)) return null;
+                  return (
+                    <div
+                      className="mt-3 rounded-lg px-4 py-3 text-sm flex flex-col gap-2"
+                      style={{
+                        background: theme === "dark" ? "rgba(15,23,42,0.85)" : "#f9fafb",
+                        border: theme === "dark" ? "1px dashed rgba(148,163,184,0.6)" : "1px dashed #cbd5f5",
+                      }}
+                    >
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                      >
+                        Qo&apos;llanma
+                      </span>
+
+                      {spec.comment && (
+                        <p
+                          style={{
+                            marginBottom: 4,
+                            color: theme === "dark" ? "#e5e7eb" : "#4b5563",
+                          }}
+                        >
+                          {spec.comment}
+                        </p>
+                      )}
+                      {spec.file && (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Button
+                            size="small"
+                            type="default"
+                            className="flex items-center gap-1"
+                            onClick={() => {
+                              if (!spec.file) return;
+                              const url: string = spec.file;
+                              const link = document.createElement("a");
+                              link.href = url.startsWith("/api/") ? url : getProxyUrl(url);
+                              link.target = "_blank";
+                              link.download = "";
+                              link.click();
+                            }}
+                          >
+                            <FileTextOutlined />
+                            Yuklab olish
+                          </Button>
+                          <Button
+                            size="small"
+                            type="link"
+                            className="flex items-center gap-1"
+                            onClick={() => {
+                              setPreviewFileName(spec.file || "");
+                              setPreviewFileUrl(spec.file || "");
+                              setPreviewLoading(true);
+                            }}
+                          >
+                            <EyeOutlined />
+                            Ko&apos;rish
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">

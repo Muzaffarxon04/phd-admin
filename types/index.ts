@@ -65,6 +65,9 @@ export interface Speciality {
   updated_at: string;
   speciality_code?: string;
   speciality_name?: string;
+  // Backenddan keladigan qo'shimcha maydonlar
+  comment?: string;
+  file?: string | null;
 }
 
 // Language Types
