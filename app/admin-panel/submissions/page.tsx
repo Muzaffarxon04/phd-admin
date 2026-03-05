@@ -334,16 +334,27 @@ export default function AdminSubmissionsPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-gray-500">O&apos;rtacha ball</span>
         </div>
       ),
-      dataIndex: "mark.score",
-      key: "mark.score",
+      dataIndex: "mark",
+      key: "mark",
       width: 120,
-      render: (val: number | string | null | undefined) => (
-        <div className="py-2">
-          <span className={`font-semibold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-            {val != null && val !== "" ? Number(val) : "—"}
-          </span>
-        </div>
-      ),
+      render: (_: Submission["mark"], record: Submission) => {
+        const score = record.mark?.score;
+        const display =
+          score !== null && score !== undefined 
+            ? Number(score)
+            : "—";
+        return (
+          <div className="py-2">
+            <span
+              className={`font-semibold text-sm ${
+                theme === "dark" ? "text-gray-200" : "text-[#484650]"
+              }`}
+            >
+              {display} 
+            </span>
+          </div>
+        );
+      },
     },
     {
       title: (
