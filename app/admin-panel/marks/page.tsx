@@ -118,17 +118,7 @@ export default function MarksPage() {
     }
   });
 
-  const toggleStatusMutation = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      marksApi.patchMark(id, { is_active: isActive }),
-    onSuccess: () => {
-      message.success("Status o'zgartirildi");
-      queryClient.invalidateQueries({ queryKey: ["marks"] });
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Statusni o'zgartirishda xatolik");
-    }
-  });
+
 
   const handleCreate = () => {
     form.validateFields().then((values) => {
