@@ -39,36 +39,9 @@ interface ApplicationField {
   order?: number;
 }
 
-interface CreateApplicationData {
-  title: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  status?: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
-  requires_oneid_verification?: boolean;
-  exam_date?: string;
-  application_fee?: string;
-  instructions?: string;
-  fields?: ApplicationField[];
-  specialities?: ApplicationSpeciality[];
-}
 
-interface Application {
-  id: number;
-  title: string;
-  description: string;
-  status: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
-  start_date: string;
-  end_date: string;
-  exam_date?: string | null;
-  application_fee?: string;
-  total_submissions: number;
-  is_open?: boolean;
-  is_upcoming?: boolean;
-  is_closed?: boolean;
-  created_by_name: string;
-  created_at: string;
-}
+
+
 
 export default function CreateApplicationPage() {
   const router = useRouter();

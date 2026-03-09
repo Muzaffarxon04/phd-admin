@@ -21,7 +21,7 @@ import {
 import { useGet, usePost, API_BASE_URL } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
-import { TableSkeleton } from "@/components/LoadingSkeleton";
+// import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import Link from "next/link";
 import { formatDate, getApplicationStatusLabel } from "@/lib/utils";

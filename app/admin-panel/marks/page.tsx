@@ -18,7 +18,7 @@ import {
 const { Title } = Typography;
 import { useThemeStore } from "@/lib/stores/themeStore";
 import {
-  PlusOutlined,
+  // PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
@@ -158,12 +158,7 @@ export default function MarksPage() {
     deleteMutation.mutate(record.id.toString());
   };
 
-  const toggleMarkStatus = (record: ApplicantMark) => {
-    toggleStatusMutation.mutate({
-      id: record.id.toString(),
-      isActive: !record.is_active
-    });
-  };
+
 
   const openEditModal = (record: ApplicantMark) => {
     setEditingRecord(record);
@@ -304,7 +299,7 @@ export default function MarksPage() {
       ),
       dataIndex: "is_active",
       key: "is_active",
-      render: (isActive: boolean, record: ApplicantMark) => (
+      render: (isActive: boolean) => (
         <div className="flex items-center gap-2">
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
             }`}>
