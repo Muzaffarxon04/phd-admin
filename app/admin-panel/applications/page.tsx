@@ -13,10 +13,12 @@ import {
   TrophyOutlined,
   EditOutlined,
   DeleteOutlined,
+  InboxOutlined,
+  RollbackOutlined,
 } from "@ant-design/icons";
 import { useGet, usePut } from "@/lib/hooks";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
@@ -68,6 +70,8 @@ export default function AdminApplicationsPage() {
   const totalElements = applicationsData?.total_elements || 0;
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [archivingId, setArchivingId] = useState<number | null>(null);
+  const [unarchivingId, setUnarchivingId] = useState<number | null>(null);
   const [editingApplication, setEditingApplication] = useState<Application | null>(null);
   const [editForm] = Form.useForm();
 
@@ -136,6 +140,39 @@ export default function AdminApplicationsPage() {
       setDeletingId(null);
     }
   };
+
+  const invalidateApplications = () => {
+    queryClient.invalidateQueries({ queryKey: [applicationsEndpoint] });
+    queryClient.refetchQueries({ queryKey: [applicationsEndpoint] });
+  };
+
+  const { mutate: archiveApplication } = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/admin/application/${id}/archive/`, { method: "POST" }),
+    onMutate: (id) => setArchivingId(id),
+    onSuccess: () => {
+      message.success("Ariza arxivga olindi");
+      invalidateApplications();
+    },
+    onError: (error) => {
+      message.error(error.message || "Arxivlashda xatolik");
+    },
+    onSettled: () => setArchivingId(null),
+  });
+
+  const { mutate: unarchiveApplication } = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/admin/application/${id}/unarchive/`, { method: "POST" }),
+    onMutate: (id) => setUnarchivingId(id),
+    onSuccess: () => {
+      message.success("Ariza arxivdan chiqarildi");
+      invalidateApplications();
+    },
+    onError: (error) => {
+      message.error(error.message || "Arxivdan chiqarishda xatolik");
+    },
+    onSettled: () => setUnarchivingId(null),
+  });
 
   const columns: ColumnsType<Application> = [
     {
@@ -257,9 +294,9 @@ export default function AdminApplicationsPage() {
         </div>
       ),
       key: "actions",
-      width: 150,
+      width: 220,
       render: (_, record) => (
-        <div className="flex justify-center gap-2 py-2">
+        <div className="flex flex-wrap justify-center gap-2 py-2">
           <Link href={`/admin-panel/applications/${record.id}`}>
             <Button
               className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
@@ -279,6 +316,29 @@ export default function AdminApplicationsPage() {
             title="Tahrirlash"
             onClick={() => handleEdit(record)}
           />
+          {record.status !== "ARCHIVED" ? (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
+                ? "bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white"
+                : "bg-gray-500/10 text-gray-600 hover:bg-gray-500 hover:text-white"
+                }`}
+              icon={<InboxOutlined style={{ fontSize: "18px" }} />}
+              title="Arxivlash"
+              loading={archivingId === record.id}
+              onClick={() => archiveApplication(record.id)}
+            />
+          ) : (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
+                ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-white"
+                : "bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
+                }`}
+              icon={<RollbackOutlined style={{ fontSize: "18px" }} />}
+              title="Arxivdan chiqarish"
+              loading={unarchivingId === record.id}
+              onClick={() => unarchiveApplication(record.id)}
+            />
+          )}
           <Popconfirm
             title="O'chirish"
             description="Haqiqatan ham bu arizani o'chirmoqchimisiz?"

@@ -20,6 +20,8 @@ import {
   Drawer,
 } from "antd";
 import { useGet, usePost } from "@/lib/hooks";
+import { useMutation } from "@tanstack/react-query";
+import { marksApi } from "@/lib/api/marks";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor } from "@/lib/utils";
@@ -37,6 +39,7 @@ import {
   ClockCircleOutlined,
   TableOutlined,
   RollbackOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
@@ -326,14 +329,27 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
     },
   });
 
-
+  const { mutate: updateScore, isPending: isUpdatingScore } = useMutation({
+    mutationFn: ({ markId, data }: { markId: number; data: { score: string; comments?: string } }) =>
+      marksApi.patchMark(String(markId), data),
+    onSuccess: () => {
+      message.success("Baho muvaffaqiyatli yangilandi");
+      setIsScoreModalOpen(false);
+      scoreForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/submissions/${id}/`] });
+    },
+    onError: (error) => {
+      message.error(error.message || "Bahoni yangilashda xatolik");
+    },
+  });
 
   const handleScoreSubmit = (values: { score: number; comments: string }) => {
-    submitScore({
-      submission: parseInt(id),
-      score: values.score.toString(),
-      comments: values.comments,
-    });
+    const payload = { score: values.score.toString(), comments: values.comments };
+    if (submission?.mark?.id != null) {
+      updateScore({ markId: submission.mark.id, data: payload });
+    } else {
+      submitScore({ submission: parseInt(id), ...payload });
+    }
   };
 
   if (isLoading) {
@@ -441,16 +457,36 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             </>
           )}
           {submission.status === "APPROVED" &&
-            (submission.mark  ? (
-              <span
-                className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30"
-                style={{
-                  background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
-                  color: "#28c76f",
-                }}
-              >
-                Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
-              </span>
+            (submission.mark ? (
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30"
+                  style={{
+                    background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
+                    color: "#28c76f",
+                  }}
+                >
+                  Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
+                </span>
+                <Button
+                  type="default"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    scoreForm.setFieldsValue({
+                      score: Number(submission.mark?.score) ?? undefined,
+                      comments: submission.mark?.comments ?? "",
+                    });
+                    setIsScoreModalOpen(true);
+                  }}
+                  className="h-[42px] px-4 rounded-xl font-bold flex items-center gap-2"
+                  style={{
+                    borderColor: theme === "dark" ? "rgba(115, 103, 240, 0.5)" : "#7367f0",
+                    color: "#7367f0",
+                  }}
+                >
+                  Tahrirlash
+                </Button>
+              </div>
             ) : (
               <Button
                 type="primary"
@@ -853,7 +889,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   <Button
                     type="primary"
                     htmlType="submit"
-                    loading={isSubmittingScore}
+                    loading={isSubmittingScore || isUpdatingScore}
                     className="rounded-xl h-[40px] px-6 border-0"
                     style={{
                       background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
