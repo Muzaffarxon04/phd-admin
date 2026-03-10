@@ -10,6 +10,8 @@ import {
   App,
   ConfigProvider,
   Switch,
+  Checkbox,
+  Alert,
 } from "antd";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import {
@@ -37,6 +39,7 @@ export default function RegisterPage() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
 
@@ -246,6 +249,7 @@ export default function RegisterPage() {
                 register(v);
               }}
             >
+              
               <Form.Item
                 name="phone_number"
                 rules={[
@@ -257,12 +261,21 @@ export default function RegisterPage() {
                   placeholder="Telefon raqamni kiriting" />
               </Form.Item>
 
+              <Form.Item className="mb-4" colon={false}>
+                <Checkbox
+                  checked={acceptedPrivacy}
+                  onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                >
+                  Shaxsiy ma&apos;lumotlarim qayta ishlatilishiga roziman
+                </Checkbox>
+              </Form.Item>
 
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={isRegistering}
                 block
+                disabled={!acceptedPrivacy}
               >
                 Davom etish
               </Button>
@@ -317,52 +330,98 @@ export default function RegisterPage() {
           )}
 
           {currentStep === 2 && (
-            <Form
-              layout="vertical"
-              onFinish={completeRegistration}
-            >
+            <>
+              <Alert
+                type="warning"
+                showIcon
+                className="mb-4!"
+                message="Diqqat!"
+                description="Maʼlumotlarni toʻldirishda imloviy xatoga yoʻl qoʻymang va barcha maydonlarni passport bo‘yicha toʻldiring."
+              />
+              <Form
+                layout="vertical"
+                onFinish={completeRegistration}
+              >
               <Form.Item name="phone_number" initialValue={phoneNumber} hidden>
                 <Input />
               </Form.Item>
 
-              <Form.Item name="first_name" rules={[{ required: true }]}>
+              <Form.Item
+                name="first_name"
+                rules={[{ required: true, message: "Ismni kiriting" }]}
+              >
                 <Input prefix={<UserOutlined />} placeholder="Ism" />
               </Form.Item>
 
-              <Form.Item name="last_name" rules={[{ required: true }]}>
+              <Form.Item
+                name="last_name"
+                rules={[{ required: true, message: "Familiyani kiriting" }]}
+              >
                 <Input prefix={<UserOutlined />} placeholder="Familiya" />
               </Form.Item>
-              <Form.Item name="middle_name" rules={[{ required: true }]}>
+              <Form.Item
+                name="middle_name"
+                rules={[{ required: true, message: "Otasining ismini kiriting" }]}
+              >
                 <Input prefix={<UserOutlined />} placeholder="Otasining ismi" />
               </Form.Item>
 
-              <Form.Item name="email">
+              <Form.Item
+                name="email"
+                rules={[
+                  { required: true, message: "Email manzilini kiriting" },
+                  { type: "email", message: "To'g'ri email manzil kiriting" },
+                ]}
+              >
                 <Input prefix={<MailOutlined />} placeholder="Email" />
               </Form.Item>
 
-              <Form.Item name="password" rules={[{ min: 8 }]}>
+              <Form.Item
+                name="password"
+                rules={[
+                  { required: true, message: "Parolni kiriting" },
+                  { min: 5, message: "Parol kamida 5 ta belgidan iborat bo'lishi kerak" },
+                ]}
+              >
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="Parol"
                 />
               </Form.Item>
 
-              <Form.Item name="confirm_password" rules={[{ required: true }]}>
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Parolni tasdiqlang"
-                />
-              </Form.Item>
+                <Form.Item
+                  name="confirm_password"
+                  dependencies={["password"]}
+                  rules={[
+                    { required: true, message: "Parolni tasdiqlang" },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue("password") === value) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          new Error("Parol va tasdiqlash paroli bir xil bo'lishi kerak")
+                        );
+                      },
+                    }),
+                  ]}
+                >
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="Parolni tasdiqlang"
+                  />
+                </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isCompleting}
-                block
-              >
-                Ro‘yxatdan o‘tish
-              </Button>
-            </Form>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isCompleting}
+                  block
+                >
+                  Ro‘yxatdan o‘tish
+                </Button>
+              </Form>
+            </>
           )}
 
           <div className="text-center mt-6 text-sm">

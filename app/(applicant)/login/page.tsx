@@ -1,6 +1,7 @@
 "use client";
 
-import { Form, Input, Button, Card, App, ConfigProvider, Switch } from "antd";
+import { useState } from "react";
+import { Form, Input, Button, Card, App, ConfigProvider, Switch, Checkbox } from "antd";
 import { MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { usePost } from "@/lib/hooks";
@@ -28,6 +29,7 @@ export default function LoginPage() {
   const { message } = App.useApp();
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === "dark";
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   const { mutate: login, isPending } = usePost("/auth/login/", {
     onSuccess: (response: LoginResponse) => {
@@ -160,6 +162,15 @@ export default function LoginPage() {
               <Input.Password placeholder="Parol" />
             </Form.Item>
 
+            <Form.Item style={{ marginBottom: 18 }}>
+              <Checkbox
+                checked={acceptedPrivacy}
+                onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+              >
+                Shaxsiy ma&apos;lumotlarim qayta ishlatilishiga roziman
+              </Checkbox>
+            </Form.Item>
+
             <div style={{ textAlign: "right", marginBottom: 18 }}>
               <Link
                 href="/forgot-password"
@@ -177,6 +188,7 @@ export default function LoginPage() {
               type="primary"
               htmlType="submit"
               loading={isPending}
+              disabled={!acceptedPrivacy}
               block
               style={{
                 height: 48,
