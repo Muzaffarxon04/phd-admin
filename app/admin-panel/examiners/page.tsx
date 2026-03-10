@@ -29,7 +29,7 @@ import {
   ProjectOutlined,
   BookOutlined,
 } from "@ant-design/icons";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import type { Examiner, Speciality } from "@/types";
@@ -580,13 +580,13 @@ export default function ExaminersPage() {
             { !!examinerStats.data.period.start_date &&  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Boshlanish</div>
                   <div className="text-sm font-medium">
-                    {examinerStats.data.period.start_date ? formatDate(examinerStats.data.period.start_date) : "-"}
+                    {examinerStats.data.period.start_date ? formatDateTime(examinerStats.data.period.start_date) : "-"}
                   </div>
                 </Card>}
               { !!examinerStats.data.period.end_date &&  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Tugash</div>
                   <div className="text-sm font-medium">
-                    {examinerStats.data.period.end_date ? formatDate(examinerStats.data.period.end_date) : "-"}
+                    {examinerStats.data.period.end_date ? formatDateTime(examinerStats.data.period.end_date) : "-"}
                   </div>
                 </Card>}
               </div>

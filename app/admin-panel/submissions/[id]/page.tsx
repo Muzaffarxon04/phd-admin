@@ -18,6 +18,7 @@ import {
   Space,
   message,
   Drawer,
+  Tooltip,
 } from "antd";
 import { useGet, usePost } from "@/lib/hooks";
 import { useMutation } from "@tanstack/react-query";
@@ -459,15 +460,20 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           {submission.status === "APPROVED" &&
             (submission.mark ? (
               <div className="flex items-center gap-2">
-                <span
-                  className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30"
-                  style={{
-                    background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
-                    color: "#28c76f",
-                  }}
+                <Tooltip
+                  title={submission.mark?.comments?.trim() ? submission.mark.comments : "Izoh yo'q"}
+                  placement="top"
                 >
-                  Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
-                </span>
+                  <span
+                    className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30 cursor-pointer"
+                    style={{
+                      background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
+                      color: "#28c76f",
+                    }}
+                  >
+                    Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
+                  </span>
+                </Tooltip>
                 <Button
                   type="default"
                   icon={<EditOutlined />}

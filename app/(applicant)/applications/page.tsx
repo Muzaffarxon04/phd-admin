@@ -30,7 +30,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDate, formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
 import { useState } from "react";
 import { useThemeStore } from "@/lib/stores/themeStore";
 // import router from "next/router";
@@ -426,7 +426,7 @@ function ApplicationsPage() {
                             style={{ borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.03)" }}
                           >
                             <span style={{ color: "rgb(120, 120, 120)" }}>Imtihon sanasi:</span>
-                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{app.exam_date ? formatDate(app.exam_date) : "Aniqlanmagan"}</span>
+                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{app.exam_date ? formatDateTime(app.exam_date) : "Aniqlanmagan"}</span>
                           </div>
 
                           <div
@@ -434,7 +434,7 @@ function ApplicationsPage() {
                             style={{ borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.03)" }}
                           >
                             <span style={{ color: "rgb(120, 120, 120)" }}>Boshlanish:</span>
-                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{formatDate(app.start_date)}</span>
+                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{formatDateTime(app.start_date)}</span>
                           </div>
 
                           <div
@@ -442,7 +442,7 @@ function ApplicationsPage() {
                             style={{ borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.03)" }}
                           >
                             <span style={{ color: "rgb(120, 120, 120)" }}>Tugash:</span>
-                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{formatDate(app.end_date)}</span>
+                            <span style={{ color: theme === "dark" ? "rgb(200, 203, 209)" : "#484650" }}>{formatDateTime(app.end_date)}</span>
                           </div>
 
                       

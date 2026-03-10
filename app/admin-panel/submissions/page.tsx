@@ -36,6 +36,10 @@ interface Submission {
   submission_number: string;
   application: number;
   application_title: string;
+  speciality?: { id: number; name: string; code: string } | string | null;
+  speciality_name?: string | null; // fallback (old)
+  speciality_code?: string | null; // fallback (old)
+  education_form?: string | null;
   applicant: number;
   applicant_name: string;
   applicant_phone: string;
@@ -248,6 +252,53 @@ export default function AdminSubmissionsPage() {
         </div>
       ),
       width: 250,
+    },
+    {
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <FileTextOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Mutaxassislik</span>
+        </div>
+      ),
+      key: "speciality",
+      width: 220,
+      render: (_: unknown, record) => {
+        const specialityObj =
+          record.speciality && typeof record.speciality === "object" && !Array.isArray(record.speciality)
+            ? (record.speciality as { id?: number; name?: string; code?: string })
+            : null;
+        const name = specialityObj?.name || record.speciality_name || (typeof record.speciality === "string" ? record.speciality : "") || "—";
+        const code = specialityObj?.code || (record.speciality_code ? String(record.speciality_code) : "");
+        return (
+          <div className="py-2">
+            <div className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+              {code ? `${code} - ${name}` : name}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      title: (
+        <div className="flex items-center gap-2 py-3">
+          <CreditCardOutlined className="text-[#7367f0]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ta&apos;lim shakli</span>
+        </div>
+      ),
+      key: "education_form",
+      dataIndex: "education_form",
+      width: 160,
+      render: (value?: string | null) => (
+        <div className="py-2">
+          <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+            theme === "dark"
+              ? "text-gray-300 bg-white/5 border-white/10"
+              : "text-gray-600 bg-black/5 border-black/10"
+          }`}>
+            {value || "—"}
+          </span>
+        </div>
+      ),
     },
     {
       title: (

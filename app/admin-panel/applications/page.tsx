@@ -23,7 +23,7 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import Link from "next/link";
-import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
 
 interface Application {
   id: number;
@@ -213,12 +213,12 @@ export default function AdminApplicationsPage() {
         <div className=" flex items-center gap-2">
           <div className="text-xs font-bold text-green-500 flex items-center gap-1">
             {/* <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> */}
-            {formatDate(record.start_date)}
+            {formatDateTime(record.start_date)}
           </div>
           -
           <div className="text-xs font-bold text-red-500 flex items-center gap-1">
             {/* <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> */}
-            {formatDate(record.end_date)}
+            {formatDateTime(record.end_date)}
           </div>
         </div>
       ),
@@ -234,7 +234,7 @@ export default function AdminApplicationsPage() {
       key: "exam_date",
       render: (_, record) => (
         <div className="text-xs font-bold text-[#7367f0]">
-          {record.exam_date ? formatDate(record.exam_date) : "—"}
+          {record.exam_date ? formatDateTime(record.exam_date) : "—"}
         </div>
       ),
       // width: 140,

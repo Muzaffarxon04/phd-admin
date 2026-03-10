@@ -7,11 +7,11 @@ import dayjs from "dayjs";
 import { useGet, usePut, usePost } from "@/lib/hooks";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
-import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { formatDate, formatDateTime, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
+import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined } from "@ant-design/icons";
 import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
 interface ApplicationField {
@@ -236,6 +236,43 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
+
+  const invalidateApplication = () => {
+    queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
+    queryClient.refetchQueries({ queryKey: [`/admin/application/${id}/`] });
+    queryClient.invalidateQueries({ queryKey: ["/admin/application/"] });
+  };
+
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [unarchivingId, setUnarchivingId] = useState<string | null>(null);
+
+  const { mutate: archiveApplication } = useMutation({
+    mutationFn: (appId: string) =>
+      apiRequest(`/admin/application/${appId}/archive/`, { method: "POST" }),
+    onMutate: (appId) => setArchivingId(appId),
+    onSuccess: () => {
+      message.success("Ariza arxivga olindi");
+      invalidateApplication();
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Arxivlashda xatolik");
+    },
+    onSettled: () => setArchivingId(null),
+  });
+
+  const { mutate: unarchiveApplication } = useMutation({
+    mutationFn: (appId: string) =>
+      apiRequest(`/admin/application/${appId}/unarchive/`, { method: "POST" }),
+    onMutate: (appId) => setUnarchivingId(appId),
+    onSuccess: () => {
+      message.success("Ariza arxivdan chiqarildi");
+      invalidateApplication();
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Arxivdan chiqarishda xatolik");
+    },
+    onSettled: () => setUnarchivingId(null),
+  });
 
   const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/");
   const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true");
@@ -568,6 +605,25 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           <Button type="default" icon={<EditOutlined />} onClick={handleEditApplication}>
             Tahrirlash
           </Button>
+          {application.status !== "ARCHIVED" ? (
+            <Button
+              type="default"
+              icon={<InboxOutlined />}
+              onClick={() => archiveApplication(String(application.id))}
+              loading={archivingId === String(application.id)}
+            >
+              Arxivlash
+            </Button>
+          ) : (
+            <Button
+              type="default"
+              icon={<RollbackOutlined />}
+              onClick={() => unarchiveApplication(String(application.id))}
+              loading={unarchivingId === String(application.id)}
+            >
+              Arxivdan chiqarish
+            </Button>
+          )}
           {application.status !== "PUBLISHED" && (
             <Button type="primary" onClick={handlePublish}>
               E&apos;lon qilish
@@ -619,10 +675,10 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           {/* <Descriptions.Item label="Maksimal topshiriqlar">
             {application.max_submissions || "Cheklanmagan"}
           </Descriptions.Item> */}
-          <Descriptions.Item label="Boshlanish sanasi">{formatDate(application.start_date)}</Descriptions.Item>
-          <Descriptions.Item label="Tugash sanasi">{formatDate(application.end_date)}</Descriptions.Item>
+          <Descriptions.Item label="Boshlanish sanasi">{formatDateTime(application.start_date)}</Descriptions.Item>
+          <Descriptions.Item label="Tugash sanasi">{formatDateTime(application.end_date)}</Descriptions.Item>
           <Descriptions.Item label="Imtihon sanasi">
-            {application.exam_date ? formatDate(application.exam_date) : "Kiritilmagan"}
+            {application.exam_date ? formatDateTime(application.exam_date) : "Kiritilmagan"}
           </Descriptions.Item>
           <Descriptions.Item label="Ariza to&apos;lovi">
             {application.application_fee ? `${application.application_fee} UZS` : "Bepul"}

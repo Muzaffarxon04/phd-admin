@@ -38,7 +38,7 @@ import {
   // SaveOutlined,
   SendOutlined
 } from "@ant-design/icons";
-import { formatDate, parseMoneyAmount } from "@/lib/utils";
+import { formatDateTime, parseMoneyAmount } from "@/lib/utils";
 import { type Dayjs } from "dayjs";
 import { useState, useEffect } from "react";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -717,7 +717,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Boshlanish sanasi</Text>
                   <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-                    {formatDate(application.start_date)}
+                    {formatDateTime(application.start_date)}
                   </div>
                 </div>
               </div>
@@ -729,7 +729,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 <div>
                   <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Tugash sanasi</Text>
                   <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-                    {formatDate(application.end_date)}
+                    {formatDateTime(application.end_date)}
                   </div>
                 </div>
               </div>
@@ -756,7 +756,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   <div>
                     <Text className="text-gray-500 block text-xs font-semibold uppercase tracking-wider">Imtihon sanasi</Text>
                     <div className="font-bold text-base" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-                      {formatDate(application.exam_date)}
+                      {formatDateTime(application.exam_date)}
                     </div>
                   </div>
                 </div>

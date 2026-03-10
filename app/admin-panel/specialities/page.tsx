@@ -34,7 +34,7 @@ import {
   UserOutlined,
   CalendarOutlined,
 } from "@ant-design/icons";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import type { Speciality, SpecialityStatistics } from "@/types";
 
@@ -549,13 +549,13 @@ export default function SpecialitiesPage() {
             {!!specialityStats.data.period.start_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Boshlanish sanasi</div>
                   <div className="text-sm font-medium">
-                    {specialityStats.data.period.start_date ? formatDate(specialityStats.data.period.start_date) : "-"}
+                    {specialityStats.data.period.start_date ? formatDateTime(specialityStats.data.period.start_date) : "-"}
                   </div>
                 </Card>}
                {!!specialityStats.data.period.end_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                     <div className="text-gray-400 text-xs mb-1">Tugash sanasi</div>
                     <div className="text-sm font-medium">
-                      {specialityStats.data.period.end_date ? formatDate(specialityStats.data.period.end_date) : "-"}
+                      {specialityStats.data.period.end_date ? formatDateTime(specialityStats.data.period.end_date) : "-"}
                   </div>
                 </Card>}
               </div>
