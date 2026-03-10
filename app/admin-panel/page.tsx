@@ -417,7 +417,7 @@ export default function AdminPanelPage() {
                       </div>
                       <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>
                         {item.value.toLocaleString()}
-                      </span>
+                  </span>
                     </div>
                   ))}
                 </div>
@@ -484,8 +484,8 @@ export default function AdminPanelPage() {
                               <span className="text-sm font-semibold" style={{ color: textColor }}>{item.value}</span>
                             </div>
                           ))}
-                        </div>
-                      </div>
+              </div>
+            </div>
                     );
                   })}
               </div>

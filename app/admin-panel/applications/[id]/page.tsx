@@ -11,7 +11,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate, formatDateTime, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
-import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined, HolderOutlined } from "@ant-design/icons";
 import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
 interface ApplicationField {
@@ -234,6 +234,10 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const { message, modal } = App.useApp();
   const fieldType = Form.useWatch("field_type", form);
 
+  const [orderedFields, setOrderedFields] = useState<ApplicationField[]>([]);
+  const [dragFieldId, setDragFieldId] = useState<number | null>(null);
+  const [dragOverFieldId, setDragOverFieldId] = useState<number | null>(null);
+
   const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
 
@@ -374,7 +378,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     }
   };
 
-  const handleUpdateField = async (fieldId: number, fieldData: CreateFieldData) => {
+  const handleUpdateField = async (fieldId: number, fieldData: Partial<CreateFieldData>) => {
     setIsUpdatingField(true);
     try {
       await apiRequest(`/admin/application/${id}/fields/${fieldId}/update/`, {
@@ -392,6 +396,55 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     } finally {
       setIsUpdatingField(false);
     }
+  };
+
+  useEffect(() => {
+    if (application?.fields) {
+      const sorted = [...application.fields].sort((a, b) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.id - b.id;
+      });
+      setOrderedFields(sorted);
+    } else {
+      setOrderedFields([]);
+    }
+  }, [application?.fields]);
+
+  const handleReorderFields = async (nextFields: ApplicationField[]) => {
+    setOrderedFields(nextFields);
+
+    try {
+      await Promise.all(
+        nextFields.map((field, index) =>
+          apiRequest(`/admin/application/${id}/fields/${field.id}/update/`, {
+            method: "PUT",
+            body: JSON.stringify({ order: index + 1 }),
+          }),
+        ),
+      );
+      message.success("Maydonlar tartibi yangilandi!");
+      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Maydonlar tartibini saqlashda xatolik";
+      message.error(errorMessage);
+    }
+  };
+
+  const handleFieldDrop = async (targetFieldId: number) => {
+    if (!orderedFields.length || dragFieldId === null || dragFieldId === targetFieldId) return;
+
+    const currentIndex = orderedFields.findIndex((f) => f.id === dragFieldId);
+    const targetIndex = orderedFields.findIndex((f) => f.id === targetFieldId);
+    if (currentIndex === -1 || targetIndex === -1) return;
+
+    const updated = [...orderedFields];
+    const [moved] = updated.splice(currentIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+
+    setDragFieldId(null);
+    await handleReorderFields(updated);
   };
 
   const handleEditField = (field: ApplicationField) => {
@@ -817,20 +870,43 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                     </Button>
                   </div>
               <div>
-              {application.fields && application.fields.length > 0 ? (
+              {orderedFields && orderedFields.length > 0 ? (
                     <div className="space-y-2!">
-                      {application.fields
-                        .sort((a, b) => (a.order || 0) - (b.order || 0))
-                        .map((field, index) => (
+                      {orderedFields.map((field, index) => (
                           <Card
                             key={field.id + "-" + index}
-                            className="border border-gray-200"
+                            draggable
+                            onDragStart={() => setDragFieldId(field.id)}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              if (dragOverFieldId !== field.id) {
+                                setDragOverFieldId(field.id);
+                              }
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              if (dragOverFieldId === field.id) {
+                                setDragOverFieldId(null);
+                              }
+                            }}
+                            onDrop={() => {
+                              setDragOverFieldId(null);
+                              handleFieldDrop(field.id);
+                            }}
+                            className="border border-gray-200 cursor-move"
                             style={{
                               background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "#ffffff",
-                              borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#e5e7eb",
+                              borderColor:
+                                dragOverFieldId === field.id
+                                  ? "#7367f0"
+                                  : theme === "dark"
+                                    ? "rgba(255, 255, 255, 0.05)"
+                                    : "#e5e7eb",
+                              borderStyle: dragOverFieldId === field.id ? "dashed" : "solid",
                             }}
                             extra={
                               <Space>
+                                <HolderOutlined style={{ cursor: "grab", fontSize: 22, color: "#9ca3af" }} />
                                 <Button
                                   type="primary"
                                   size="small"

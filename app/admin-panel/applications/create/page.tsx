@@ -5,7 +5,7 @@ import { Form, Input, InputNumber, DatePicker, App, Button, Space, Card, Switch,
 import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
+import { PlusOutlined, MinusCircleOutlined, UploadOutlined, HolderOutlined } from "@ant-design/icons";
 import { apiUpload } from "@/lib/hooks/useUniversalFetch";
 import type { Dayjs } from "dayjs";
 import Link from "next/link";
@@ -49,6 +49,8 @@ export default function CreateApplicationPage() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
+  const [dragFieldIndex, setDragFieldIndex] = useState<number | null>(null);
+  const [dragOverFieldIndex, setDragOverFieldIndex] = useState<number | null>(null);
 
   // Fetch specialities and examiners
   const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
@@ -84,8 +86,14 @@ export default function CreateApplicationPage() {
       }
       if (values.application_fee != null) formData.set("application_fee", values.application_fee.toString());
       if (values.instructions) formData.set("instructions", values.instructions);
-      if (values.fields && values.fields.length > 0) {
-        formData.set("fields", JSON.stringify(values.fields));
+
+      const fieldsWithOrder =
+        (values.fields || []).map((field, index) => ({
+          ...field,
+          order: index + 1,
+        })) || [];
+      if (fieldsWithOrder.length > 0) {
+        formData.set("fields", JSON.stringify(fieldsWithOrder));
       }
       const specialitiesPayload = (values.specialities || []).map(({ speciality_id, examiners, comment }) => ({
         speciality_id,
@@ -221,7 +229,7 @@ export default function CreateApplicationPage() {
           </Form.Item>
 
           <Form.List name="fields">
-            {(fields, { add, remove }) => (
+            {(fields, { add, remove, move }) => (
               <>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-base font-medium">Maydonlar</span>
@@ -229,48 +237,79 @@ export default function CreateApplicationPage() {
                     Maydon qo&apos;shish
                   </Button>
                 </div>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline" className="w-full">
-                    <Form.Item
-                      {...restField}
-                      name={[name, "label"]}
-                      label="Maydon nomi"
-                      rules={[{ required: true, message: "Maydon nomini kiriting!" }]}
-                      style={{ flex: 1 }}
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div key={key}>
+                    <Space
+                      style={{ display: "flex", marginBottom: 8 }}
+                      align="baseline"
+                      className="w-full"
+                      draggable
+                      onDragStart={() => setDragFieldIndex(index)}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (dragOverFieldIndex !== index) {
+                          setDragOverFieldIndex(index);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        if (dragOverFieldIndex === index) {
+                          setDragOverFieldIndex(null);
+                        }
+                      }}
+                      onDrop={() => {
+                        if (
+                          dragFieldIndex !== null &&
+                          dragFieldIndex !== index
+                        ) {
+                          move(dragFieldIndex, index);
+                        }
+                        setDragOverFieldIndex(null);
+                        setDragFieldIndex(null);
+                      }}
                     >
-                      <Input placeholder="Masalan: Research Topic" />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "field_type"]}
-                      label="Maydon turi"
-                      rules={[{ required: true, message: "Maydon turini tanlang!" }]}
-                      style={{ width: 150 }}
-                    >
-                      <Select placeholder="Turi">
-                        <Select.Option value="TEXT">{getFieldTypeLabel("TEXT")}</Select.Option>
-                        <Select.Option value="TEXTAREA">{getFieldTypeLabel("TEXTAREA")}</Select.Option>
-                        <Select.Option value="EMAIL">{getFieldTypeLabel("EMAIL")}</Select.Option>
-                        <Select.Option value="PHONE">{getFieldTypeLabel("PHONE")}</Select.Option>
-                        <Select.Option value="NUMBER">{getFieldTypeLabel("NUMBER")}</Select.Option>
-                        <Select.Option value="DATE">{getFieldTypeLabel("DATE")}</Select.Option>
-                        <Select.Option value="SELECT">{getFieldTypeLabel("SELECT")}</Select.Option>
-                        <Select.Option value="RADIO">{getFieldTypeLabel("RADIO")}</Select.Option>
-                        <Select.Option value="CHECKBOX">{getFieldTypeLabel("CHECKBOX")}</Select.Option>
-                        <Select.Option value="FILE">{getFieldTypeLabel("FILE")}</Select.Option>
-                        <Select.Option value="URL">{getFieldTypeLabel("URL")}</Select.Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "required"]}
-                      valuePropName="checked"
-                      style={{ width: 100 }}
-                    >
-                      <Switch checkedChildren="Majburiy" unCheckedChildren="Ixtiyoriy" />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer" />
-                  </Space>
+                      <HolderOutlined style={{ cursor: "grab", fontSize: 20, color: "#9ca3af" }} />
+                      <Form.Item
+                        {...restField}
+                        name={[name, "label"]}
+                        label="Maydon nomi"
+                        rules={[{ required: true, message: "Maydon nomini kiriting!" }]}
+                        style={{ flex: 1 }}
+                      >
+                        <Input placeholder="Masalan: Research Topic" />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "field_type"]}
+                        label="Maydon turi"
+                        rules={[{ required: true, message: "Maydon turini tanlang!" }]}
+                        style={{ width: 150 }}
+                      >
+                        <Select placeholder="Turi">
+                          <Select.Option value="TEXT">{getFieldTypeLabel("TEXT")}</Select.Option>
+                          <Select.Option value="TEXTAREA">{getFieldTypeLabel("TEXTAREA")}</Select.Option>
+                          <Select.Option value="EMAIL">{getFieldTypeLabel("EMAIL")}</Select.Option>
+                          <Select.Option value="PHONE">{getFieldTypeLabel("PHONE")}</Select.Option>
+                          <Select.Option value="NUMBER">{getFieldTypeLabel("NUMBER")}</Select.Option>
+                          <Select.Option value="DATE">{getFieldTypeLabel("DATE")}</Select.Option>
+                          <Select.Option value="SELECT">{getFieldTypeLabel("SELECT")}</Select.Option>
+                          <Select.Option value="RADIO">{getFieldTypeLabel("RADIO")}</Select.Option>
+                          <Select.Option value="CHECKBOX">{getFieldTypeLabel("CHECKBOX")}</Select.Option>
+                          <Select.Option value="FILE">{getFieldTypeLabel("FILE")}</Select.Option>
+                          <Select.Option value="URL">{getFieldTypeLabel("URL")}</Select.Option>
+                        </Select>
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "required"]}
+                        valuePropName="checked"
+                        style={{ width: 100 }}
+                      >
+                        <Switch checkedChildren="Majburiy" unCheckedChildren="Ixtiyoriy" />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} className="text-red-500 cursor-pointer" />
+                    </Space>
+                  </div>
                 ))}
               </>
             )}
