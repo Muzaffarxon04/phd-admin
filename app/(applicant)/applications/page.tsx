@@ -214,7 +214,7 @@ function ApplicationsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto">
+        <div className=" mx-auto">
           <Title level={2} className="mb-8 text-center">Mavjud Arizalar</Title>
           <Row gutter={[24, 24]}>
             {[1, 2, 3, 4, 5, 6].map((i) => (

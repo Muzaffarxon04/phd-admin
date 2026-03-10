@@ -333,7 +333,7 @@ export default function RegisterPage() {
                 <Input prefix={<UserOutlined />} placeholder="Familiya" />
               </Form.Item>
               <Form.Item name="middle_name" rules={[{ required: true }]}>
-                <Input prefix={<UserOutlined />} placeholder="Familiya" />
+                <Input prefix={<UserOutlined />} placeholder="Otasining ismi" />
               </Form.Item>
 
               <Form.Item name="email">

@@ -516,9 +516,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       return;
     }
 
+    const educationForm = values.education_form as string | undefined;
+    if (!educationForm) {
+      message.error("Iltimos, ta'lim shaklini tanlang!");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("application", String(application.id));
     formData.append("speciality", String(selectedSpeciality));
+    formData.append("education_form", educationForm);
 
     const answers: Array<{
       field_id: number;
@@ -671,7 +678,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         />
         </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className=" mx-auto px-4 py-8">
         {/* {!canApply && (
           <div
             className="mb-8 p-4 rounded-xl border flex items-center justify-between"
@@ -858,6 +865,19 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               form={form}
               layout="vertical"
               onFinish={handleSubmit}
+              onFinishFailed={({ errorFields }) => {
+                if (errorFields && errorFields.length > 0) {
+                  form.scrollToField(errorFields[0].name, {
+                    behavior: "smooth",
+                    block: "center",
+                  });
+                }
+                const firstError = errorFields?.[0]?.errors?.[0];
+                if (firstError) {
+                  message.error(firstError);
+                }
+              }}
+              scrollToFirstError
               autoComplete="off"
               className="premium-form"
             >
@@ -958,6 +978,27 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 })()}
               </div>
 
+              {/* Education form (Ta'lim shakli) */}
+              <div className="mb-8">
+                <Form.Item
+                  name="education_form"
+                  label={
+                    <span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>
+                      Ta&apos;lim shakli <span className="text-red-500">*</span>
+                    </span>
+                  }
+                  rules={[{ required: true, message: "Iltimos, ta'lim shaklini tanlang!" }]}
+                >
+                  <Radio.Group className="flex flex-col gap-2">
+                    <Radio value="DOKTORANTURA_DSC">Doktorantura (Dsc)</Radio>
+                    <Radio value="TAYANCH_DOKTORANTURA_PHD">Tayanch doktorantura (PhD)</Radio>
+                    <Radio value="MUSTAQIL_TADQIQOTCHI_DSC">Mustaqil tadqiqotchi (Dsc)</Radio>
+                    <Radio value="MUSTAQIL_TADQIQOTCHI_PHD">Mustaqil tadqiqotchi (PhD)</Radio>
+                    <Radio value="STAJYOR_TADQIQOTCHI">Stajyor-tadqiqotchi</Radio>
+                  </Radio.Group>
+                </Form.Item>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
               {application.fields
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -988,7 +1029,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     rules={[
                       {
                         required: field.required,
-                            message: `${field.label} maydonini to&apos;ldirish majburiy!`,
+                            message: `${field.label} maydonini toldirish majburiy!`,
                       },
                     ]}
                     valuePropName={field.field_type === "FILE" ? "fileList" : "value"}

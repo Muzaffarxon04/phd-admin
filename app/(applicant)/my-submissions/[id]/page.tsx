@@ -573,7 +573,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
         background: theme === "dark" ? "#1f2937" : "#ffffff",
         borderColor: theme === "dark" ? "#374151" : "#e5e7eb"
       }}>
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
           <Link href="/my-submissions">
@@ -605,7 +605,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto pt-6">
+      <div className=" mx-auto pt-6">
         {/* Timeline */}
         <Card className="!mb-6 border-0" style={cardStyle} bodyStyle={{ padding: "32px 24px" }}>
           <Steps

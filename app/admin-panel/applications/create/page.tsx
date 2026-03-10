@@ -79,7 +79,9 @@ export default function CreateApplicationPage() {
       formData.set("end_date", values.end_date.format("YYYY-MM-DDTHH:mm:ss[Z]"));
       formData.set("status", values.status || "DRAFT");
       formData.set("requires_oneid_verification", String(values.requires_oneid_verification ?? false));
-      if (values.exam_date) formData.set("exam_date", values.exam_date.format("YYYY-MM-DD"));
+      if (values.exam_date) {
+        formData.set("exam_date", values.exam_date.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      }
       if (values.application_fee != null) formData.set("application_fee", values.application_fee.toString());
       if (values.instructions) formData.set("instructions", values.instructions);
       if (values.fields && values.fields.length > 0) {
@@ -149,7 +151,7 @@ export default function CreateApplicationPage() {
             label="Boshlanish sanasi"
             rules={[{ required: true, message: "Boshlanish sanasini tanlang!" }]}
           >
-            <DatePicker className="w-full" format="YYYY-MM-DD" />
+            <DatePicker className="w-full" showTime format="YYYY-MM-DD HH:mm" />
           </Form.Item>
 
           <Form.Item
@@ -157,7 +159,7 @@ export default function CreateApplicationPage() {
             label="Tugash sanasi"
             rules={[{ required: true, message: "Tugash sanasini tanlang!" }]}
           >
-            <DatePicker className="w-full" format="YYYY-MM-DD" />
+            <DatePicker className="w-full" showTime format="YYYY-MM-DD HH:mm" />
           </Form.Item>
 
           <Form.Item
@@ -179,7 +181,8 @@ export default function CreateApplicationPage() {
           >
             <DatePicker
               className="w-full"
-              format="YYYY-MM-DD"
+              showTime
+              format="YYYY-MM-DD HH:mm"
               disabledDate={(current) =>
                 current && form.getFieldValue("end_date")
                   ? current.isBefore(form.getFieldValue("end_date"), "day")

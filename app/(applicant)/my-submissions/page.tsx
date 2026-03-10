@@ -224,7 +224,7 @@ export default function MySubmissionsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className=" mx-auto">
           <Title level={2} className="mb-8">Mening Arizalarim</Title>
           <TableSkeleton />
         </div>
