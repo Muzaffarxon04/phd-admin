@@ -69,7 +69,7 @@ export default function AdminSubmissionsPage() {
     searchParams.set("status", statusFilter);
   }
   if (applicationFilter !== "all") {
-    searchParams.set("application_id", String(applicationFilter));
+    searchParams.set("application", String(applicationFilter));
   }
   if (searchTerm.trim()) {
     searchParams.set("search", searchTerm.trim());
