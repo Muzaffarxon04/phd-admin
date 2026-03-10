@@ -51,6 +51,9 @@ export interface MarksStatistics {
   approved_marks: number;
   pending_marks: number;
   by_mark_type: Record<string, number>;
+  /** API qaytarsa — active/inactive pie chart uchun */
+  active_marks?: number;
+  inactive_marks?: number;
 }
 
 // Marks API Service

@@ -6,15 +6,23 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 import { useGet } from "@/lib/hooks";
 import {
   FileTextOutlined,
-  UserOutlined,
-  CheckCircleOutlined,
-  DollarOutlined,
-  ArrowUpOutlined,
   TeamOutlined,
   SolutionOutlined,
   SendOutlined,
 } from "@ant-design/icons";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from "recharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as RechartsTooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LabelList,
+} from "recharts";
 
 export interface StatisticsResponse {
   total_applications?: number;
@@ -23,6 +31,30 @@ export interface StatisticsResponse {
   paid_count?: number;
   [key: string]: unknown;
 }
+
+type OverallV1Response = {
+  message?: string;
+  error?: unknown;
+  status?: number;
+  data?: {
+    applications?: { total?: number; by_status?: Record<string, number> };
+    submissions?: { total?: number; by_status?: Record<string, number> };
+    applicants?: { total?: number; with_submission?: number };
+    examiners?: { total?: number; active?: number };
+  };
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Qoralama",
+  PUBLISHED: "E'lon qilingan",
+  CLOSED: "Yopilgan",
+  ARCHIVED: "Arxivlangan",
+  SUBMITTED: "Topshirilgan",
+  UNDER_REVIEW: "Tekshirilmoqda",
+  APPROVED: "Qabul qilingan",
+  REJECTED: "Rad etilgan",
+  WITHDRAWN: "Bekor qilingan",
+};
 
 const CHART_COLORS = ["#7367f0", "#52c41a", "#ff9f43", "#ea5455", "#00cfe8", "#28c76f", "#8b5cf6", "#06b6d4"];
 
@@ -51,17 +83,18 @@ const STAT_LABELS: Record<string, string> = {
   by_type: "Turi bo'yicha",
   status_breakdown: "Holat bo'yicha",
   application_breakdown: "Ariza bo'yicha",
+  by_application: "Ariza bo'yicha ekspertlar",
+  by_speciality: "Mutaxassislik bo'yicha topshiriqlar",
   monthly: "Oylik",
   by_month: "Oylar bo'yicha",
 };
 
 function getLabel(key: string): string {
-  return STAT_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function calculatePercentage(part: number, total: number): number {
-  if (total <= 0) return 0;
-  return Math.round((part / total) * 1000) / 10;
+  return (
+    STAT_LABELS[key] ||
+    STATUS_LABELS[key] ||
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 }
 
 function isBreakdownValue(value: unknown): value is Record<string, number> {
@@ -76,20 +109,159 @@ function breakdownToChartData(breakdown: Record<string, number>): { name: string
     .filter((d) => d.value > 0);
 }
 
+/** by_application: massiv yoki { key: number } — har bir item bo'yicha chart */
+type ByApplicationChartRow = { name: string; fullName: string; value: number };
+
+function byApplicationToChartData(raw: unknown): ByApplicationChartRow[] {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item, index) => {
+        if (item == null || typeof item !== "object" || Array.isArray(item)) return null;
+        const o = item as Record<string, unknown>;
+        const num = (k: string): number | null => {
+          const v = o[k];
+          if (typeof v === "number" && Number.isFinite(v)) return v;
+          if (typeof v === "string" && v.trim() !== "") {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : null;
+          }
+          return null;
+        };
+        const valueKeys = ["count", "value", "examiner_count", "examiners_count", "total", "number"];
+        let value: number | null = null;
+        for (const k of valueKeys) {
+          const n = num(k);
+          if (n != null && n > 0) {
+            value = n;
+            break;
+          }
+        }
+        if (value == null) return null;
+        if (!Number.isFinite(value) || value <= 0) return null;
+        const fullName =
+          String(o.application_title ?? o.title ?? o.name ?? o.label ?? o.application_name ?? "").trim() ||
+          String(o.application_id ?? o.id ?? `Ariza ${index + 1}`);
+        const name = fullName.length > 36 ? `${fullName.slice(0, 33)}…` : fullName;
+        return { name, fullName, value };
+      })
+      .filter((x): x is ByApplicationChartRow => x != null);
+  }
+  if (isBreakdownValue(raw)) {
+    return Object.entries(raw as Record<string, number>)
+      .map(([key, val]) => {
+        const value = Number(val);
+        if (!Number.isFinite(value) || value <= 0) return null;
+        const fullName = key;
+        const name = key.length > 36 ? `${key.slice(0, 33)}…` : key;
+        return { name, fullName, value };
+      })
+      .filter((x): x is ByApplicationChartRow => x != null);
+  }
+  return [];
+}
+
+/** by_speciality: /statistics/submissions/ — massiv itemlari bo'yicha bar chart */
+function bySpecialityToChartData(raw: unknown): ByApplicationChartRow[] {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item, index) => {
+        if (item == null || typeof item !== "object" || Array.isArray(item)) return null;
+        const o = item as Record<string, unknown>;
+        const num = (k: string): number | null => {
+          const v = o[k];
+          if (typeof v === "number" && Number.isFinite(v)) return v;
+          if (typeof v === "string" && v.trim() !== "") {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : null;
+          }
+          return null;
+        };
+        const valueKeys = [
+          "count",
+          "value",
+          "submission_count",
+          "submissions_count",
+          "total",
+          "number",
+        ];
+        let value: number | null = null;
+        for (const k of valueKeys) {
+          const n = num(k);
+          if (n != null && n > 0) {
+            value = n;
+            break;
+          }
+        }
+        if (value == null) return null;
+        const specialityName =
+          String(
+            o.speciality_name ??
+              o.speciality ??
+              o.specialty_name ??
+              o.name ??
+              o.title ??
+              o.label ??
+              ""
+          ).trim() ||
+          String(o.speciality_id ?? o.id ?? `Mutaxassislik ${index + 1}`);
+        const specialityCode = String(o.speciality_code ?? o.code ?? "").trim();
+        const fullName = specialityCode ? `${specialityName} (${specialityCode})` : specialityName;
+        const name = fullName.length > 36 ? `${fullName.slice(0, 33)}…` : fullName;
+        return { name, fullName, value };
+      })
+      .filter((x): x is ByApplicationChartRow => x != null);
+  }
+  if (isBreakdownValue(raw)) {
+    return byApplicationToChartData(raw);
+  }
+  return [];
+}
+
 export default function AdminPanelPage() {
   const { theme } = useThemeStore();
 
-  const { data: statisticsData, isLoading: statsLoading } = useGet<StatisticsResponse | { data: StatisticsResponse }>("/statistics/");
-  const raw = statisticsData as { data?: StatisticsResponse } | StatisticsResponse | undefined;
-  const stats: StatisticsResponse | undefined = (raw && typeof raw === "object" && "data" in raw && raw.data
-    ? raw.data
-    : raw) as StatisticsResponse | undefined;
-  const totalApplications = Number(stats?.total_applications ?? 0);
-  const totalSubmissions = Number(stats?.total_submissions ?? 0);
-  const approvedCount = Number(stats?.approved_count ?? 0);
-  const paidCount = Number(stats?.paid_count ?? 0);
-  const approvalRate = totalSubmissions > 0 ? calculatePercentage(approvedCount, totalSubmissions) : 0;
-  const paymentRate = totalSubmissions > 0 ? calculatePercentage(paidCount, totalSubmissions) : 0;
+  const { data: statisticsData, isLoading: statsLoading } = useGet<
+    StatisticsResponse | { data: StatisticsResponse } | OverallV1Response
+  >("/statistics/");
+  const raw = statisticsData as unknown as
+    | { data?: StatisticsResponse }
+    | StatisticsResponse
+    | OverallV1Response
+    | undefined;
+  const overall: OverallV1Response["data"] | undefined =
+    raw &&
+    typeof raw === "object" &&
+    "message" in raw &&
+    "data" in raw &&
+    (raw as OverallV1Response).data
+      ? (raw as OverallV1Response).data
+      : undefined;
+
+  const stats: StatisticsResponse | undefined =
+    overall
+      ? (overall as unknown as StatisticsResponse)
+      : raw && typeof raw === "object" && "data" in raw && !("message" in raw)
+        ? ((raw as { data?: StatisticsResponse }).data as StatisticsResponse | undefined)
+        : (raw as StatisticsResponse | undefined);
+
+  const totalApplications = Number(
+    (overall?.applications?.total ?? (stats as unknown as { total_applications?: number } | undefined)?.total_applications) ?? 0
+  );
+  const approvedCount = Number(
+    (overall?.submissions?.by_status?.APPROVED ??
+      (stats as unknown as { approved_count?: number } | undefined)?.approved_count) ?? 0
+  );
+  const paidCount = Number((stats as unknown as { paid_count?: number } | undefined)?.paid_count ?? 0);
+  void totalApplications;
+  void approvedCount;
+  void paidCount;
+
+  const submissionsByStatus =
+    (overall?.submissions?.by_status && isBreakdownValue(overall.submissions.by_status)
+      ? (overall.submissions.by_status as Record<string, number>)
+      : null) ?? null;
 
   const { data: applicantsData, isLoading: applicantsLoading } = useGet<Record<string, unknown> | { data: Record<string, unknown> }>("/statistics/applicants/");
   const { data: applicationsStatsData, isLoading: applicationsStatsLoading } = useGet<Record<string, unknown> | { data: Record<string, unknown> }>("/statistics/applications/");
@@ -174,73 +346,84 @@ export default function AdminPanelPage() {
         </div>
                 </div>
 
-      {/* Key Metrics Grid */}
-      {statsLoading ? (
-        <div className="flex justify-center py-12">
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              label: "Jami Arizalar",
-              value: totalApplications.toLocaleString(),
-              icon: <FileTextOutlined style={{ fontSize: "24px" }} />,
-              change: totalApplications > 0 ? `+${Math.round((totalApplications / 10) * 100) / 10}%` : "0%",
-              bg: "bg-blue-500/10",
-              textColor: "text-blue-500",
-            },
-            {
-              label: "Topshirilganlar",
-              value: totalSubmissions.toLocaleString(),
-              icon: <UserOutlined style={{ fontSize: "24px" }} />,
-              change: totalSubmissions > 0 ? `+${Math.round((totalSubmissions / 20) * 100) / 10}%` : "0%",
-              bg: "bg-purple-500/10",
-              textColor: "text-purple-500",
-            },
-            {
-              label: "Qabul qilingan",
-              value: String(approvedCount),
-              icon: <CheckCircleOutlined style={{ fontSize: "24px" }} />,
-              change: `${approvalRate}% qabul`,
-              bg: "bg-green-500/10",
-              textColor: "text-green-500",
-            },
-            {
-              label: "To'langan",
-              value: String(paidCount),
-              icon: <DollarOutlined style={{ fontSize: "24px" }} />,
-              change: `${paymentRate}% to'lov`,
-              bg: "bg-orange-500/10",
-              textColor: "text-orange-500",
-            },
-          ].map((stat, idx) => (
-            <div
-              key={idx}
-              className="rounded-xl p-6 transition-all duration-300 hover:shadow-lg"
-              style={{
-                background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-gray-400 text-sm font-medium mb-1">{stat.label}</div>
-                  <div className="text-2xl font-bold" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-                    {stat.value}
-                  </div>
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className={`text-xs font-bold ${stat.textColor}`}>{stat.change}</span>
-                    <ArrowUpOutlined className={`text-[10px] ${stat.textColor}`} />
+
+
+      {/* Submissions by_status — alohida chart (markazida total) */}
+      {!statsLoading && submissionsByStatus && (
+        <div className="rounded-xl p-6 transition-all duration-300" style={cardStyle}>
+          <div className="flex items-center justify-between mb-4">
+            <Title level={5} className="!mb-0" style={{ color: textColor }}>
+              Topshiriqlar holati
+            </Title>
+            <div className="text-gray-400 text-sm font-medium">
+              Jami: {Number(overall?.submissions?.total ?? Object.values(submissionsByStatus).reduce((s, v) => s + v, 0)).toLocaleString()}
+            </div>
+          </div>
+          {(() => {
+            const chartData = breakdownToChartData(submissionsByStatus);
+            const pieTotal = Number(overall?.submissions?.total ?? chartData.reduce((s, d) => s + d.value, 0));
+            if (chartData.length === 0) return null;
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div className="relative w-full" style={{ height: 280 }}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={70}
+                        outerRadius={105}
+                        paddingAngle={4}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                      >
+                        {chartData.map((_, i) => (
+                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        contentStyle={tooltipStyle}
+                        formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]}
+                        labelFormatter={(label) => label}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold leading-tight" style={{ color: textColor }}>
+                        {pieTotal.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-400 font-medium mt-0.5">Jami</div>
+                    </div>
                   </div>
                 </div>
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg} ${stat.textColor}`}>
-                  {stat.icon}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {chartData.map((item, i) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between rounded-lg px-4 py-3"
+                      style={{
+                        background: theme === "dark" ? "rgba(255,255,255,0.04)" : "#ffffff",
+                        border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid #e5e7eb",
+                      }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                        <span className={`text-sm font-medium truncate ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} title={item.name}>
+                          {item.name}
+                        </span>
+                      </div>
+                      <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>
+                        {item.value.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })()}
         </div>
       )}
 
@@ -271,17 +454,28 @@ export default function AdminPanelPage() {
                   {mainBreakdowns.map(({ key, data }) => {
                     const chartData = breakdownToChartData(data);
                     if (chartData.length === 0) return null;
+                    const pieTotal = chartData.reduce((sum, d) => sum + d.value, 0);
                     return (
                       <div key={key} className="rounded-xl p-6" style={cardStyle}>
                         <div className="text-gray-400 text-sm font-medium mb-4">{getLabel(key)}</div>
-                        <ResponsiveContainer width="100%" height={260}>
-                          <PieChart>
-                            <Pie data={chartData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" nameKey="name">
-                              {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />)}
-                            </Pie>
-                            <RechartsTooltip contentStyle={tooltipStyle} formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <div className="relative w-full" style={{ height: 260 }}>
+                          <ResponsiveContainer width="100%" height={260}>
+                            <PieChart>
+                              <Pie data={chartData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" nameKey="name">
+                                {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />)}
+                              </Pie>
+                              <RechartsTooltip contentStyle={tooltipStyle} formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold leading-tight" style={{ color: textColor }}>
+                                {pieTotal.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-gray-400 font-medium mt-0.5">Jami</div>
+                            </div>
+                          </div>
+                        </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
                           {chartData.map((item, i) => (
                             <div key={item.name} className="flex items-center gap-2">
@@ -294,24 +488,33 @@ export default function AdminPanelPage() {
                       </div>
                     );
                   })}
-                </div>
+              </div>
               )}
-            </div>
-          </div>
+              </div>
+              </div>
         );
       })()}
 
       {/* Statistics: applicants, applications, examiners, submissions — ketma ket, chartlar bilan */}
       {statsSections.map((section) => {
         const { scalars, breakdowns } = splitScalarsAndBreakdowns(section.data);
-        const hasContent = scalars.length > 0 || breakdowns.length > 0;
         const isExaminers = section.endpoint === "/statistics/examiners/";
-        const examinersChartFromScalars =
-          isExaminers &&
-          scalars
-            .filter(([key, v]) => typeof v === "number" && Number(v) > 0 && getLabel(key) !== "Jami")
-            .map(([key, value]) => ({ name: getLabel(key), value: Number(value) }));
-        const showExaminersPie = isExaminers && examinersChartFromScalars && examinersChartFromScalars.length > 0;
+        const isSubmissions = section.endpoint === "/statistics/submissions/";
+        const byApplicationChartData =
+          isExaminers && section.data
+            ? byApplicationToChartData(section.data.by_application)
+            : [];
+        const bySpecialityChartData =
+          isSubmissions && section.data
+            ? bySpecialityToChartData(section.data.by_speciality)
+            : [];
+        const breakdownsWithoutByApplication =
+          isExaminers ? breakdowns.filter((b) => b.key !== "by_application") : breakdowns;
+        const hasContent =
+          scalars.length > 0 ||
+          breakdownsWithoutByApplication.length > 0 ||
+          byApplicationChartData.length > 0 ||
+          bySpecialityChartData.length > 0;
         return (
           <div key={section.endpoint} className="space-y-4">
             <div className="flex items-center gap-2">
@@ -330,72 +533,123 @@ export default function AdminPanelPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {scalars.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {scalars.map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="rounded-xl p-4 transition-all duration-300 hover:shadow-md"
-                        style={{ ...cardStyle, border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)" }}
-                      >
-                        <div className="text-gray-400 text-xs font-medium mb-1 uppercase tracking-wider">
-                          {getLabel(key)}
-                        </div>
-                        <div className="text-xl font-bold" style={{ color: textColor }}>
-                          {typeof value === "number" ? value.toLocaleString() : value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {showExaminersPie && examinersChartFromScalars && (
+           
+                {isExaminers && byApplicationChartData.length > 0 && (
                   <div className="rounded-xl p-6 transition-all duration-300" style={cardStyle}>
                     <div className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">
-                      Ekspertlar taqsimoti
+                      {getLabel("by_application")}
                     </div>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <PieChart>
-                        <Pie
-                          data={examinersChartFromScalars}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={4}
-                          dataKey="value"
-                          nameKey="name"
-                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                        >
-                          {examinersChartFromScalars.map((_, index) => (
-                            <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="none" />
-                          ))}
-                        </Pie>
+                    <ResponsiveContainer width="100%" height={Math.min(420, 80 + byApplicationChartData.length * 36)}>
+                      <BarChart
+                        data={byApplicationChartData}
+                        layout="vertical"
+                        margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          horizontal={false}
+                          stroke={theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
+                        />
+                        <XAxis type="number" tick={{ fill: "#8b8b8b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={140}
+                          tick={{ fill: "#8b8b8b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
                         <RechartsTooltip
                           contentStyle={tooltipStyle}
-                          formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Son"]}
-                          labelFormatter={(label) => label}
+                          formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Ekspertlar soni"]}
+                          labelFormatter={(_, payload) =>
+                            payload?.[0]?.payload?.fullName ?? payload?.[0]?.payload?.name ?? ""
+                          }
                         />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
-                      {examinersChartFromScalars.map((item, index) => (
-                        <div key={item.name} className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                        <Bar dataKey="value" fill="#7367f0" radius={[0, 6, 6, 0]} barSize={18} name="Ekspertlar">
+                          <LabelList
+                            dataKey="value"
+                            position="right"
+                            formatter={(v: unknown) => (v != null && v !== "" ? String(v) : "")}
+                            style={{
+                              fill: theme === "dark" ? "#e5e7eb" : "#484650",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
                           />
-                          <span className="text-sm text-gray-400">{item.name}:</span>
-                          <span className="text-sm font-semibold" style={{ color: textColor }}>{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
-                {breakdowns.length > 0 && (
+                {isSubmissions && bySpecialityChartData.length > 0 && (
+                  <div className="rounded-xl p-6 transition-all duration-300" style={cardStyle}>
+                    <div className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">
+                      {getLabel("by_speciality")}
+                    </div>
+                    <ResponsiveContainer
+                      width="100%"
+                      height={Math.min(420, 80 + bySpecialityChartData.length * 36)}
+                    >
+                      <BarChart
+                        data={bySpecialityChartData}
+                        layout="vertical"
+                        margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          horizontal={false}
+                          stroke={theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
+                        />
+                        <XAxis
+                          type="number"
+                          tick={{ fill: "#8b8b8b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={140}
+                          tick={{ fill: "#8b8b8b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <RechartsTooltip
+                          contentStyle={tooltipStyle}
+                          formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Topshiriqlar soni"]}
+                          labelFormatter={(_, payload) =>
+                            payload?.[0]?.payload?.fullName ?? payload?.[0]?.payload?.name ?? ""
+                          }
+                        />
+                        <Bar
+                          dataKey="value"
+                          fill="#52c41a"
+                          radius={[0, 6, 6, 0]}
+                          barSize={18}
+                          name="Topshiriqlar"
+                        >
+                          <LabelList
+                            dataKey="value"
+                            position="right"
+                            formatter={(v: unknown) => (v != null && v !== "" ? String(v) : "")}
+                            style={{
+                              fill: theme === "dark" ? "#e5e7eb" : "#484650",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                {breakdownsWithoutByApplication.length > 0 && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {breakdowns.map(({ key, data }) => {
+                    {breakdownsWithoutByApplication.map(({ key, data }) => {
                       const chartData = breakdownToChartData(data);
                       if (chartData.length === 0) return null;
+                      const pieTotal = chartData.reduce((sum, d) => sum + d.value, 0);
                       return (
                         <div
                           key={key}
@@ -405,30 +659,40 @@ export default function AdminPanelPage() {
                           <div className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">
                             {getLabel(key)}
                           </div>
-                          <ResponsiveContainer width="100%" height={260}>
-                            <PieChart>
-                              <Pie
-                                data={chartData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={90}
-                                paddingAngle={4}
-                                dataKey="value"
-                                nameKey="name"
-                                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                              >
-                                {chartData.map((_, index) => (
-                                  <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="none" />
-                                ))}
-                              </Pie>
-                              <RechartsTooltip
-                                contentStyle={tooltipStyle}
-                                formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Son"]}
-                                labelFormatter={(label) => label}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <div className="relative w-full" style={{ height: 260 }}>
+                            <ResponsiveContainer width="100%" height={260}>
+                              <PieChart>
+                                <Pie
+                                  data={chartData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={60}
+                                  outerRadius={90}
+                                  paddingAngle={4}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                                >
+                                  {chartData.map((_, index) => (
+                                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="none" />
+                                  ))}
+                                </Pie>
+                                <RechartsTooltip
+                                  contentStyle={tooltipStyle}
+                                  formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Son"]}
+                                  labelFormatter={(label) => label}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold leading-tight" style={{ color: textColor }}>
+                                  {pieTotal.toLocaleString()}
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium mt-0.5">Jami</div>
+                              </div>
+              </div>
+            </div>
                           <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
                             {chartData.map((item, index) => (
                               <div key={item.name} className="flex items-center gap-2">
@@ -441,14 +705,14 @@ export default function AdminPanelPage() {
                               </div>
                             ))}
                           </div>
-                        </div>
+              </div>
                       );
                     })}
-                  </div>
+              </div>
                 )}
               </div>
             )}
-          </div>
+            </div>
         );
       })}
 

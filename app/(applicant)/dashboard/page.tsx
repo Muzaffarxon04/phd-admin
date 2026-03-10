@@ -186,19 +186,19 @@ export default function DashboardPage() {
           Bosh sahifa
         </Title>
         {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            {
+      <Breadcrumb
+        items={[
+          {
               href: "/dashboard",
-              title: (
+            title: (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, color: "rgb(115, 103, 240)" }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="align-text-top feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                </span>
-              ),
-            },
+              </span>
+            ),
+          },
             { title: <span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Bosh sahifa</span> },
-          ]}
-        />
+        ]}
+      />
       </div>
 
 
@@ -297,8 +297,8 @@ export default function DashboardPage() {
         
         .user-info-table .ant-table-container {
           background: transparent !important;
-        }
-      `}</style>
+          }
+        `}</style>
     </div>
   );
 }

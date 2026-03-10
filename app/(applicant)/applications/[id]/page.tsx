@@ -377,7 +377,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           if (createdId) {
             router.push(`/my-submissions/${createdId}`);
           } else {
-            router.push("/my-submissions");
+        router.push("/my-submissions");
           }
           Modal.destroyAll();
         };

@@ -75,10 +75,10 @@ export default function AdminSubmissionsPage() {
   const { data: submissionsData, isLoading, error } = useGet<{ data: { data: Submission[] } }>(submissionsUrl);
 
   const { data: applicationsData } = useGet<{ data: { data: ApplicationItem[] } }>("/admin/application/");
-
+  
   // Handle different response formats
   const submissions = useMemo(() => {
-    if (submissionsData) {
+  if (submissionsData) {
       if (Array.isArray(submissionsData?.data?.data)) {
         return submissionsData.data.data;
       } else if (submissionsData.data && Array.isArray(submissionsData.data.data)) {
@@ -381,7 +381,7 @@ export default function AdminSubmissionsPage() {
       key: "actions",
       render: (_, record) => (
         <div className="flex justify-center gap-2 py-2">
-          <Link href={`/admin-panel/submissions/${record.id}`}>
+        <Link href={`/admin-panel/submissions/${record.id}`}>
             <Button
               className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
                 ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
@@ -389,7 +389,7 @@ export default function AdminSubmissionsPage() {
                 }`}
               icon={<EyeOutlined style={{ fontSize: "18px" }} />}
             />
-          </Link>
+        </Link>
           <Button
             className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
               ? "bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white"
@@ -452,15 +452,15 @@ export default function AdminSubmissionsPage() {
 
     return (
       <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{
-          fontSize: "24px",
+        <h1 style={{ 
+          fontSize: "24px", 
           fontWeight: 700,
           marginBottom: 24,
           color: theme === "dark" ? "#ffffff" : "#1a1a1a"
         }}>
           Qabul Hujjatlari
         </h1>
-        <ErrorState
+        <ErrorState 
           description={errorMessage}
           onRetry={() => window.location.reload()}
         />

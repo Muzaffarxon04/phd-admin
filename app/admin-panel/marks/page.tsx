@@ -36,6 +36,19 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { marksApi, ApplicantMark, ApplicantMarkCreate, ApplicantMarkUpdate } from "@/lib/api/marks";
 import { adminApi, type ApplicationSubmissionListResponse } from "@/lib/api/admin";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  LabelList,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const { Option } = Select;
 
@@ -413,45 +426,184 @@ export default function MarksPage() {
               ))}
             </div>
 
-      
-
-
-            {/* By Mark Type */}
-            {statistics.by_mark_type && Object.keys(statistics.by_mark_type).length > 0 && (
-              <div className="rounded-xl p-6 transition-all duration-300"
-                style={{
-                  background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
-                  border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                }}
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                    style={{ background: "#7367f015", color: "#7367f0" }}
-                  >
-                    <BarChartOutlined />
+            {/* Active / Inactive — Pie chart (by_mark_type tepasida) */}
+            {statistics && (() => {
+              const statsRecord = statistics as { active_marks?: number; inactive_marks?: number };
+              let active = Number(statsRecord.active_marks);
+              let inactive = Number(statsRecord.inactive_marks);
+              if (!Number.isFinite(active)) active = 0;
+              if (!Number.isFinite(inactive)) inactive = 0;
+              if (active === 0 && inactive === 0 && marksData?.results?.length) {
+                active = marksData.results.filter((m) => m.is_active === true).length;
+                inactive = marksData.results.filter((m) => m.is_active === false).length;
+              }
+              const pieData = [
+                { name: "Faol (active)", value: active, color: "#52c41a" },
+                { name: "Nofaol (inactive)", value: inactive, color: "#8b8b8b" },
+              ].filter((d) => d.value > 0);
+              if (pieData.length === 0) return null;
+              const tooltipStyle = {
+                borderRadius: "12px",
+                border: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                background: theme === "dark" ? "rgb(30, 38, 60)" : "#ffffff",
+              };
+              return (
+                <div
+                  className="rounded-xl p-6 transition-all duration-300"
+                  style={{
+                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <div className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">
+                    Faol / Nofaol baholar
                   </div>
-                  <div>
-                    <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">Baholar turi bo&apos;yicha</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                  {Object.entries(statistics.by_mark_type).map(([markType, count]) => (
-                    <div
-                      key={markType}
-                      className="rounded-lg p-4"
-                      style={{
-                        background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "#ffffff",
-                        border: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid #e5e7eb",
-                      }}
-                    >
-                      <div className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">{markType}</div>
-                      <div className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{count}</div>
+                  <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative w-full max-w-[280px]" style={{ height: 240 }}>
+                      <ResponsiveContainer width="100%" height={240}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={85}
+                            paddingAngle={2}
+                            dataKey="value"
+                            nameKey="name"
+                            label={({ name, percent }) =>
+                              `${String(name ?? "").split(" ")[0] || "—"} ${((percent ?? 0) * 100).toFixed(0)}%`
+                            }
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={index} fill={entry.color} stroke="none" />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip
+                            contentStyle={tooltipStyle}
+                            formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center">
+                          <div
+                            className="text-2xl font-bold leading-tight"
+                            style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}
+                          >
+                            {pieData.reduce((s, d) => s + d.value, 0).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-400 font-medium mt-0.5">Jami</div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                    <div className="flex flex-col gap-3 flex-1">
+                      {pieData.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between rounded-lg px-4 py-3"
+                          style={{
+                            background: theme === "dark" ? "rgba(255,255,255,0.04)" : "#ffffff",
+                            border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid #e5e7eb",
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full shrink-0" style={{ background: item.color }} />
+                            <span className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                              {item.name}
+                            </span>
+                          </div>
+                          <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>
+                            {item.value.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
+
+            {/* By Mark Type — alohida chart */}
+            {statistics.by_mark_type && Object.keys(statistics.by_mark_type).length > 0 && (() => {
+              const byMarkTypeChartData = Object.entries(statistics.by_mark_type).map(([name, value]) => ({
+                name: name.length > 32 ? `${name.slice(0, 29)}…` : name,
+                fullName: name,
+                value: Number(value) || 0,
+              })).filter((d) => d.value > 0);
+              const tooltipStyle = {
+                borderRadius: "12px",
+                border: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                background: theme === "dark" ? "rgb(30, 38, 60)" : "#ffffff",
+              };
+              return (
+                <div
+                  className="rounded-xl p-6 transition-all duration-300"
+                  style={{
+                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
+                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+                      style={{ background: "#7367f015", color: "#7367f0" }}
+                    >
+                      <BarChartOutlined />
+                    </div>
+                    <div>
+                      <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">Baholar turi bo&apos;yicha</div>
+                      <div className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                        Alohida diagramma — har bir tur bo&apos;yicha son
+                      </div>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={Math.min(400, 100 + byMarkTypeChartData.length * 40)}>
+                    <BarChart
+                      data={byMarkTypeChartData}
+                      layout="vertical"
+                      margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        horizontal={false}
+                        stroke={theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
+                      />
+                      <XAxis type="number" tick={{ fill: "#8b8b8b", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={120}
+                        tick={{ fill: "#8b8b8b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <RechartsTooltip
+                        contentStyle={tooltipStyle}
+                        formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Baholar soni"]}
+                        labelFormatter={(_, payload) =>
+                          (payload?.[0]?.payload as { fullName?: string })?.fullName ?? ""
+                        }
+                      />
+                      <Bar dataKey="value" fill="#7367f0" radius={[0, 6, 6, 0]} barSize={20} name="Son">
+                        <LabelList
+                          dataKey="value"
+                          position="right"
+                          formatter={(v: unknown) => (v != null && v !== "" ? String(v) : "")}
+                          style={{
+                            fill: theme === "dark" ? "#e5e7eb" : "#484650",
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })()}
           </div>
         )}
       </Modal>
