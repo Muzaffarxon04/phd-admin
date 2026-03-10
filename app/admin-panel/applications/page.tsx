@@ -437,6 +437,7 @@ export default function AdminApplicationsPage() {
           rowKey="id"
           locale={{ emptyText: "Hozircha arizalar mavjud emas" }}
           className="custom-admin-table"
+          scroll={{ x: "max-content" }}
           pagination={{
             current: currentPage,
             pageSize: pageSize,

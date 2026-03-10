@@ -370,6 +370,7 @@ export default function SpecialitiesPage() {
           loading={isLoading}
           rowKey="id"
           className="custom-admin-table"
+          scroll={{ x: "max-content" }}
           pagination={{
             current: currentPage,
             pageSize,

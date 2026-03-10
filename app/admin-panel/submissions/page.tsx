@@ -530,7 +530,7 @@ export default function AdminSubmissionsPage() {
           <div className="text-gray-400 text-sm font-medium">Barcha talabgorlar arizalari ro&apos;yxati</div>
         </div>
 
-        <div className="flex items-start gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <Input
             placeholder="Qidirish..."
             className="pl-9 pr-4 py-2 w-64 h-[40px] rounded-xl transition-all duration-300"
@@ -618,6 +618,7 @@ export default function AdminSubmissionsPage() {
           loading={isLoading}
           locale={{ emptyText: "Arizalar mavjud emas" }}
           className="custom-admin-table"
+          scroll={{ x: "max-content" }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

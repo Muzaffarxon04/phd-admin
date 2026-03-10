@@ -12,9 +12,10 @@ const { Title } = Typography;
 const { Option } = Select;
 
 interface Application {
-    id: number;
+    application_id: number;
+    application_title: string;
     title: string;
-    application_specialities: Speciality[];
+    specialities: Speciality[];
 }
 
 export default function GuvohnomaPage() {
@@ -101,7 +102,7 @@ export default function GuvohnomaPage() {
                                 onChange={(value) => {
                                     setSelectedApplication(value);
                                     setSelectedSpeciality(undefined);
-                                    setSelectedApplications(applications?.find(app => app.id.toString() === value)?.application_specialities || []);
+                                    setSelectedApplications(applications?.find(app => app.application_id.toString() === value)?.specialities || []);
                                 }}
                                 value={selectedApplication}
                                 dropdownStyle={{
@@ -109,8 +110,8 @@ export default function GuvohnomaPage() {
                                 }}
                             >
                                 {applications.map((app) => (
-                                    <Option key={app.id} value={app.id.toString()}>
-                                        {app.title}
+                                    <Option key={app.application_id} value={app.application_id.toString()}>
+                                        {app.application_title}
                                     </Option>
                                 ))}
                             </Select>
