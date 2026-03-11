@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Form, Input, InputNumber, DatePicker, App, Button, Space, Card, Switch, Select, Upload } from "antd";
 import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
@@ -51,6 +51,15 @@ export default function CreateApplicationPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [dragFieldIndex, setDragFieldIndex] = useState<number | null>(null);
   const [dragOverFieldIndex, setDragOverFieldIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (dragFieldIndex !== null) {
+      document.body.style.cursor = "grabbing";
+      return () => {
+        document.body.style.cursor = "";
+      };
+    }
+  }, [dragFieldIndex]);
 
   // Fetch specialities and examiners
   const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
@@ -238,11 +247,11 @@ export default function CreateApplicationPage() {
                   </Button>
                 </div>
                 {fields.map(({ key, name, ...restField }, index) => (
-                  <div key={key}>
+                  <div key={key} className="cursor-grab">
                     <Space
-                      style={{ display: "flex", marginBottom: 8 }}
+                      style={{ display: "flex", marginBottom: 8, cursor: "grab" }}
                       align="baseline"
-                      className="w-full"
+                      className="w-full rounded-md py-2 px-3 -mx-3 transition-colors hover:bg-gray-100/80"
                       draggable
                       onDragStart={() => setDragFieldIndex(index)}
                       onDragOver={(e) => {
