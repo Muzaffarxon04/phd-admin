@@ -59,7 +59,6 @@ interface ProfileFormValues {
   birth_date?: string;
   birth_place?: string;
   citizen?: string;
-  phone_number?: string;
   nation?: string;
   permanent_address?: string;
   pinfl?: string;
@@ -249,7 +248,6 @@ export default function DashboardPage() {
                   birth_date: (currentUser.birth_date ?? "") || undefined,
                   birth_place: (currentUser.birth_place ?? "") || undefined,
                   citizen: (currentUser.citizen ?? currentUser.citizenship ?? "") || undefined,
-                  phone_number: (currentUser.phone_number ?? "") || undefined,
                   nation: (currentUser.nation ?? currentUser.nationality ?? "") || undefined,
                   permanent_address: (currentUser.permanent_address ?? "") || undefined,
                   pinfl: (currentUser.pinfl ?? "") || undefined,
@@ -313,9 +311,6 @@ export default function DashboardPage() {
             </Form.Item>
             <Form.Item name="email" label="Email">
               <Input placeholder="user@example.com" />
-            </Form.Item>
-            <Form.Item name="phone_number" label="Telefon">
-              <Input placeholder="+998..." />
             </Form.Item>
             <Form.Item name="organization" label="Tashkilot">
               <Input placeholder="Tashkilot" />
