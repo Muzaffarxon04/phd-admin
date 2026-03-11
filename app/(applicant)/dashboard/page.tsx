@@ -241,8 +241,12 @@ export default function DashboardPage() {
             icon={<EditOutlined />}
             onClick={() => {
               if (currentUser) {
+                const computedFullName =
+                  (currentUser.full_name && currentUser.full_name.trim().length > 0
+                    ? currentUser.full_name
+                    : `${currentUser.last_name ?? ""} ${currentUser.first_name ?? ""} ${currentUser.middle_name ?? ""}`.trim()) || "";
                 form.setFieldsValue({
-                  full_name: (currentUser.full_name ?? "") || undefined,
+                  full_name: computedFullName || undefined,
                   email: (currentUser.email ?? "") || undefined,
                   organization: (currentUser.organization ?? "") || undefined,
                   birth_date: (currentUser.birth_date ?? "") || undefined,
