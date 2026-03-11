@@ -53,7 +53,9 @@ interface User {
 }
 
 interface ProfileFormValues {
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  middle_name?: string;
   email?: string;
   organization?: string;
   birth_date?: string;
@@ -242,12 +244,10 @@ export default function DashboardPage() {
             icon={<EditOutlined />}
             onClick={() => {
               if (currentUser) {
-                const computedFullName =
-                  (currentUser.full_name && currentUser.full_name.trim().length > 0
-                    ? currentUser.full_name
-                    : `${currentUser.last_name ?? ""} ${currentUser.first_name ?? ""} ${currentUser.middle_name ?? ""}`.trim()) || "";
                 form.setFieldsValue({
-                  full_name: computedFullName || undefined,
+                  first_name: (currentUser.first_name ?? "") || undefined,
+                  last_name: (currentUser.last_name ?? "") || undefined,
+                  middle_name: (currentUser.middle_name ?? "") || undefined,
                   email: (currentUser.email ?? "") || undefined,
                   organization: (currentUser.organization ?? "") || undefined,
                   birth_date: (currentUser.birth_date ?? "") || undefined,
@@ -311,8 +311,14 @@ export default function DashboardPage() {
       >
         <Form form={form} layout="vertical" onFinish={handleSaveProfile}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Form.Item name="full_name" label="F.I.SH.">
-              <Input placeholder="F.I.SH." />
+            <Form.Item name="first_name" label="Ism">
+              <Input placeholder="Ism" />
+            </Form.Item>
+            <Form.Item name="last_name" label="Familiya">
+              <Input placeholder="Familiya" />
+            </Form.Item>
+            <Form.Item name="middle_name" label="Otasining ismi">
+              <Input placeholder="Otasining ismi" />
             </Form.Item>
             <Form.Item name="email" label="Email">
               <Input placeholder="user@example.com" />
@@ -335,15 +341,18 @@ export default function DashboardPage() {
             <Form.Item name="permanent_address" label="Doimiy manzil">
               <Input placeholder="Doimiy manzil" />
             </Form.Item>
-            <Form.Item name="pinfl" label="PINFL">
-              <Input placeholder="PINFL" />
-            </Form.Item>
-            <Form.Item name="passport_seria" label="Pasport seriya">
-              <Input placeholder="AA" />
-            </Form.Item>
-            <Form.Item name="passport_number" label="Pasport raqami">
-              <Input placeholder="1234567" />
-            </Form.Item>
+
+            <div className="md:col-span-2 flex flex-col md:flex-row gap-4">
+              <Form.Item name="passport_seria" label="Seriya" className="md:w-24">
+                <Input placeholder="AA" maxLength={2} />
+              </Form.Item>
+              <Form.Item name="passport_number" label="Pasport raqami" className="md:w-40">
+                <Input placeholder="1234567" maxLength={9} />
+              </Form.Item>
+              <Form.Item name="pinfl" label="PINFL" className="flex-1">
+                <Input placeholder="PINFL" maxLength={14} />
+              </Form.Item>
+            </div>
           </div>
         </Form>
       </Modal>
