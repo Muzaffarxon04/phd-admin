@@ -522,18 +522,19 @@ export default function AdminSubmissionsPage() {
   return (
     <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col justify-between md:flex-row md:items-center  gap-4">
+        <div className="flex flex-col gap-2">
           <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Qabul Hujjatlari
           </Title>
           <div className="text-gray-400 text-sm font-medium">Barcha talabgorlar arizalari ro&apos;yxati</div>
         </div>
 
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="flex  flex-1 flex-wrap justify-end items-start gap-3">
           <Input
+          
             placeholder="Qidirish..."
-            className="pl-9 pr-4 py-2 w-64 h-[40px] rounded-xl transition-all duration-300"
+            className="pl-9 pr-4 py-2  h-[40px] rounded-xl transition-all duration-300 w-[230px]!"
             style={{
               background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
               border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
@@ -561,6 +562,11 @@ export default function AdminSubmissionsPage() {
 
           <Select
             allowClear
+            showSearch
+            optionFilterProp="label"
+            filterOption={(input, option) =>
+              (option?.label ?? "").toString().toLowerCase().includes(input.toLowerCase())
+            }
             className="w-56 premium-select"
             placeholder="Ariza (campaign) bo'yicha"
             value={applicationFilter === "all" ? undefined : applicationFilter}
