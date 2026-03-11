@@ -1051,6 +1051,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   type="primary"
                   htmlType="submit"
                   loading={isCreating}
+                  disabled={!application.fields || application.fields.length === 0}
                   icon={<SendOutlined />}
                   className="h-[50px] text-lg font-bold rounded-xl border-0 shadow-lg"
                   style={{
