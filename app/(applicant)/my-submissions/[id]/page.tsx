@@ -224,24 +224,24 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     }
   );
 
-  const { mutate: downloadGuvohnoma, isPending: isDownloading } = useDownload(
-    `/pdf/submission-marks/${submissionId}/generate-guvohnoma/`,
-    `guvohnoma-${submission?.submission_number || "certificate"}.pdf`,
-    {
-    onSuccess: () => {
-        message.success("Guvohnoma yuklanmoqda...");
-    },
-    onError: (error) => {
-        const data = error.data as { error?: string; message?: string } | undefined;
-        const errorMessage =
-          data?.error ||
-          data?.message ||
-          error.message ||
-          "Guvohnomani yuklashda xatolik";
-        message.error(errorMessage);
-      },
-    }
-  );
+  // const { mutate: downloadGuvohnoma, isPending: isDownloading } = useDownload(
+  //   `/pdf/submission-marks/${submissionId}/generate-guvohnoma/`,
+  //   `guvohnoma-${submission?.submission_number || "certificate"}.pdf`,
+  //   {
+  //   onSuccess: () => {
+  //       message.success("Guvohnoma yuklanmoqda...");
+  //   },
+  //   onError: (error) => {
+  //       const data = error.data as { error?: string; message?: string } | undefined;
+  //       const errorMessage =
+  //         data?.error ||
+  //         data?.message ||
+  //         error.message ||
+  //         "Guvohnomani yuklashda xatolik";
+  //       message.error(errorMessage);
+  //     },
+  //   }
+  // );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);

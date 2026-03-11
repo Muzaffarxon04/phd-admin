@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import { Card, Spin, Tag, Button, Descriptions, Modal, Form, Input, InputNumber, Select, Switch, Space, App, Row, Col, DatePicker, Radio, Checkbox, Upload } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
-import { useGet, usePut, usePost } from "@/lib/hooks";
+import { useGet, usePost } from "@/lib/hooks";
 import { apiRequest, usePatch } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
