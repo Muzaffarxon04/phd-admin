@@ -904,9 +904,15 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                                     : "#e5e7eb",
                               borderStyle: dragOverFieldId === field.id ? "dashed" : "solid",
                             }}
+                            
                             extra={
-                              <Space>
-                                <HolderOutlined style={{ cursor: "grab", fontSize: 22, color: "#9ca3af" }} />
+                              <Space >
+                           
+                       <div className="flex absolute left-2 xl:left-[47%] top-4  items-center ">
+                       <HolderOutlined  style={{ cursor: "grab", fontSize: 22, color: "#9ca3af" }} />
+                       <HolderOutlined  style={{ cursor: "grab", fontSize: 22, color: "#9ca3af" }} />
+                       <HolderOutlined  style={{ cursor: "grab", fontSize: 22, color: "#9ca3af" }} />
+                       </div>
                                 <Button
                                   type="primary"
                                   size="small"
@@ -925,6 +931,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                                 >
                                   O&apos;chirish
                                 </Button>
+                       
                               </Space>
                             }
                           >
