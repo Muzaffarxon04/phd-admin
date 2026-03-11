@@ -70,7 +70,7 @@ interface ProfileFormValues {
 
 export default function DashboardPage() {
   const savedUser = tokenStorage.getUser() as User | null;
-  const { data: userData, isLoading } = useGet<User>("/applicant/profile/");
+  const { data: userData, isLoading, refetch } = useGet<User>("/applicant/profile/");
   const patchProfile = usePatch("/applicant/profile/");
   const { theme } = useThemeStore();
 
@@ -188,6 +188,7 @@ export default function DashboardPage() {
   const handleSaveProfile = async (values: ProfileFormValues) => {
     try {
       await patchProfile.mutateAsync(values);
+      await refetch();
       message.success("Profil muvaffaqiyatli yangilandi");
       setIsEditing(false);
       setIsProfileModalOpen(false);
