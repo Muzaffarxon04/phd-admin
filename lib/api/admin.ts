@@ -170,7 +170,7 @@ export const adminApi = {
     return apiRequest<ApplicationDetail>(
       `/admin/application/${id}/update/`,
       {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(data),
       }
     );

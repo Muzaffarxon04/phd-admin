@@ -809,17 +809,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
                     {submission.status === "APPROVED" && (
                       <div className="text-center py-4">
-                        <Text type="success" strong className="block mb-3">Arizangiz tasdiqlandi</Text>
-                        <Button
-                          type="primary"
-                          icon={<DownloadOutlined />}
-                          onClick={() => downloadGuvohnoma()}
-                          loading={isDownloading}
-                          block
-                          className="h-[40px] rounded-lg shadow-none bg-green-600 hover:bg-green-500"
-                        >
-                          Guvohnomani yuklash
-                        </Button>
+                        <Text type="success" strong className="block">Arizangiz tasdiqlandi</Text>
                       </div>
                     )}
 

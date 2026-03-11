@@ -5,7 +5,7 @@ import { Card, Spin, Tag, Button, Descriptions, Modal, Form, Input, InputNumber,
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useGet, usePut, usePost } from "@/lib/hooks";
-import { apiRequest } from "@/lib/hooks/useUniversalFetch";
+import { apiRequest, usePatch } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
@@ -283,7 +283,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];
 
-  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<
+  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePatch<
     { data: Application },
     Partial<Omit<Application, "specialities">> & { speciality_examiners?: ApplicationSpecialityForm[] }
   >(`/admin/application/${id}/update/`, {
