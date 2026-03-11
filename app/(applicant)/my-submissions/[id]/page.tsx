@@ -30,7 +30,7 @@ import {
   useGet,
   usePost,
   useUploadPatch,
-  useDownload,
+  // useDownload,
   // usePatch, 
 } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
@@ -187,7 +187,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   const { data: response, isLoading } = useGet<{ data: Submission }>(`/applicant/my-submissions/${id}/`);
   const submission = response?.data;
   // console.log(submission);
-  const submissionId = submission?.id;
+  // const submissionId = submission?.id;
   const { mutate: submitSubmission, isPending: isSubmitting } = usePost(`/applicant/submissions/${id}/submit/`, {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/applicant/my-submissions/${id}/`] });
@@ -607,7 +607,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
       <div className=" mx-auto pt-6">
         {/* Timeline */}
-        <Card className="!mb-6 border-0" style={cardStyle} bodyStyle={{ padding: "32px 24px" }}>
+        <Card className="mb-6! border-0" style={cardStyle} bodyStyle={{ padding: "32px 24px" }}>
           <Steps
             current={activeStep}
             size="small"
@@ -687,7 +687,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 description={submission.review_notes}
                 type={submission.status === 'REJECTED' ? 'error' : 'info'}
                 showIcon
-                className="!mb-6 rounded-lg border-0 "
+                className="mb-6! rounded-lg border-0 "
                 style={{
                   backgroundColor: submission.status === 'REJECTED' ? (theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2') : (theme === 'dark' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff'),
                   color: theme === 'dark' ? '#e5e7eb' : '#1f2937'
@@ -783,7 +783,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                 </Card>
 
                 {/* Actions */}
-                <Card className="border-0 !mt-4" style={cardStyle} bodyStyle={{ padding: "20px" }}>
+                <Card className="border-0 mt-4!" style={cardStyle} bodyStyle={{ padding: "20px" }}>
                   <div className="flex flex-col gap-3">
                     {submission.status === "DRAFT" && (
                       <>
