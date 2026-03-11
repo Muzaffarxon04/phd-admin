@@ -9,6 +9,7 @@ import {
   Input,
   message,
   Typography,
+  Button,
 } from "antd";
 
 import { useState } from "react";
@@ -16,55 +17,70 @@ import { useState } from "react";
 import { useGet, usePatch } from "@/lib/hooks";
 import { tokenStorage, getRoleDisplayLabel } from "@/lib/utils";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import { EditOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 
 /* ================= TYPES ================= */
 
 interface User {
-  id: number;
-  phone_number: string;
-  email?: string;
-  first_name: string;
-  last_name: string;
+  id?: number;
+  phone_number?: string | null;
+  email?: string | null;
+  first_name?: string;
+  last_name?: string;
   middle_name?: string;
-  full_name: string;
-  role: string;
-  is_verified: boolean;
+  full_name?: string | null;
+  role?: string;
+  is_verified?: boolean;
   photo?: string | null;
-  profile_completion: number;
-  date_joined: string;
-  last_login: string;
-  birth_date?: string;
-  birth_place?: string;
-  citizenship?: string;
-  nationality?: string;
-  permanent_address?: string;
-  pinfl?: string;
-  organization?: string;
+  profile_completion?: number;
+  date_joined?: string;
+  last_login?: string;
+  birth_date?: string | null;
+  birth_place?: string | null;
+  citizenship?: string | null;
+  citizen?: string | null;
+  nationality?: string | null;
+  nation?: string | null;
+  permanent_address?: string | null;
+  pinfl?: string | null;
+  organization?: string | null;
+  passport_seria?: string | null;
+  passport_number?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface ProfileFormValues {
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
+  full_name?: string;
   email?: string;
-  phone_number: string;
+  organization?: string;
+  birth_date?: string;
+  birth_place?: string;
+  citizen?: string;
+  phone_number?: string;
+  nation?: string;
+  permanent_address?: string;
+  pinfl?: string;
+  passport_seria?: string;
+  passport_number?: string;
 }
 
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
   const savedUser = tokenStorage.getUser() as User | null;
-  const { data: userData, isLoading } = useGet<User>("/auth/me/");
-  const patchProfile = usePatch("/auth/update-profile/");
+  const { data: userData, isLoading } = useGet<User>("/applicant/profile/");
+  const patchProfile = usePatch("/applicant/profile/");
   const { theme } = useThemeStore();
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [, setIsEditing] = useState(false);
   const [form] = Form.useForm<ProfileFormValues>();
 
-  const currentUser = userData || savedUser;
+  const apiUser = (userData as unknown as { data?: User } | undefined)?.data ?? userData;
+  const currentUser = apiUser || savedUser;
 
   const fullName =
     currentUser?.full_name ||
@@ -77,7 +93,7 @@ export default function DashboardPage() {
     {
       key: "1",
       label: "F.I.SH.",
-      value: fullName.toUpperCase(),
+      value: (fullName || "Kiritilmagan").toUpperCase(),
     },
     {
       key: "2",
@@ -107,7 +123,7 @@ export default function DashboardPage() {
     {
       key: "7",
       label: "Fuqarolik",
-      value: currentUser?.citizenship || "O'ZBEKISTON",
+      value: currentUser?.citizen || currentUser?.citizenship || "Kiritilmagan",
     },
     {
       key: "8",
@@ -117,7 +133,7 @@ export default function DashboardPage() {
     {
       key: "9",
       label: "Millati",
-      value: currentUser?.nationality || "O'ZBEK",
+      value: currentUser?.nation || currentUser?.nationality || "Kiritilmagan",
     },
     {
       key: "10",
@@ -129,6 +145,17 @@ export default function DashboardPage() {
       label: "PINFL",
       value: currentUser?.pinfl || "Kiritilmagan",
     },
+    {
+      key: "12",
+      label: "Pasport seriya",
+      value: currentUser?.passport_seria || "Kiritilmagan",
+    },
+    {
+      key: "13",
+      label: "Pasport raqami",
+      value: currentUser?.passport_number || "Kiritilmagan",
+    },
+   
   ];
 
   const columns = [
@@ -182,7 +209,7 @@ export default function DashboardPage() {
     <div style={{ minHeight: "100vh" }}>
       {/* Page Title */}
       <div className="mb-4 flex items-center gap-4">
-        <Title level={4} className="!text-[24px]  mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+        <Title level={4} className="text-[24px]!  mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
           Bosh sahifa
         </Title>
         {/* Breadcrumb */}
@@ -209,6 +236,37 @@ export default function DashboardPage() {
           <span style={{ fontSize: "20px", fontWeight: 500, color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Foydalanuvchi malumotlari
           </span>
+        }
+        extra={
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              if (currentUser) {
+                form.setFieldsValue({
+                  full_name: (currentUser.full_name ?? "") || undefined,
+                  email: (currentUser.email ?? "") || undefined,
+                  organization: (currentUser.organization ?? "") || undefined,
+                  birth_date: (currentUser.birth_date ?? "") || undefined,
+                  birth_place: (currentUser.birth_place ?? "") || undefined,
+                  citizen: (currentUser.citizen ?? currentUser.citizenship ?? "") || undefined,
+                  phone_number: (currentUser.phone_number ?? "") || undefined,
+                  nation: (currentUser.nation ?? currentUser.nationality ?? "") || undefined,
+                  permanent_address: (currentUser.permanent_address ?? "") || undefined,
+                  pinfl: (currentUser.pinfl ?? "") || undefined,
+                  passport_seria: (currentUser.passport_seria ?? "") || undefined,
+                  passport_number: (currentUser.passport_number ?? "") || undefined,
+                });
+              }
+              setIsProfileModalOpen(true);
+            }}
+            className="h-[40px] px-4 rounded-xl border-0 shadow-sm font-medium flex items-center gap-2"
+            style={{
+              background: theme === "dark" ? "rgba(115, 103, 240, 0.2)" : "rgba(115, 103, 240, 0.12)",
+              color: "#7367f0",
+            }}
+          >
+            Tahrirlash
+          </Button>
         }
         style={{
           borderRadius: 6,
@@ -245,23 +303,48 @@ export default function DashboardPage() {
         title="Profilni tahrirlash"
         onCancel={() => setIsProfileModalOpen(false)}
         onOk={() => form.submit()}
+        width={900}
+        style={{ maxWidth: "calc(100vw - 32px)" }}
       >
         <Form form={form} layout="vertical" onFinish={handleSaveProfile}>
-          <Form.Item name="first_name" label="Ism" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="last_name" label="Familiya" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="middle_name" label="Sharif">
-            <Input />
-          </Form.Item>
-          <Form.Item name="email" label="Email">
-            <Input />
-          </Form.Item>
-          <Form.Item name="phone_number" label="Telefon" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item name="full_name" label="F.I.SH.">
+              <Input placeholder="F.I.SH." />
+            </Form.Item>
+            <Form.Item name="email" label="Email">
+              <Input placeholder="user@example.com" />
+            </Form.Item>
+            <Form.Item name="phone_number" label="Telefon">
+              <Input placeholder="+998..." />
+            </Form.Item>
+            <Form.Item name="organization" label="Tashkilot">
+              <Input placeholder="Tashkilot" />
+            </Form.Item>
+            <Form.Item name="birth_date" label="Tug'ilgan sana">
+              <Input type="date" />
+            </Form.Item>
+            <Form.Item name="birth_place" label="Tug'ilgan joy">
+              <Input placeholder="Tug'ilgan joy" />
+            </Form.Item>
+            <Form.Item name="citizen" label="Fuqarolik">
+              <Input placeholder="Fuqarolik" />
+            </Form.Item>
+            <Form.Item name="nation" label="Millat">
+              <Input placeholder="Millat" />
+            </Form.Item>
+            <Form.Item name="permanent_address" label="Doimiy manzil">
+              <Input placeholder="Doimiy manzil" />
+            </Form.Item>
+            <Form.Item name="pinfl" label="PINFL">
+              <Input placeholder="PINFL" />
+            </Form.Item>
+            <Form.Item name="passport_seria" label="Pasport seriya">
+              <Input placeholder="AA" />
+            </Form.Item>
+            <Form.Item name="passport_number" label="Pasport raqami">
+              <Input placeholder="1234567" />
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 
