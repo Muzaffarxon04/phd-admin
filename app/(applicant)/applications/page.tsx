@@ -256,7 +256,7 @@ function ApplicationsPage() {
       <div className="mx-auto">
         {/* Page Title & Breadcrumb */}
         <div className="mb-8 flex items-center gap-4">
-          <Title level={4} className="!text-[24px] mb-0! border-r-1 border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          <Title level={4} className="text-[24px]! mb-0! border-r! border-[rgb(214,220,225)] pr-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
             Mavjud Arizalar
           </Title>
           <Breadcrumb
