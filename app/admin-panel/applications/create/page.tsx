@@ -211,7 +211,6 @@ export default function CreateApplicationPage() {
         
 
           <Form.Item
-          className="w-[400px]!"
             name="application_fee"
             label="Ariza tolovi (UZS)"
             rules={[
@@ -373,22 +372,24 @@ export default function CreateApplicationPage() {
                               {examinerFields.map((examinerField) => {
                                 const { key: fieldKey, ...restExaminerField } = examinerField;
                                 return (
-                                  <div key={fieldKey} className="flex items-start gap-2 ">
+                                  <div
+                                    key={fieldKey}
+                                    className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] gap-2 items-start"
+                                  >
                                     <Form.Item
                                       {...restExaminerField}
                                       name={[examinerField.name, "examiner_id"]}
                                       rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
-                                      className="flex-1"
                                     >
                                       <Select
-                                        className="w-[400px]!"
+                                        className="w-full"
                                         placeholder="Imtihonchini tanlang"
                                         showSearch
                                         optionFilterProp="children"
                                       >
                                         {examinersList.map((e: Examiner) => (
                                           <Select.Option key={e.id} value={e.id}>
-                                            {e.full_name} 
+                                            {e.full_name}
                                           </Select.Option>
                                         ))}
                                       </Select>
@@ -398,17 +399,19 @@ export default function CreateApplicationPage() {
                                       name={[examinerField.name, "role"]}
                                       rules={[{ required: true, message: "Rolni tanlang!" }]}
                                     >
-                                      <Select className="w-[200px]!" placeholder="Rol">
+                                      <Select className="w-full" placeholder="Rol">
                                         <Select.Option value="CHAIRMAN">{getExaminerRoleLabel("CHAIRMAN")}</Select.Option>
                                         <Select.Option value="PRE_CHAIRMAN">{getExaminerRoleLabel("PRE_CHAIRMAN")}</Select.Option>
                                         <Select.Option value="SECRETARY">{getExaminerRoleLabel("SECRETARY")}</Select.Option>
                                         <Select.Option value="MEMBER">{getExaminerRoleLabel("MEMBER")}</Select.Option>
                                       </Select>
                                     </Form.Item>
-                                    <MinusCircleOutlined
-                                      onClick={() => removeExaminer(examinerField.name)}
-                                      className="text-red-500 cursor-pointer "
-                                    />
+                                    <div className="flex md:justify-center pt-1">
+                                      <MinusCircleOutlined
+                                        onClick={() => removeExaminer(examinerField.name)}
+                                        className="text-red-500 cursor-pointer"
+                                      />
+                                    </div>
                                   </div>
                                 );
                               })}
