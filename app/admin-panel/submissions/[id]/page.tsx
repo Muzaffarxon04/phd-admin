@@ -642,6 +642,12 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                         </Tag>
                       </div>
                       <div className="flex justify-between gap-4">
+                        <Text className="text-gray-400 shrink-0">Ta&apos;lim shakli:</Text>
+                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                          {submission.education_form ?? "—"}
+                        </Text>
+                      </div>
+                      <div className="flex justify-between gap-4">
                         <Text className="text-gray-400 shrink-0">Ariza to&apos;lovi:</Text>
                         <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
                           {(submission.application as ApplicationDetails).application_fee != null
@@ -858,10 +864,6 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant_phone}</Text>
                 </div>
               )}
-              <div className="flex justify-between">
-                <Text className="text-gray-400">Ta&apos;lim shakli:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.education_form ?? "—"}</Text>
-              </div>
               <div className="flex justify-between">
                 <Text className="text-gray-400">To&apos;lov holati:</Text>
                 <Tag
