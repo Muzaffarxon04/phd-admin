@@ -18,6 +18,7 @@ import {
   List,
   Avatar,
   Switch,
+  Select,
 } from "antd";
 import {
   PlusOutlined,
@@ -68,8 +69,11 @@ export default function SpecialitiesPage() {
 
   const specialitiesUrl = `/speciality/list/?page=${currentPage}&page_size=${pageSize}${searchTerm.trim() ? `&search=${encodeURIComponent(searchTerm.trim())}` : ""}`;
 
-  // Fetch specialities
+  // Fetch specialities for table (paginated)
   const { data: specialitiesData, refetch: refetchSpecialities, isLoading } = useGet<SpecialitiesListResponse>(specialitiesUrl);
+
+  // Fetch all specialities for selects (use large page_size to avoid multiple pages)
+  const { data: allSpecialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/?page=1&page_size=999");
 
   // Fetch speciality statistics
   const { data: specialityStats, isLoading: isStatsLoading } = useGet<{ data: SpecialityStatistics }>(
@@ -78,6 +82,7 @@ export default function SpecialitiesPage() {
   );
 
   const specialities = specialitiesData?.data?.data || [];
+  const allSpecialities = allSpecialitiesData?.data?.data || [];
   const totalElements = specialitiesData?.total_elements ?? 0;
 
   // Mutations
@@ -101,7 +106,7 @@ export default function SpecialitiesPage() {
     },
   });
 
-  const updateSpeciality = usePost(`/speciality/${editingSpeciality?.id}/update/`, {
+  const updateSpeciality = usePost(`/speciality/update/${editingSpeciality?.id}/`, {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli yangilandi");
       setIsModalOpen(false);
@@ -122,7 +127,7 @@ export default function SpecialitiesPage() {
     },
   });
 
-  const deleteSpeciality = useDelete(`/speciality/${editingSpeciality?.id}/delete/`, {
+  const deleteSpeciality = useDelete(`/speciality/delete/${editingSpeciality?.id}/`, {
     onSuccess: () => {
       message.success("Mutaxassislik muvaffaqiyatli o'chirildi");
       refetchSpecialities();
@@ -155,6 +160,7 @@ export default function SpecialitiesPage() {
       field_of_science: speciality.field_of_science,
       is_active: speciality.is_active,
       is_foreign: speciality.is_foreign ?? false,
+      parent: (speciality as unknown as { parent?: { id: string | number } }).parent?.id,
     });
     setIsModalOpen(true);
   };
@@ -429,11 +435,15 @@ export default function SpecialitiesPage() {
           .premium-modal .ant-form-item-label > label {
             color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
           }
-          .premium-modal .ant-input, .premium-modal .ant-input-textarea {
+          .premium-modal .ant-input,
+          .premium-modal .ant-input-textarea,
+          .premium-modal .ant-select-selector {
             background: ${theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
             border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
             color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
             border-radius: 12px !important;
+            height: 40px !important;
+            padding: 6px 11px !important;
           }
           .premium-popconfirm .ant-popover-inner {
             background: ${theme === "dark" ? "rgb(50, 58, 80)" : "#ffffff"} !important;
@@ -480,6 +490,24 @@ export default function SpecialitiesPage() {
             rules={[{ required: true, message: "Nomni kiriting" }]}
           >
             <Input placeholder="Biokimyo" />
+          </Form.Item>
+
+          <Form.Item
+            name="parent"
+            label="Asosiy mutaxassislik"
+          >
+            <Select
+              placeholder="Asosiy mutaxassislikni tanlang"
+              allowClear
+              showSearch
+              optionFilterProp="children"
+            >
+              {allSpecialities.map((s: Speciality) => (
+                <Select.Option key={s.id} value={s.id}>
+                  {s.code} - {s.name}{s.is_foreign ? " (Chet tili)" : ""}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item name="description" label="Tavsif">
