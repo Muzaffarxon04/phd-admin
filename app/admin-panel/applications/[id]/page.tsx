@@ -5,13 +5,13 @@ import { Card, Spin, Tag, Button, Descriptions, Modal, Form, Input, InputNumber,
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useGet, usePost } from "@/lib/hooks";
-import { apiRequest, usePatch } from "@/lib/hooks/useUniversalFetch";
+import { apiRequest, apiUpload } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate, formatDateTime, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
-import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined, HolderOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined, HolderOutlined, UploadOutlined, FileTextOutlined } from "@ant-design/icons";
 import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
 interface ApplicationField {
@@ -42,12 +42,17 @@ interface Examiner {
   role_display: string;
 }
 
+const API_BASE = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "")) || "https://api-doktarant.tashmeduni.uz";
+
 interface Speciality {
   id: number;
   name: string;
   code: string;
   description: string;
   examiners: Examiner[];
+  comment?: string;
+  file?: string | null;
+  file_speciality_id?: number;
 }
 
 interface Application {
@@ -94,6 +99,12 @@ interface ApplicationSpecialityForm {
     examiner_id: string | number;
     role: "CHAIRMAN" | "PRE_CHAIRMAN" | "SECRETARY" | "MEMBER";
   }>;
+  /** Izoh – har bir mutaxassislik uchun alohida */
+  comment?: string;
+  /** FormData da `file_spec_${speciality_id}` kaliti bilan yuboriladi */
+  file?: File;
+  /** API dan kelgan mavjud fayl URL (modalda default ko'rsatish uchun) */
+  existing_file_url?: string | null;
 }
 
 const renderFieldInput = (field: ApplicationField) => {
@@ -233,6 +244,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const [specialitiesForm] = Form.useForm();
   const { message, modal } = App.useApp();
   const fieldType = Form.useWatch("field_type", form);
+  const watchedSpecialities = Form.useWatch("specialities", specialitiesForm) as ApplicationSpecialityForm[] | undefined;
 
   const [orderedFields, setOrderedFields] = useState<ApplicationField[]>([]);
   const [dragFieldId, setDragFieldId] = useState<number | null>(null);
@@ -240,6 +252,91 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
 
   const { data: applicationData, isLoading } = useGet<{ data: Application }>(`/admin/application/${id}/`);
   const application = applicationData?.data;
+
+  const [isUpdatingApplication, setIsUpdatingApplication] = useState(false);
+
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const getProxyUrl = (url: string) => `/api/proxy-file?url=${encodeURIComponent(url)}`;
+
+  const getFileExt = (url: string) => {
+    const pathPart = url.split("?")[0];
+    return pathPart.split(".").pop()?.toLowerCase() || "";
+  };
+
+  const handleOpenPreview = (path: string) => {
+    const p = typeof path === "string" ? path.trim() : "";
+    if (!p || p === "/") return;
+    const url = path.startsWith("http") ? path : API_BASE + (path.startsWith("/") ? path : `/${path}`);
+    setPreviewFileName(path.split("/").pop() || "");
+    setPreviewFileUrl(url);
+    setPreviewLoading(true);
+  };
+
+  const handleClosePreview = () => {
+    if (previewFileUrl && previewFileUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setPreviewFileUrl(null);
+    setPreviewFileName("");
+    setPreviewLoading(false);
+  };
+
+  const handlePreviewLoad = () => setPreviewLoading(false);
+
+  useEffect(() => {
+    if (!previewFileUrl || !previewLoading) return;
+    const ext = getFileExt(previewFileName || previewFileUrl);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    if (!imageExts.includes(ext) && ext !== "pdf") {
+      const id = setTimeout(() => setPreviewLoading(false), 0);
+      return () => clearTimeout(id);
+    }
+    const t = setTimeout(() => setPreviewLoading(false), 15000);
+    return () => clearTimeout(t);
+  }, [previewFileUrl, previewLoading, previewFileName]);
+
+  const renderFilePreview = (displayUrl: string, originalUrl: string, fileName?: string) => {
+    const ext = getFileExt(fileName || originalUrl);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"];
+    if (imageExts.includes(ext)) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element -- Dynamic file preview
+        <img src={displayUrl} alt="Preview" className="max-w-full max-h-[70vh] object-contain" onLoad={handlePreviewLoad} />
+      );
+    }
+    if (ext === "pdf") {
+      return (
+        <object
+          data={displayUrl}
+          type="application/pdf"
+          className="w-full h-[70vh] rounded"
+          title="PDF preview"
+          onLoad={handlePreviewLoad}
+        >
+          <p className="py-8 text-center" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+            PDF ko&apos;rish uchun{" "}
+            <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              yangi tabda oching
+            </a>
+          </p>
+        </object>
+      );
+    }
+    return (
+      <div className="text-center py-8">
+        <FileTextOutlined style={{ fontSize: 48, color: theme === "dark" ? "#6b7280" : "#9ca3af" }} />
+        <p className="mt-4 mb-4" style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>
+          Ushbu fayl formatida oldindan ko&apos;rish mumkin emas
+        </p>
+        <a href={displayUrl} target="_blank" rel="noopener noreferrer" download={fileName} className="text-blue-500 hover:underline">
+          Yuklab olish
+        </a>
+      </div>
+    );
+  };
 
   const invalidateApplication = () => {
     queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
@@ -282,21 +379,6 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true");
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];
-
-  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePatch<
-    { data: Application },
-    Partial<Omit<Application, "specialities">> & { speciality_examiners?: ApplicationSpecialityForm[] }
-  >(`/admin/application/${id}/update/`, {
-    onSuccess: () => {
-      message.success("Ariza muvaffaqiyatli yangilandi!");
-      setIsApplicationModalOpen(false);
-      setIsSpecialitiesModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: [`/admin/application/${id}/`] });
-    },
-    onError: (error) => {
-      message.error(error.message || "Arizani yangilashda xatolik");
-    },
-  });
 
   const { mutate: createField, isPending: isCreatingField } = usePost<{ data: ApplicationField }, CreateFieldData>(
     `/admin/application/${id}/fields/create/`,
@@ -495,22 +577,89 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     });
   };
 
-  const handlePublish = () => {
-    if (application) {
-      const rest = Object.fromEntries(
-        Object.entries(application).filter(([key]) => key !== "specialities")
-      ) as Omit<Application, "specialities">;
-      updateApplication({ ...rest, status: "PUBLISHED" });
+  const sendApplicationFormData = async (
+    overrides: {
+      title?: string;
+      description?: string;
+      start_date?: Dayjs | null;
+      end_date?: Dayjs | null;
+      exam_date?: Dayjs | null;
+      status?: Application["status"];
+    },
+    successMessage?: string,
+  ) => {
+    if (!application) return;
+    setIsUpdatingApplication(true);
+    try {
+      const formData = new FormData();
+
+      const start = overrides.start_date ?? (application.start_date ? dayjs(application.start_date) : null);
+      const end = overrides.end_date ?? (application.end_date ? dayjs(application.end_date) : null);
+      const exam = overrides.exam_date !== undefined
+        ? overrides.exam_date
+        : (application.exam_date ? dayjs(application.exam_date) : null);
+
+      formData.set("title", overrides.title ?? application.title);
+      formData.set("description", overrides.description ?? application.description);
+      if (start) {
+        formData.set("start_date", start.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      }
+      if (end) {
+        formData.set("end_date", end.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      }
+      if (exam !== null && exam !== undefined) {
+        formData.set("exam_date", exam.format("YYYY-MM-DDTHH:mm:ss[Z]"));
+      }
+
+      formData.set("status", overrides.status ?? application.status);
+      formData.set(
+        "requires_oneid_verification",
+        String(application.requires_oneid_verification ?? false),
+      );
+
+      if (application.application_fee != null) {
+        formData.set("application_fee", application.application_fee);
+      }
+      if (application.instructions) {
+        formData.set("instructions", application.instructions);
+      }
+      if (Array.isArray(application.required_documents) && application.required_documents.length > 0) {
+        formData.set("required_documents", JSON.stringify(application.required_documents));
+      }
+      if (application.max_submissions != null) {
+        formData.set("max_submissions", String(application.max_submissions));
+      }
+
+      await apiUpload(`/admin/application/${id}/update/`, formData, "PATCH");
+
+      if (successMessage) {
+        message.success(successMessage);
+      }
+      invalidateApplication();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Arizani yangilashda xatolik";
+      message.error(errorMessage);
+      throw error;
+    } finally {
+      setIsUpdatingApplication(false);
     }
   };
 
+  const handlePublish = () => {
+    if (!application) return;
+    void sendApplicationFormData(
+      { status: "PUBLISHED" },
+      "Ariza e'lon qilindi!",
+    );
+  };
+
   const handleClose = () => {
-    if (application) {
-      const rest = Object.fromEntries(
-        Object.entries(application).filter(([key]) => key !== "specialities")
-      ) as Omit<Application, "specialities">;
-      updateApplication({ ...rest, status: "CLOSED" });
-    }
+    if (!application) return;
+    void sendApplicationFormData(
+      { status: "CLOSED" },
+      "Ariza yopildi!",
+    );
   };
 
   const handleDeleteApplication = () => {
@@ -550,7 +699,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     }
   };
 
-  const handleUpdateApplication = (values: {
+  const handleUpdateApplication = async (values: {
     title: string;
     description: string;
     start_date: Dayjs | null;
@@ -560,18 +709,23 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
   }) => {
     if (!application) return;
 
-    const updateData: Partial<Omit<Application, "specialities">> = {
-      title: values.title,
-      description: values.description,
-      start_date: values.start_date ? values.start_date.format("YYYY-MM-DD") : application.start_date,
-      end_date: values.end_date ? values.end_date.format("YYYY-MM-DD") : application.end_date,
-      ...(values.exam_date != null && {
-        exam_date: values.exam_date ? values.exam_date.format("YYYY-MM-DD") : null,
-      }),
-      status: values.status as Application["status"],
-    };
-
-    updateApplication(updateData);
+    try {
+      await sendApplicationFormData(
+        {
+          title: values.title,
+          description: values.description,
+          start_date: values.start_date,
+          end_date: values.end_date,
+          exam_date: values.exam_date ?? null,
+          status: values.status as Application["status"],
+        },
+        "Ariza muvaffaqiyatli yangilandi!",
+      );
+      setIsApplicationModalOpen(false);
+      applicationForm.resetFields();
+    } catch {
+      // xabar sendApplicationFormData ichida ko'rsatiladi
+    }
   };
 
   const handleOpenSpecialitiesModal = () => {
@@ -585,6 +739,8 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
             examiner_id: ex.id,
             role: ex.role,
           })),
+          comment: (spec as Speciality).comment ?? "",
+          existing_file_url: (spec as Speciality).file ?? null,
         };
       });
       specialitiesForm.setFieldsValue({ specialities: formValues });
@@ -594,20 +750,63 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     setIsSpecialitiesModalOpen(true);
   };
 
-  const handleUpdateSpecialities = (values: { specialities?: ApplicationSpecialityForm[] }) => {
+  const handleUpdateSpecialities = async (values: { specialities?: ApplicationSpecialityForm[] }) => {
     const list = values.specialities || [];
     if (list.length === 0) {
       message.warning("Kamida bitta mutaxassislik qo'shishingiz kerak");
       return;
     }
     if (!application) return;
-    updateApplication({
-      title: application.title,
-      description: application.description,
-      start_date: application.start_date,
-      end_date: application.end_date,
-      speciality_examiners: list,
-    });
+
+    try {
+      const formData = new FormData();
+
+      // Asosiy application maydonlari (mavjud qiymatlar bilan)
+      formData.set("title", application.title);
+      formData.set("description", application.description);
+      formData.set("start_date", application.start_date);
+      formData.set("end_date", application.end_date);
+      formData.set("status", application.status);
+      formData.set("requires_oneid_verification", String(application.requires_oneid_verification ?? false));
+      if (application.exam_date != null) {
+        formData.set("exam_date", application.exam_date ?? "");
+      }
+      if (application.application_fee != null) {
+        formData.set("application_fee", application.application_fee);
+      }
+      if (application.instructions) {
+        formData.set("instructions", application.instructions);
+      }
+
+      // Mutaxassisliklar payload (examiners + comment)
+      const specialitiesPayload = list.map(({ speciality_id, examiner_ids, comment }) => ({
+        speciality_id,
+        examiner_ids: examiner_ids,
+        ...(comment && { comment }),
+      }));
+
+      // Update endpoint bu ma'lumotni `speciality_examiners` kalitida kutadi
+      formData.set("speciality_examiners", JSON.stringify(specialitiesPayload));
+
+      // Fayllar: har bir mutaxassislik uchun alohida kalit (create dagi formatga mos)
+      list.forEach((item) => {
+        const sid = item.speciality_id;
+        const file = item.file;
+        if (sid != null && file instanceof File) {
+          formData.set(`file_${sid}`, file);
+        }
+      });
+
+      await apiUpload(`/admin/application/${id}/update/`, formData, "PATCH");
+
+      message.success("Mutaxassisliklar muvaffaqiyatli yangilandi!");
+      setIsSpecialitiesModalOpen(false);
+      specialitiesForm.resetFields();
+      invalidateApplication();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Mutaxassisliklarni yangilashda xatolik";
+      message.error(errorMessage);
+    }
   };
 
   // Update form when application data changes
@@ -833,7 +1032,28 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                               Imtihonchilar tayinlanmagan
                             </div>
                           )}
-                          
+                          {(speciality.comment || speciality.file) && (
+                            <div className="mt-4 pt-3 border-t" style={{ borderColor: theme === "dark" ? "rgba(255,255,255,0.06)" : "#e5e7eb" }}>
+                              {speciality.comment && (
+                                <div className="mb-2">
+                                  <span className="font-medium text-sm" style={{ color: theme === "dark" ? "#94a3b8" : "#6b7280" }}>Izoh: </span>
+                                  <span className="text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#374151" }}>{speciality.comment}</span>
+                                </div>
+                              )}
+                              {speciality.file && (
+                                <div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenPreview(speciality.file!)}
+                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7367f0] hover:underline bg-transparent border-0 cursor-pointer p-0"
+                                  >
+                                    <FileTextOutlined />
+                                    Ko&apos;rish
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </Card>
                       ))}
                     </div>
@@ -1358,18 +1578,20 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                               {examinerFields.map((examinerField) => {
                                 const { key: fieldKey, ...restExaminerField } = examinerField;
                                 return (
-                                  <div key={fieldKey} className="flex items-start gap-2 mb-2">
+                                  <div
+                                    key={fieldKey}
+                                    className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] gap-2 items-start mb-2"
+                                  >
                                     <Form.Item
                                       {...restExaminerField}
                                       name={[examinerField.name, "examiner_id"]}
                                       rules={[{ required: true, message: "Imtihonchini tanlang!" }]}
-                                      className="flex-1"
                                     >
                                       <Select
+                                        className="w-full"
                                         placeholder="Imtihonchini tanlang"
                                         showSearch
                                         optionFilterProp="children"
-                                        style={{ minWidth: 200 }}
                                       >
                                         {examinersList.map((e: ExaminerType) => (
                                           <Select.Option key={e.id} value={e.id}>
@@ -1383,18 +1605,20 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                                       name={[examinerField.name, "role"]}
                                       rules={[{ required: true, message: "Rolni tanlang!" }]}
                                     >
-                                        <Select placeholder="Rol" style={{ minWidth: 140 }}>
+                                      <Select className="w-full" placeholder="Rol">
                                         <Select.Option value="CHAIRMAN">{getExaminerRoleLabel("CHAIRMAN")}</Select.Option>
                                         <Select.Option value="PRE_CHAIRMAN">{getExaminerRoleLabel("PRE_CHAIRMAN")}</Select.Option>
                                         <Select.Option value="SECRETARY">{getExaminerRoleLabel("SECRETARY")}</Select.Option>
                                         <Select.Option value="MEMBER">{getExaminerRoleLabel("MEMBER")}</Select.Option>
                                       </Select>
                                     </Form.Item>
-                                  <MinusCircleOutlined
-                                    onClick={() => removeExaminer(examinerField.name)}
-                                    className="text-red-500 cursor-pointer mt-1"
-                                  />
-                                </div>
+                                    <div className="flex md:justify-center pt-1">
+                                      <MinusCircleOutlined
+                                        onClick={() => removeExaminer(examinerField.name)}
+                                        className="text-red-500 cursor-pointer"
+                                      />
+                                    </div>
+                                  </div>
                                 );
                               })}
                               <Button
@@ -1410,6 +1634,47 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
                         </Form.List>
                       </Form.Item>
                     </div>
+                    {watchedSpecialities?.[name]?.existing_file_url && (
+                      <div className="mb-3">
+                        <span className="text-sm font-medium text-gray-500 mr-2">Mavjud fayl:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPreview(watchedSpecialities[name].existing_file_url!)}
+                          className="inline-flex items-center gap-1 text-[#7367f0] hover:underline bg-transparent border-0 cursor-pointer p-0"
+                        >
+                          <FileTextOutlined />
+                          Ko&apos;rish
+                        </button>
+                      </div>
+                    )}
+                    <Form.Item
+                      {...restField}
+                      name={[name, "file"]}
+                      label="Fayl (ixtiyoriy)"
+                      className="mt-4"
+                      getValueFromEvent={(e) => e?.fileList?.[0]?.originFileObj ?? undefined}
+                      getValueProps={(value: File | undefined) => ({
+                        fileList: value
+                          ? [{ uid: "-1", name: value.name, status: "done" as const, originFileObj: value }]
+                          : [],
+                      })}
+                    >
+                      <Upload
+                        maxCount={1}
+                        beforeUpload={() => false}
+                        accept="*"
+                      >
+                        <Button icon={<UploadOutlined />}>Fayl tanlash</Button>
+                      </Upload>
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "comment"]}
+                      label="Izoh (ushbu mutaxassislik uchun)"
+                      className="mt-4"
+                    >
+                      <Input.TextArea rows={2} placeholder="Izoh (ixtiyoriy)" />
+                    </Form.Item>
                   </Card>
                 ))}
               </>
@@ -1432,6 +1697,33 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Fayl ko'rinishi"
+        open={!!previewFileUrl}
+        onCancel={handleClosePreview}
+        footer={<Button onClick={handleClosePreview}>Yopish</Button>}
+        width={800}
+        destroyOnClose
+        zIndex={1100}
+        styles={{ wrapper: { zIndex: 1100 } }}
+      >
+        {previewFileUrl && (
+          <div className="relative flex justify-center" style={{ minHeight: 300 }}>
+            {previewLoading && (
+              <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/80 dark:bg-gray-900/80 rounded z-10" style={{ background: theme === "dark" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.8)" }}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7367f0] mb-4" />
+                <span style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>Fayl yuklanmoqda...</span>
+              </div>
+            )}
+            {renderFilePreview(
+              previewFileUrl.startsWith("blob:") ? previewFileUrl : getProxyUrl(previewFileUrl),
+              previewFileUrl,
+              previewFileName
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

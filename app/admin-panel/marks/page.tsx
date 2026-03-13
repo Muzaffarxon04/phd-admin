@@ -230,16 +230,33 @@ export default function MarksPage() {
         </div>
       ),
       key: "speciality_info",
-      render: (_: unknown, record: ApplicantMark) => (
-        <div className="py-2">
-          <div className="font-bold text-xs text-[#7367f0] mb-1">
-            {record.submission_details?.speciality_name || "-"}
+      render: (_: unknown, record: ApplicantMark) => {
+        const details = record.submission_details as unknown as {
+          speciality_name?: string;
+          speciality?: { name?: string; parent?: { name?: string } };
+          speciality_parent_name?: string;
+          application_title?: string;
+        } | undefined;
+        const baseName =
+          details?.speciality_name ||
+          details?.speciality?.name ||
+          "-";
+        const parentName =
+          details?.speciality?.parent?.name ||
+          details?.speciality_parent_name ||
+          "";
+        const displayName = parentName ? `${baseName} (${parentName})` : baseName;
+        return (
+          <div className="py-2">
+            <div className="font-bold text-xs text-[#7367f0] mb-1">
+              {displayName}
+            </div>
+            <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">
+              {details?.application_title || "-"}
+            </div>
           </div>
-          <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">
-            {record.submission_details?.application_title || "-"}
-          </div>
-        </div>
-      ),
+        );
+      },
       width: 200,
     },
     {

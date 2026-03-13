@@ -402,7 +402,12 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         });
       },
       onError: (error) => {
-        message.error(error.message || "Ariza yaratishda xatolik");
+        const errorMsg = error.message || "";
+        if (errorMsg.includes("duplicate key value violates unique constraint")) {
+          message.error("Allaqachon ariza topshirgansiz");
+        } else {
+          message.error(errorMsg || "Ariza yaratishda xatolik yuz berdi");
+        }
       },
     }
   );
@@ -900,10 +905,22 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     filterOption={(input, option) =>
                       (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                     }
-                    options={specialities.map((spec) => ({
-                      value: spec.id,
-                      label: `${spec.code} - ${spec.name}${spec.is_foreign ? " (chet tili)" : ""}`,
-                    }))}
+                    options={specialities.map((spec) => {
+                      const withParent = spec as unknown as {
+                        parent?: { name?: string };
+                        parent_name?: string;
+                      };
+                      const parentName = withParent.parent?.name || withParent.parent_name || "";
+                      const baseName = `${spec.code} - ${spec.name}`;
+                      const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
+                      return {
+                        value: spec.id,
+                        label: `${nameWithParent} 
+                        `,
+                      };
+                        // ${spec.is_foreign ? " (chet tili)" : ""}
+
+                    })}
                     dropdownStyle={{
                       background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
                       border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",

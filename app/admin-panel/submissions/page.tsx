@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Button, Typography, Input, Select, message, Modal, Descriptions, Spin, Tag, Drawer, Form, InputNumber, Space } from "antd";
+import { Table, Button, Typography, Input, Select, App, Modal, Descriptions, Spin, Tag, Drawer, Form, InputNumber, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
   EyeOutlined,
@@ -17,6 +17,7 @@ import {
   FileExcelOutlined,
   FileWordOutlined,
   StarOutlined,
+  RollbackOutlined,
 } from "@ant-design/icons";
 import { useGet, usePost, API_BASE_URL } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -27,7 +28,7 @@ import Link from "next/link";
 import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 const { Title } = Typography;
 
@@ -57,6 +58,7 @@ interface ApplicationItem {
 }
 
 export default function AdminSubmissionsPage() {
+  const { message } = App.useApp();
   const { theme } = useThemeStore();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
@@ -94,6 +96,31 @@ export default function AdminSubmissionsPage() {
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentCheckId, setPaymentCheckId] = useState<number | null>(null);
+
+  // Return drawer state
+  const [returnDrawerOpen, setReturnDrawerOpen] = useState(false);
+  const [selectedReturnId, setSelectedReturnId] = useState<number | null>(null);
+  const [isReturnSubmitting, setIsReturnSubmitting] = useState(false);
+  const [returnForm] = Form.useForm();
+
+  const handleReturnSubmit = async (values: { notes: string }) => {
+    if (!selectedReturnId) return;
+    setIsReturnSubmitting(true);
+    try {
+      await apiRequest(`/admin/application/submissions/${selectedReturnId}/withdrawn/`, {
+        method: "POST",
+        body: JSON.stringify({ notes: values.notes }),
+      });
+      message.success("Ariza qaytarildi");
+      setReturnDrawerOpen(false);
+      returnForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: ["/admin/application/submissions/"] });
+    } catch (error) {
+      message.error((error as Error).message || "Qaytarishda xatolik");
+    } finally {
+      setIsReturnSubmitting(false);
+    }
+  };
 
   // Drawer review state
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
@@ -265,14 +292,24 @@ export default function AdminSubmissionsPage() {
       render: (_: unknown, record) => {
         const specialityObj =
           record.speciality && typeof record.speciality === "object" && !Array.isArray(record.speciality)
-            ? (record.speciality as { id?: number; name?: string; code?: string })
+            ? (record.speciality as { id?: number; name?: string; code?: string; parent?: { name?: string } })
             : null;
-        const name = specialityObj?.name || record.speciality_name || (typeof record.speciality === "string" ? record.speciality : "") || "—";
+        const baseName =
+          specialityObj?.name ||
+          record.speciality_name ||
+          (typeof record.speciality === "string" ? record.speciality : "") ||
+          "—";
+        const parentName =
+          specialityObj?.parent?.name ||
+          (record as unknown as { speciality_parent_name?: string }).speciality_parent_name ||
+          undefined;
+        const nameWithParent = parentName ? `${baseName} (${parentName})` : baseName;
         const code = specialityObj?.code || (record.speciality_code ? String(record.speciality_code) : "");
+        const fullLabel = code ? `${code} - ${nameWithParent}` : nameWithParent;
         return (
           <div className="py-2">
             <div className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-              {code ? `${code} - ${name}` : name}
+              {fullLabel}
             </div>
           </div>
         );
@@ -475,6 +512,20 @@ export default function AdminSubmissionsPage() {
               />
             </>
           )}
+          {(record.status === "SUBMITTED" || record.status === "UNDER_REVIEW" || record.status === "APPROVED" || record.status === "REJECTED") && (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
+                ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white"
+                : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white"
+                }`}
+              icon={<RollbackOutlined style={{ fontSize: "18px" }} />}
+              title="Qaytarish"
+              onClick={() => {
+                setSelectedReturnId(record.id);
+                setReturnDrawerOpen(true);
+              }}
+            />
+          )}
           {record.status === "APPROVED" && !record?.mark?.score && (
             <Button
               className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
@@ -488,7 +539,7 @@ export default function AdminSubmissionsPage() {
           )}
         </div>
       ),
-      width: 180,
+      width: 220,
     },
   ];
 
@@ -869,6 +920,71 @@ export default function AdminSubmissionsPage() {
               }}
             >
               {reviewAction === "approve" ? "Tasdiqlash" : "Rad etish"}
+            </Button>
+          </div>
+        </Form>
+      </Drawer>
+
+      <Drawer
+        title="Arizani Qaytarish"
+        placement="right"
+        onClose={() => {
+          setReturnDrawerOpen(false);
+          returnForm.resetFields();
+        }}
+        open={returnDrawerOpen}
+        width={400}
+        styles={{
+          header: {
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            color: theme === "dark" ? "#ffffff" : "#000000",
+            borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
+          },
+          body: {
+            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            color: theme === "dark" ? "#ffffff" : "#000000",
+          }
+        }}
+      >
+        <Form
+          form={returnForm}
+          layout="vertical"
+          onFinish={handleReturnSubmit}
+        >
+          <Form.Item
+            name="notes"
+            label={<span style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>Eslatmalar</span>}
+            rules={[{ required: true, message: "Eslatma kiritish majburiy!" }]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="Qaytarish sababi yoki izoh qoldiring..."
+              className="rounded-xl"
+            />
+          </Form.Item>
+
+          <div className="flex gap-3 justify-end mt-4">
+            <Button
+              onClick={() => {
+                setReturnDrawerOpen(false);
+                returnForm.resetFields();
+              }}
+              className="rounded-xl"
+            >
+              Bekor qilish
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isReturnSubmitting}
+              className="rounded-xl"
+              style={{
+                background: "linear-gradient(118deg, #ff9f43, rgba(255, 159, 67, 0.7))",
+                borderColor: "#ff9f43",
+                boxShadow: "0 8px 25px -8px #ff9f43",
+              }}
+            >
+              Qaytarish
             </Button>
           </div>
         </Form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Button, Typography, Popconfirm, message, Modal, Form, Input, Select, Row, Col, DatePicker, Space } from "antd";
+import { Table, Button, Typography, Popconfirm, App, Modal, Form, Input, Select, Row, Col, DatePicker, Space } from "antd";
 const { Title } = Typography;
 import type { ColumnsType } from "antd/es/table";
 import type { Dayjs } from "dayjs";
@@ -15,8 +15,10 @@ import {
   DeleteOutlined,
   InboxOutlined,
   RollbackOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
-import { useGet, usePut } from "@/lib/hooks";
+import { useGet, usePatch } from "@/lib/hooks";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -43,6 +45,7 @@ interface Application {
 }
 
 export default function AdminApplicationsPage() {
+  const { message } = App.useApp();
   const { theme } = useThemeStore();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,11 +75,13 @@ export default function AdminApplicationsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
   const [unarchivingId, setUnarchivingId] = useState<number | null>(null);
+  const [publishingId, setPublishingId] = useState<number | null>(null);
+  const [closingId, setClosingId] = useState<number | null>(null);
   const [editingApplication, setEditingApplication] = useState<Application | null>(null);
   const [editForm] = Form.useForm();
 
   const editId = editingApplication?.id ?? 0;
-  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePut<{ data: Application }>(
+  const { mutate: updateApplication, isPending: isUpdatingApplication } = usePatch<{ data: Application }>(
     `/admin/application/${editId}/update/`,
     {
       onSuccess: () => {
@@ -172,6 +177,40 @@ export default function AdminApplicationsPage() {
       message.error(error.message || "Arxivdan chiqarishda xatolik");
     },
     onSettled: () => setUnarchivingId(null),
+  });
+
+  const { mutate: publishApplication } = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/admin/application/${id}/update/`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "PUBLISHED" }),
+      }),
+    onMutate: (id) => setPublishingId(id),
+    onSuccess: () => {
+      message.success("Ariza e'lon qilindi");
+      invalidateApplications();
+    },
+    onError: (error) => {
+      message.error((error as Error).message || "E'lon qilishda xatolik");
+    },
+    onSettled: () => setPublishingId(null),
+  });
+
+  const { mutate: closeApplication } = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/admin/application/${id}/update/`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "CLOSED" }),
+      }),
+    onMutate: (id) => setClosingId(id),
+    onSuccess: () => {
+      message.success("Ariza yopildi");
+      invalidateApplications();
+    },
+    onError: (error) => {
+      message.error((error as Error).message || "Yopishda xatolik");
+    },
+    onSettled: () => setClosingId(null),
   });
 
   const columns: ColumnsType<Application> = [
@@ -294,7 +333,7 @@ export default function AdminApplicationsPage() {
         </div>
       ),
       key: "actions",
-      width: 220,
+      width: 280,
       render: (_, record) => (
         <div className="flex flex-wrap justify-center gap-2 py-2">
           <Link href={`/admin-panel/applications/${record.id}`}>
@@ -316,6 +355,30 @@ export default function AdminApplicationsPage() {
             title="Tahrirlash"
             onClick={() => handleEdit(record)}
           />
+          {record.status !== "PUBLISHED" && record.status !== "ARCHIVED" && (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
+                ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white"
+                : "bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white"
+                }`}
+              icon={<CheckCircleOutlined style={{ fontSize: "18px" }} />}
+              title="E'lon qilish"
+              loading={publishingId === record.id}
+              onClick={() => publishApplication(record.id)}
+            />
+          )}
+          {record.status === "PUBLISHED" && (
+            <Button
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
+                ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white"
+                : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white"
+                }`}
+              icon={<StopOutlined style={{ fontSize: "18px" }} />}
+              title="Yopish"
+              loading={closingId === record.id}
+              onClick={() => closeApplication(record.id)}
+            />
+          )}
           {record.status !== "ARCHIVED" ? (
             <Button
               className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"

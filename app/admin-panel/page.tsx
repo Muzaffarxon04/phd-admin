@@ -195,7 +195,7 @@ function bySpecialityToChartData(raw: unknown): ByApplicationChartRow[] {
           }
         }
         if (value == null) return null;
-        const specialityName =
+        const rawName =
           String(
             o.speciality_name ??
               o.speciality ??
@@ -206,6 +206,11 @@ function bySpecialityToChartData(raw: unknown): ByApplicationChartRow[] {
               ""
           ).trim() ||
           String(o.speciality_id ?? o.id ?? `Mutaxassislik ${index + 1}`);
+        const parentName =
+          (o as unknown as { parent?: { name?: string }; speciality_parent_name?: string }).parent?.name ||
+          (o as unknown as { speciality_parent_name?: string }).speciality_parent_name ||
+          "";
+        const specialityName = parentName ? `${rawName} (${parentName})` : rawName;
         const specialityCode = String(o.speciality_code ?? o.code ?? "").trim();
         const fullName = specialityCode ? `${specialityName} (${specialityCode})` : specialityName;
         const name = fullName.length > 36 ? `${fullName.slice(0, 33)}…` : fullName;

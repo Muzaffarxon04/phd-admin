@@ -328,17 +328,8 @@ function ApplicationsPage() {
         {filteredApplications.length === 0 ? (
           <div className="text-center py-12">
             <EmptyState
-              description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha mavjud arizalar yo&apos;q"}
-              action={
-                searchTerm ?
-                  <Button onClick={() => { setSearchTerm(""); setStatusFilter("all"); }}>Barchalarini ko&apos;rish</Button>
-                  :
-                  <Link href="/dashboard">
-                    <Button type="primary">
-                      Yangi ariza yaratish
-                    </Button>
-                  </Link>
-              }
+              description={searchTerm ? "Hech qanday ariza topilmadi" : "Hozircha arizalar mavjud emas"}
+            
             />
           </div>
         ) : viewMode === "grid" ? (

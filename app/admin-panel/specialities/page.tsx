@@ -188,16 +188,21 @@ export default function SpecialitiesPage() {
       ),
       dataIndex: "name",
       key: "name",
-      render: (name: string, record: Speciality) => (
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
-            {name}
-          </span>
-          {record.is_foreign && (
-            <Tag color="blue">Chet tili</Tag>
-          )}
-        </div>
-      ),
+      render: (name: string, record: Speciality) => {
+        const parentName =
+          (record as unknown as { parent?: { name?: string } }).parent?.name || undefined;
+        const displayName = parentName ? `${name} -> (${parentName})` : name;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
+              {displayName}
+            </span>
+            {record.is_foreign && (
+              <Tag color="blue">Chet tili</Tag>
+            )}
+          </div>
+        );
+      },
       width: 300,
     },
     {
@@ -502,11 +507,17 @@ export default function SpecialitiesPage() {
               showSearch
               optionFilterProp="children"
             >
-              {allSpecialities.map((s: Speciality) => (
-                <Select.Option key={s.id} value={s.id}>
-                  {s.code} - {s.name}{s.is_foreign ? " (Chet tili)" : ""}
-                </Select.Option>
-              ))}
+              {allSpecialities.map((s: Speciality) => {
+                const parentName =
+                  (s as unknown as { parent?: { name?: string } }).parent?.name || undefined;
+                return (
+                  <Select.Option key={s.id} value={s.id}>
+                    {s.code} - {s.name}
+                    {parentName ? ` (${parentName})` : ""}
+                    {s.is_foreign ? " (Chet tili)" : ""}
+                  </Select.Option>
+                );
+              })}
             </Select>
           </Form.Item>
 

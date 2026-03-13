@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Button, Select, Typography, message } from "antd";
+import { Card, Button, Select, Typography, App } from "antd";
 import { DownloadOutlined, FileWordOutlined } from "@ant-design/icons";
 import { useGet } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
@@ -19,6 +19,7 @@ interface Application {
 }
 
 export default function GuvohnomaPage() {
+    const { message } = App.useApp();
     const { theme } = useThemeStore();
     const [selectedApplication, setSelectedApplication] = useState<string | undefined>(undefined);
     const [selectedSpeciality, setSelectedSpeciality] = useState<string | undefined>(undefined);
@@ -137,11 +138,20 @@ export default function GuvohnomaPage() {
                                     backgroundColor: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"
                                 }}
                             >
-                                {selectedApplications.map((spec) => (
-                                    <Option key={spec.id} value={spec.speciality?.toString()}>
-                                        {spec.speciality_code || spec.code} - {spec.speciality_name || spec.name}{spec.is_foreign ? " (Chet tili)" : ""}
-                                    </Option>
-                                ))}
+                          {selectedApplications.map((spec) => {
+                            const parentName =
+                              (spec as unknown as { parent?: { name?: string }; parent_name?: string }).parent?.name ||
+                              (spec as unknown as { parent_name?: string }).parent_name ||
+                              undefined;
+                            const baseName = spec.speciality_name || spec.name;
+                            return (
+                              <Option key={spec.id} value={spec.speciality?.toString()}>
+                                {spec.speciality_code || spec.code} - {baseName}
+                                {parentName ? ` (${parentName})` : ""}
+                                {spec.is_foreign ? " (Chet tili)" : ""}
+                              </Option>
+                            );
+                          })}
                             </Select>
                         </div>
 
