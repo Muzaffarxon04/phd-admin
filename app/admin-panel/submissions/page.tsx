@@ -28,7 +28,7 @@ import Link from "next/link";
 import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 const { Title } = Typography;
 

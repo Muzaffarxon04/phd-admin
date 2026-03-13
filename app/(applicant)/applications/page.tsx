@@ -28,7 +28,7 @@ import { useGet } from "@/lib/hooks";
 import { ApplicationCardSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
-import Link from "next/link";
+// import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate, formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
 import { useState } from "react";
