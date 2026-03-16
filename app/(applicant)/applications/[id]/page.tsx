@@ -16,7 +16,6 @@ import {
   Typography,
   Alert,
   Modal,
-  Tag,
 } from "antd";
 import {
   useGet,
@@ -42,6 +41,7 @@ import {
 import { formatDateTime, parseMoneyAmount } from "@/lib/utils";
 import { type Dayjs } from "dayjs";
 import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title, Text, Paragraph } = Typography;
@@ -345,7 +345,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { theme } = useThemeStore();
 
   // Custom states
-  const [selectedSpecialities, setSelectedSpecialities] = useState<Array<string | number>>([]);
+  const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
+  const [selectedForeignSpecialities, setSelectedForeignSpecialities] = useState<Array<number | string>>([]);
+  const [otherSpecialities, setOtherSpecialities] = useState<Array<{ id: number; name: string; code: string }>>([]);
+  const [apiForeignSpecialities, setApiForeignSpecialities] = useState<Array<{ id: number; name: string; code: string }>>([]);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -353,16 +356,57 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = applicationResponse?.data;
 
-  interface ApplicantSpeciality {
-    id: number | string;
-    code: string;
-    name: string;
-    comment?: string;
-    file?: string | null;
-    is_foreign?: boolean;
-  }
+  const specialities = application?.specialities || [];
+  const foreignSpecialities = specialities.filter((s) => s.is_foreign);
 
-  const specialities = (application?.specialities || []) as ApplicantSpeciality[];
+  // Chet tili mutaxassisligi tanlanganda → other_specialities → main selectga
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRelated = async () => {
+      if (selectedForeignSpecialities.length === 0) {
+        setOtherSpecialities([]);
+        return;
+      }
+      const foreignId = String(selectedForeignSpecialities[0]);
+      const appId = application?.id;
+      const query = appId != null ? `?application_id=${appId}` : "";
+      try {
+        const res = await apiRequest<{
+          data?: { other_specialities?: Array<{ id: number; name: string; code: string }> };
+        }>(`/speciality/specialities/${foreignId}/related-foreign/${query}`, { method: "GET" });
+        if (cancelled) return;
+        setOtherSpecialities(res?.data?.other_specialities ?? []);
+      } catch {
+        if (!cancelled) setOtherSpecialities([]);
+      }
+    };
+    fetchRelated();
+    return () => { cancelled = true; };
+  }, [selectedForeignSpecialities, application?.id]);
+
+  // Main speciality tanlanganda → foreign_specialities → checkboxlarga
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRelated = async () => {
+      if (!selectedSpeciality) {
+        setApiForeignSpecialities([]);
+        return;
+      }
+      const appId = application?.id;
+      const query = appId != null ? `?application_id=${appId}` : "";
+      try {
+        const res = await apiRequest<{
+          data?: { foreign_specialities?: Array<{ id: number; name: string; code: string }> };
+        }>(`/speciality/specialities/${selectedSpeciality}/related-foreign/${query}`, { method: "GET" });
+        if (cancelled) return;
+        setApiForeignSpecialities(res?.data?.foreign_specialities ?? []);
+      } catch {
+        if (!cancelled) setApiForeignSpecialities([]);
+      }
+    };
+    fetchRelated();
+    return () => { cancelled = true; };
+  }, [selectedSpeciality, application?.id]);
 
   const { mutate: createSubmission, isPending: isCreating } = useUpload<CreateSubmissionResponse>(
     "/applicant/submissions/create/",
@@ -522,9 +566,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
  
     if (!application) return;
 
-    // Validate speciality selection (kamida bitta mutaxassislik)
-    if (!selectedSpecialities.length) {
-      message.error("Iltimos, kamida bitta mutaxassislikni tanlang!");
+    // Validate speciality selection if needed
+    if (!selectedSpeciality && selectedForeignSpecialities.length === 0) {
+      message.error("Iltimos, mutaxassislikni tanlang!");
       return;
     }
 
@@ -534,12 +578,14 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       return;
     }
 
+    const specialitiesPayload = [
+      ...(selectedSpeciality ? [Number(selectedSpeciality)] : []),
+      ...selectedForeignSpecialities.map(Number),
+    ];
+
     const formData = new FormData();
     formData.append("application", String(application.id));
-    // Bir nechta mutaxassisliklar: array ko'rinishida yuboramiz
-    selectedSpecialities.forEach((sid) => {
-      formData.append("specialities", String(sid));
-    });
+    formData.append("specialities", JSON.stringify(specialitiesPayload));
     formData.append("education_form", educationForm);
 
     const answers: Array<{
@@ -898,109 +944,152 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             >
               {/* Speciality Selection */}
               <div className="mb-8 p-4 rounded-xl border border-dashed border-[#7367f0]/30 bg-[#7367f0]/5">
+                {(selectedSpeciality ? apiForeignSpecialities : foreignSpecialities).length > 0 && (
+                  <div
+                    className="mb-4 p-3 rounded-lg border border-dashed"
+                    style={{ borderColor: theme === "dark" ? "rgba(148,163,184,0.4)" : "#cbd5f5" }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-wide block mb-2"
+                      style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                    >
+                      Chet tili mutaxassisligi
+                    </span>
+                    <Checkbox.Group
+                      className="grid grid-cols-1 md:grid-cols-2 gap-2"
+                      value={selectedForeignSpecialities}
+                      onChange={(vals) => setSelectedForeignSpecialities(vals as Array<number | string>)}
+                    >
+                      {(selectedSpeciality ? apiForeignSpecialities : foreignSpecialities).map((rf) => (
+                        <label
+                          key={rf.id}
+                          className="flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors duration-150"
+                          style={{
+                            borderColor: theme === "dark" ? "rgba(148,163,184,0.5)" : "#e5e7eb",
+                            background: theme === "dark" ? "rgba(15,23,42,0.8)" : "#ffffff",
+                          }}
+                        >
+                          <Checkbox value={rf.id} />
+                          <div className="flex flex-col">
+                            <span
+                              className="text-[10px] font-semibold uppercase tracking-wide"
+                              style={{ color: theme === "dark" ? "#9ca3af" : "#9ca3af" }}
+                            >
+                              {rf.code}
+                            </span>
+                            <span
+                              className="text-sm font-medium"
+                              style={{ color: theme === "dark" ? "#e5e7eb" : "#374151" }}
+                            >
+                              {rf.name}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </Checkbox.Group>
+                  </div>
+                )}
                 <Form.Item
                   label={<span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>Mutaxassislik(lar)ni tanlang <span className="text-red-500">*</span></span>}
                   required
                   className="mb-0"
                 >
-                  <Checkbox.Group
-                    className="flex flex-col gap-2 max-h-64 overflow-auto"
-                    value={selectedSpecialities}
-                    onChange={(vals) => setSelectedSpecialities(vals as Array<string | number>)}
-                  >
-                    {specialities.map((spec) => {
-                      const withParent = spec as unknown as {
-                        parent?: { name?: string };
-                        parent_name?: string;
-                      };
-                      const parentName = withParent.parent?.name || withParent.parent_name || "";
-                      const baseName = `${spec.code} - ${spec.name}`;
-                      const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
-                      return (
-                        <Checkbox key={spec.id} value={spec.id}>
-                          <span className="inline-flex items-center gap-2">
-                            <span>{nameWithParent}</span>
-                            {spec.is_foreign && (
-                              <Tag color="blue" className="text-[10px] px-2 py-0.5 rounded-full">
-                                Chet tili
-                              </Tag>
-                            )}
-                          </span>
-                        </Checkbox>
-                      );
-                    })}
-                  </Checkbox.Group>
+                  <Select
+                    allowClear
+                    placeholder="Mutaxassislikni tanlang"
+                    size="large"
+                    className="w-full custom-select-premium"
+                    // loading={isSpecialitiesLoading}
+                    value={selectedSpeciality}
+                    onChange={setSelectedSpeciality}
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    options={
+                      selectedForeignSpecialities.length > 0
+                        ? otherSpecialities.map((s) => ({
+                            value: s.id as unknown as string,
+                            label: `${s.code} - ${s.name}`,
+                          }))
+                        : specialities.filter((s) => !s.is_foreign).map((spec) => {
+                            const withParent = spec as unknown as {
+                              parent?: { name?: string };
+                              parent_name?: string;
+                            };
+                            const parentName = withParent.parent?.name || withParent.parent_name || "";
+                            const baseName = `${spec.code} - ${spec.name}`;
+                            const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
+                            return { value: spec.id, label: nameWithParent };
+                          })
+                    }
+                    dropdownStyle={{
+                      background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+                      border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
+                    }}
+                  />
                 </Form.Item>
 
-                {selectedSpecialities.length > 0 && (
-                  <div
-                    className="mt-3 rounded-lg px-4 py-3 text-sm flex flex-col gap-3"
-                    style={{
-                      background: theme === "dark" ? "rgba(15,23,42,0.85)" : "#f9fafb",
-                      border: theme === "dark" ? "1px dashed rgba(148,163,184,0.6)" : "1px dashed #cbd5f5",
-                    }}
-                  >
-                    <span
-                      className="text-xs font-semibold uppercase tracking-wide"
-                      style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                {selectedSpeciality && (() => {
+                  const spec = specialities.find((s) => String(s.id) === String(selectedSpeciality));
+                  if (!spec || (!spec.comment && !spec.file)) return null;
+                  return (
+                    <div
+                      className="mt-3 rounded-lg px-4 py-3 text-sm flex flex-col gap-2"
+                      style={{
+                        background: theme === "dark" ? "rgba(15,23,42,0.85)" : "#f9fafb",
+                        border: theme === "dark" ? "1px dashed rgba(148,163,184,0.6)" : "1px dashed #cbd5f5",
+                      }}
                     >
-                      Qo&apos;llanma
-                    </span>
-
-                    {specialities
-                      .filter((s) => selectedSpecialities.some((sid) => String(sid) === String(s.id)))
-                      .map((spec) => (
-                        <div key={spec.id} className="border-t border-dashed pt-2 first:border-t-0 first:pt-0">
-                          <div className="text-xs font-semibold mb-1" style={{ color: theme === "dark" ? "#e5e7eb" : "#4b5563" }}>
-                            {spec.code} - {spec.name}
-                          </div>
-                          {spec.comment && (
-                            <p
-                              style={{
-                                marginBottom: 4,
-                                color: theme === "dark" ? "#e5e7eb" : "#4b5563",
-                              }}
-                            >
-                              {spec.comment}
-                            </p>
-                          )}
-                          {spec.file && (
-                            <div className="flex flex-wrap items-center gap-3 mt-1">
-                              <Button
-                                size="small"
-                                type="default"
-                                className="flex items-center gap-1"
-                                onClick={() => {
-                                  const url: string = spec.file || "";
-                                  const link = document.createElement("a");
-                                  link.href = url.startsWith("/api/") ? url : getProxyUrl(url);
-                                  link.target = "_blank";
-                                  link.download = "";
-                                  link.click();
-                                }}
-                              >
-                                <FileTextOutlined />
-                                Yuklab olish
-                              </Button>
-                              <Button
-                                size="small"
-                                type="link"
-                                className="flex items-center gap-1"
-                                onClick={() => {
-                                  setPreviewFileName(spec.file || "");
-                                  setPreviewFileUrl(spec.file || "");
-                                  setPreviewLoading(true);
-                                }}
-                              >
-                                <EyeOutlined />
-                                Ko&apos;rish
-                              </Button>
-                            </div>
-                          )}
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                      >
+                        Qo&apos;llanma
+                      </span>
+                      {spec.comment && (
+                        <p style={{ marginBottom: 4, color: theme === "dark" ? "#e5e7eb" : "#4b5563" }}>
+                          {spec.comment}
+                        </p>
+                      )}
+                      {spec.file && (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Button
+                            size="small"
+                            type="default"
+                            className="flex items-center gap-1"
+                            onClick={() => {
+                              if (!spec.file) return;
+                              const url: string = spec.file;
+                              const link = document.createElement("a");
+                              link.href = url.startsWith("/api/") ? url : getProxyUrl(url);
+                              link.target = "_blank";
+                              link.download = "";
+                              link.click();
+                            }}
+                          >
+                            <FileTextOutlined />
+                            Yuklab olish
+                          </Button>
+                          <Button
+                            size="small"
+                            type="link"
+                            className="flex items-center gap-1"
+                            onClick={() => {
+                              setPreviewFileName(spec.file || "");
+                              setPreviewFileUrl(spec.file || "");
+                              setPreviewLoading(true);
+                            }}
+                          >
+                            <EyeOutlined />
+                            Ko&apos;rish
+                          </Button>
                         </div>
-                      ))}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Education form (Ta'lim shakli) */}
