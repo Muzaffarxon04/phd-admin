@@ -16,6 +16,7 @@ import {
   Typography,
   Alert,
   Modal,
+  Tag,
 } from "antd";
 import {
   useGet,
@@ -344,7 +345,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { theme } = useThemeStore();
 
   // Custom states
-  const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
+  const [selectedSpecialities, setSelectedSpecialities] = useState<Array<string | number>>([]);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -352,10 +353,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = applicationResponse?.data;
 
+  interface ApplicantSpeciality {
+    id: number | string;
+    code: string;
+    name: string;
+    comment?: string;
+    file?: string | null;
+    is_foreign?: boolean;
+  }
 
-
-
-  const specialities = application?.specialities || [];
+  const specialities = (application?.specialities || []) as ApplicantSpeciality[];
 
   const { mutate: createSubmission, isPending: isCreating } = useUpload<CreateSubmissionResponse>(
     "/applicant/submissions/create/",
@@ -515,9 +522,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
  
     if (!application) return;
 
-    // Validate speciality selection if needed
-    if (!selectedSpeciality) {
-      message.error("Iltimos, mutaxassislikni tanlang!");
+    // Validate speciality selection (kamida bitta mutaxassislik)
+    if (!selectedSpecialities.length) {
+      message.error("Iltimos, kamida bitta mutaxassislikni tanlang!");
       return;
     }
 
@@ -529,7 +536,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
     const formData = new FormData();
     formData.append("application", String(application.id));
-    formData.append("speciality", String(selectedSpeciality));
+    // Bir nechta mutaxassisliklar: array ko'rinishida yuboramiz
+    selectedSpecialities.forEach((sid) => {
+      formData.append("specialities", String(sid));
+    });
     formData.append("education_form", educationForm);
 
     const answers: Array<{
@@ -889,23 +899,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               {/* Speciality Selection */}
               <div className="mb-8 p-4 rounded-xl border border-dashed border-[#7367f0]/30 bg-[#7367f0]/5">
                 <Form.Item
-                  label={<span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>Mutaxassislikni tanlang <span className="text-red-500">*</span></span>}
+                  label={<span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>Mutaxassislik(lar)ni tanlang <span className="text-red-500">*</span></span>}
                   required
                   className="mb-0"
                 >
-                  <Select
-                    placeholder="Mutaxassislikni tanlang"
-                    size="large"
-                    className="w-full custom-select-premium"
-                    // loading={isSpecialitiesLoading}
-                    value={selectedSpeciality}
-                    onChange={setSelectedSpeciality}
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                    }
-                    options={specialities.map((spec) => {
+                  <Checkbox.Group
+                    className="flex flex-col gap-2 max-h-64 overflow-auto"
+                    value={selectedSpecialities}
+                    onChange={(vals) => setSelectedSpecialities(vals as Array<string | number>)}
+                  >
+                    {specialities.map((spec) => {
                       const withParent = spec as unknown as {
                         parent?: { name?: string };
                         parent_name?: string;
@@ -913,86 +916,91 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                       const parentName = withParent.parent?.name || withParent.parent_name || "";
                       const baseName = `${spec.code} - ${spec.name}`;
                       const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
-                      return {
-                        value: spec.id,
-                        label: `${nameWithParent} 
-                        `,
-                      };
-                        // ${spec.is_foreign ? " (chet tili)" : ""}
-
+                      return (
+                        <Checkbox key={spec.id} value={spec.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <span>{nameWithParent}</span>
+                            {spec.is_foreign && (
+                              <Tag color="blue" className="text-[10px] px-2 py-0.5 rounded-full">
+                                Chet tili
+                              </Tag>
+                            )}
+                          </span>
+                        </Checkbox>
+                      );
                     })}
-                    dropdownStyle={{
-                      background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-                      border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                    }}
-                  />
+                  </Checkbox.Group>
                 </Form.Item>
 
-                {selectedSpeciality && (() => {
-                  const spec = specialities.find((s) => String(s.id) === String(selectedSpeciality));
-                  if (!spec || (!spec.comment && !spec.file)) return null;
-                  return (
-                    <div
-                      className="mt-3 rounded-lg px-4 py-3 text-sm flex flex-col gap-2"
-                      style={{
-                        background: theme === "dark" ? "rgba(15,23,42,0.85)" : "#f9fafb",
-                        border: theme === "dark" ? "1px dashed rgba(148,163,184,0.6)" : "1px dashed #cbd5f5",
-                      }}
+                {selectedSpecialities.length > 0 && (
+                  <div
+                    className="mt-3 rounded-lg px-4 py-3 text-sm flex flex-col gap-3"
+                    style={{
+                      background: theme === "dark" ? "rgba(15,23,42,0.85)" : "#f9fafb",
+                      border: theme === "dark" ? "1px dashed rgba(148,163,184,0.6)" : "1px dashed #cbd5f5",
+                    }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
                     >
-                      <span
-                        className="text-xs font-semibold uppercase tracking-wide"
-                        style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
-                      >
-                        Qo&apos;llanma
-                      </span>
+                      Qo&apos;llanma
+                    </span>
 
-                      {spec.comment && (
-                        <p
-                          style={{
-                            marginBottom: 4,
-                            color: theme === "dark" ? "#e5e7eb" : "#4b5563",
-                          }}
-                        >
-                          {spec.comment}
-                        </p>
-                      )}
-                      {spec.file && (
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            size="small"
-                            type="default"
-                            className="flex items-center gap-1"
-                            onClick={() => {
-                              if (!spec.file) return;
-                              const url: string = spec.file;
-                              const link = document.createElement("a");
-                              link.href = url.startsWith("/api/") ? url : getProxyUrl(url);
-                              link.target = "_blank";
-                              link.download = "";
-                              link.click();
-                            }}
-                          >
-                            <FileTextOutlined />
-                            Yuklab olish
-                          </Button>
-                          <Button
-                            size="small"
-                            type="link"
-                            className="flex items-center gap-1"
-                            onClick={() => {
-                              setPreviewFileName(spec.file || "");
-                              setPreviewFileUrl(spec.file || "");
-                              setPreviewLoading(true);
-                            }}
-                          >
-                            <EyeOutlined />
-                            Ko&apos;rish
-                          </Button>
+                    {specialities
+                      .filter((s) => selectedSpecialities.some((sid) => String(sid) === String(s.id)))
+                      .map((spec) => (
+                        <div key={spec.id} className="border-t border-dashed pt-2 first:border-t-0 first:pt-0">
+                          <div className="text-xs font-semibold mb-1" style={{ color: theme === "dark" ? "#e5e7eb" : "#4b5563" }}>
+                            {spec.code} - {spec.name}
+                          </div>
+                          {spec.comment && (
+                            <p
+                              style={{
+                                marginBottom: 4,
+                                color: theme === "dark" ? "#e5e7eb" : "#4b5563",
+                              }}
+                            >
+                              {spec.comment}
+                            </p>
+                          )}
+                          {spec.file && (
+                            <div className="flex flex-wrap items-center gap-3 mt-1">
+                              <Button
+                                size="small"
+                                type="default"
+                                className="flex items-center gap-1"
+                                onClick={() => {
+                                  const url: string = spec.file || "";
+                                  const link = document.createElement("a");
+                                  link.href = url.startsWith("/api/") ? url : getProxyUrl(url);
+                                  link.target = "_blank";
+                                  link.download = "";
+                                  link.click();
+                                }}
+                              >
+                                <FileTextOutlined />
+                                Yuklab olish
+                              </Button>
+                              <Button
+                                size="small"
+                                type="link"
+                                className="flex items-center gap-1"
+                                onClick={() => {
+                                  setPreviewFileName(spec.file || "");
+                                  setPreviewFileUrl(spec.file || "");
+                                  setPreviewLoading(true);
+                                }}
+                              >
+                                <EyeOutlined />
+                                Ko&apos;rish
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                      ))}
+                  </div>
+                )}
               </div>
 
               {/* Education form (Ta'lim shakli) */}
