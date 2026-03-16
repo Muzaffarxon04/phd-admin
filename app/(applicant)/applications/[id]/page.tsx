@@ -41,6 +41,7 @@ import {
 import { formatDateTime, parseMoneyAmount } from "@/lib/utils";
 import { type Dayjs } from "dayjs";
 import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useThemeStore } from "@/lib/stores/themeStore";
 
 const { Title, Text, Paragraph } = Typography;
@@ -345,6 +346,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   // Custom states
   const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(null);
+  const [selectedForeignSpecialities, setSelectedForeignSpecialities] = useState<Array<number | string>>([]);
+  const [otherSpecialities, setOtherSpecialities] = useState<Array<{ id: number; name: string; code: string }>>([]);
+  const [apiForeignSpecialities, setApiForeignSpecialities] = useState<Array<{ id: number; name: string; code: string }>>([]);
   const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -352,10 +356,57 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { data: applicationResponse, isLoading } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = applicationResponse?.data;
 
-
-
-
   const specialities = application?.specialities || [];
+  const foreignSpecialities = specialities.filter((s) => s.is_foreign);
+
+  // Chet tili mutaxassisligi tanlanganda → other_specialities → main selectga
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRelated = async () => {
+      if (selectedForeignSpecialities.length === 0) {
+        setOtherSpecialities([]);
+        return;
+      }
+      const foreignId = String(selectedForeignSpecialities[0]);
+      const appId = application?.id;
+      const query = appId != null ? `?application_id=${appId}` : "";
+      try {
+        const res = await apiRequest<{
+          data?: { other_specialities?: Array<{ id: number; name: string; code: string }> };
+        }>(`/speciality/specialities/${foreignId}/related-foreign/${query}`, { method: "GET" });
+        if (cancelled) return;
+        setOtherSpecialities(res?.data?.other_specialities ?? []);
+      } catch {
+        if (!cancelled) setOtherSpecialities([]);
+      }
+    };
+    fetchRelated();
+    return () => { cancelled = true; };
+  }, [selectedForeignSpecialities, application?.id]);
+
+  // Main speciality tanlanganda → foreign_specialities → checkboxlarga
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRelated = async () => {
+      if (!selectedSpeciality) {
+        setApiForeignSpecialities([]);
+        return;
+      }
+      const appId = application?.id;
+      const query = appId != null ? `?application_id=${appId}` : "";
+      try {
+        const res = await apiRequest<{
+          data?: { foreign_specialities?: Array<{ id: number; name: string; code: string }> };
+        }>(`/speciality/specialities/${selectedSpeciality}/related-foreign/${query}`, { method: "GET" });
+        if (cancelled) return;
+        setApiForeignSpecialities(res?.data?.foreign_specialities ?? []);
+      } catch {
+        if (!cancelled) setApiForeignSpecialities([]);
+      }
+    };
+    fetchRelated();
+    return () => { cancelled = true; };
+  }, [selectedSpeciality, application?.id]);
 
   const { mutate: createSubmission, isPending: isCreating } = useUpload<CreateSubmissionResponse>(
     "/applicant/submissions/create/",
@@ -516,7 +567,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     if (!application) return;
 
     // Validate speciality selection if needed
-    if (!selectedSpeciality) {
+    if (!selectedSpeciality && selectedForeignSpecialities.length === 0) {
       message.error("Iltimos, mutaxassislikni tanlang!");
       return;
     }
@@ -527,9 +578,14 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       return;
     }
 
+    const specialitiesPayload = [
+      ...(selectedSpeciality ? [Number(selectedSpeciality)] : []),
+      ...selectedForeignSpecialities.map(Number),
+    ];
+
     const formData = new FormData();
     formData.append("application", String(application.id));
-    formData.append("speciality", String(selectedSpeciality));
+    formData.append("specialities", JSON.stringify(specialitiesPayload));
     formData.append("education_form", educationForm);
 
     const answers: Array<{
@@ -888,12 +944,58 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             >
               {/* Speciality Selection */}
               <div className="mb-8 p-4 rounded-xl border border-dashed border-[#7367f0]/30 bg-[#7367f0]/5">
+                {(selectedSpeciality ? apiForeignSpecialities : foreignSpecialities).length > 0 && (
+                  <div
+                    className="mb-4 p-3 rounded-lg border border-dashed"
+                    style={{ borderColor: theme === "dark" ? "rgba(148,163,184,0.4)" : "#cbd5f5" }}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-wide block mb-2"
+                      style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                    >
+                      Chet tili mutaxassisligi
+                    </span>
+                    <Checkbox.Group
+                      className="grid grid-cols-1 md:grid-cols-2 gap-2"
+                      value={selectedForeignSpecialities}
+                      onChange={(vals) => setSelectedForeignSpecialities(vals as Array<number | string>)}
+                    >
+                      {(selectedSpeciality ? apiForeignSpecialities : foreignSpecialities).map((rf) => (
+                        <label
+                          key={rf.id}
+                          className="flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors duration-150"
+                          style={{
+                            borderColor: theme === "dark" ? "rgba(148,163,184,0.5)" : "#e5e7eb",
+                            background: theme === "dark" ? "rgba(15,23,42,0.8)" : "#ffffff",
+                          }}
+                        >
+                          <Checkbox value={rf.id} />
+                          <div className="flex flex-col">
+                            <span
+                              className="text-[10px] font-semibold uppercase tracking-wide"
+                              style={{ color: theme === "dark" ? "#9ca3af" : "#9ca3af" }}
+                            >
+                              {rf.code}
+                            </span>
+                            <span
+                              className="text-sm font-medium"
+                              style={{ color: theme === "dark" ? "#e5e7eb" : "#374151" }}
+                            >
+                              {rf.name}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </Checkbox.Group>
+                  </div>
+                )}
                 <Form.Item
                   label={<span className="text-lg font-semibold" style={{ color: theme === "dark" ? "#fff" : "#484650" }}>Mutaxassislikni tanlang <span className="text-red-500">*</span></span>}
                   required
                   className="mb-0"
                 >
                   <Select
+                    allowClear
                     placeholder="Mutaxassislikni tanlang"
                     size="large"
                     className="w-full custom-select-premium"
@@ -905,22 +1007,23 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     filterOption={(input, option) =>
                       (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                     }
-                    options={specialities.map((spec) => {
-                      const withParent = spec as unknown as {
-                        parent?: { name?: string };
-                        parent_name?: string;
-                      };
-                      const parentName = withParent.parent?.name || withParent.parent_name || "";
-                      const baseName = `${spec.code} - ${spec.name}`;
-                      const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
-                      return {
-                        value: spec.id,
-                        label: `${nameWithParent} 
-                        `,
-                      };
-                        // ${spec.is_foreign ? " (chet tili)" : ""}
-
-                    })}
+                    options={
+                      selectedForeignSpecialities.length > 0
+                        ? otherSpecialities.map((s) => ({
+                            value: s.id as unknown as string,
+                            label: `${s.code} - ${s.name}`,
+                          }))
+                        : specialities.filter((s) => !s.is_foreign).map((spec) => {
+                            const withParent = spec as unknown as {
+                              parent?: { name?: string };
+                              parent_name?: string;
+                            };
+                            const parentName = withParent.parent?.name || withParent.parent_name || "";
+                            const baseName = `${spec.code} - ${spec.name}`;
+                            const nameWithParent = parentName ? `${baseName} => (${parentName})` : baseName;
+                            return { value: spec.id, label: nameWithParent };
+                          })
+                    }
                     dropdownStyle={{
                       background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
                       border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
