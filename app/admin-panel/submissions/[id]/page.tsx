@@ -54,14 +54,19 @@ interface ApplicantDetails {
   phone_number?: string | null;
   email?: string | null;
   pinfl?: string | null;
-  passport_series?: string | null;
+  passport_seria?: string | null;
+
   passport_number?: string | null;
   passport_issued_date?: string | null;
   passport_issued_by?: string | null;
   birth_date?: string | null;
+  birth_place?: string | null;
+  citizen?: string | null;
+  nation?: string | null;
   permanent_address?: string | null;
   region?: string | null;
   district?: string | null;
+  organization?: string | null;
   role?: string;
   is_active?: boolean;
   profile?: unknown;
@@ -585,112 +590,112 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 typeof submission.application === "object" &&
                 submission.application !== null &&
                 "title" in submission.application ? (
-                  <div
-                    className="rounded-xl p-5 mb-6"
-                    style={{
-                      background: theme === "dark" ? "rgba(255,255,255,0.03)" : "#f8f9fa",
-                      border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgb(235, 233, 241)",
-                    }}
-                  >
-                    <div className="space-y-3">
-                  
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Sarlavha:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit", textAlign: "right" }}>
-                          {(submission.application as ApplicationDetails).title ?? "—"}
-                        </Text>
-                      </div>
-                      {(submission.application as ApplicationDetails).description != null && (
-                        <div className="flex justify-between gap-4 items-start">
-                          <Text className="text-gray-400 shrink-0">Tavsif:</Text>
-                          <Text style={{ color: theme === "dark" ? "#e2e8f0" : "inherit", textAlign: "right" }}>
-                            {(submission.application as ApplicationDetails).description || "—"}
-                          </Text>
-                        </div>
-                      )}
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Boshlanish sanasi:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).start_date
-                            ? formatDateTime((submission.application as ApplicationDetails).start_date!)
-                            : "—"}
-                        </Text>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Tugash sanasi:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).end_date
-                            ? formatDateTime((submission.application as ApplicationDetails).end_date!)
-                            : "—"}
-                        </Text>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Imtihon sanasi:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).exam_date
-                            ? formatDateTime((submission.application as ApplicationDetails).exam_date!)
-                            : "—"}
-                        </Text>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Holat:</Text>
-                        <Tag
-                          color={getApplicationStatusColor((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
-                          className="m-0"
-                        >
-                          {getApplicationStatusLabel((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
-                        </Tag>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Ta&apos;lim shakli:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {submission.education_form ?? "—"}
-                        </Text>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Ariza to&apos;lovi:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).application_fee != null
-                            ? `${Number((submission.application as ApplicationDetails).application_fee).toLocaleString()} UZS`
-                            : "—"}
-                        </Text>
-                      </div>
-           
-                      
-                
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Yaratuvchi:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).created_by_name ?? "—"}
-                        </Text>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <Text className="text-gray-400 shrink-0">Yaratilgan:</Text>
-                        <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                          {(submission.application as ApplicationDetails).created_at
-                            ? formatDateTime((submission.application as ApplicationDetails).created_at!)
-                            : "—"}
-                        </Text>
-                      </div>
-                      {((submission.application as ApplicationDetails).specialities?.length ?? 0) > 0 && (
-                        <div className="pt-2">
-                          <Text className="text-gray-400 block mb-2">Mutaxassisliklar:</Text>
-                          <div className="flex flex-wrap gap-2">
-                            {((submission.application as ApplicationDetails).specialities ?? []).map((s) => (
-                              <Tag key={s.id} style={{ margin: 0 }}>
-                                {s.code} — {s.name}
-                              </Tag>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
+                <div
+                  className="rounded-xl p-5 mb-6"
+                  style={{
+                    background: theme === "dark" ? "rgba(255,255,255,0.03)" : "#f8f9fa",
+                    border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgb(235, 233, 241)",
+                  }}
+                >
+                  <div className="space-y-3">
 
-<Title level={5} className="!mb-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                    Javoblar
-                    </Title>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Sarlavha:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit", textAlign: "right" }}>
+                        {(submission.application as ApplicationDetails).title ?? "—"}
+                      </Text>
+                    </div>
+                    {(submission.application as ApplicationDetails).description != null && (
+                      <div className="flex justify-between gap-4 items-start">
+                        <Text className="text-gray-400 shrink-0">Tavsif:</Text>
+                        <Text style={{ color: theme === "dark" ? "#e2e8f0" : "inherit", textAlign: "right" }}>
+                          {(submission.application as ApplicationDetails).description || "—"}
+                        </Text>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Boshlanish sanasi:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).start_date
+                          ? formatDateTime((submission.application as ApplicationDetails).start_date!)
+                          : "—"}
+                      </Text>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Tugash sanasi:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).end_date
+                          ? formatDateTime((submission.application as ApplicationDetails).end_date!)
+                          : "—"}
+                      </Text>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Imtihon sanasi:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).exam_date
+                          ? formatDateTime((submission.application as ApplicationDetails).exam_date!)
+                          : "—"}
+                      </Text>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Holat:</Text>
+                      <Tag
+                        color={getApplicationStatusColor((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
+                        className="m-0"
+                      >
+                        {getApplicationStatusLabel((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
+                      </Tag>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Ta&apos;lim shakli:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {submission.education_form ?? "—"}
+                      </Text>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Ariza to&apos;lovi:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).application_fee != null
+                          ? `${Number((submission.application as ApplicationDetails).application_fee).toLocaleString()} UZS`
+                          : "—"}
+                      </Text>
+                    </div>
+
+
+
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Yaratuvchi:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).created_by_name ?? "—"}
+                      </Text>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <Text className="text-gray-400 shrink-0">Yaratilgan:</Text>
+                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                        {(submission.application as ApplicationDetails).created_at
+                          ? formatDateTime((submission.application as ApplicationDetails).created_at!)
+                          : "—"}
+                      </Text>
+                    </div>
+                    {((submission.application as ApplicationDetails).specialities?.length ?? 0) > 0 && (
+                      <div className="pt-2">
+                        <Text className="text-gray-400 block mb-2">Mutaxassisliklar:</Text>
+                        <div className="flex flex-wrap gap-2">
+                          {((submission.application as ApplicationDetails).specialities ?? []).map((s) => (
+                            <Tag key={s.id} style={{ margin: 0 }}>
+                              {s.code} — {s.name}
+                            </Tag>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+              <Title level={5} className="!mb-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                Javoblar
+              </Title>
               <Tabs
                 defaultActiveKey="card"
                 className={`premium-tabs ${theme === "dark" ? "dark-tabs" : ""}`}
@@ -720,7 +725,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             </div>
           </div>
 
-          {submission.documents && submission.documents.length > 0 ?<div
+          {submission.documents && submission.documents.length > 0 ? <div
             className="rounded-xl overflow-hidden transition-all duration-300"
             style={{
               background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
@@ -738,7 +743,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 </Title>
               </div>
             </div>
-            {submission.documents && submission.documents.length > 0 ?<div className="p-6">
+            {submission.documents && submission.documents.length > 0 ? <div className="p-6">
               {submission.documents && submission.documents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(submission.documents as { id?: number; file?: string }[]).map((doc, idx) => (
@@ -824,7 +829,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   </div>
                   <div className="flex justify-between">
                     <Text className="text-gray-400">Pasport seriyasi:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_series ?? "—"}</Text>
+                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_seria ?? "—"}</Text>
                   </div>
                   <div className="flex justify-between">
                     <Text className="text-gray-400">Pasport raqami:</Text>
@@ -843,6 +848,18 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                     <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.birth_date ? formatDate(submission.applicant.birth_date) : "—"}</Text>
                   </div>
                   <div className="flex justify-between">
+                    <Text className="text-gray-400">Tug&apos;ilgan joy:</Text>
+                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.birth_place ?? "—"}</Text>
+                  </div>
+                  <div className="flex justify-between">
+                    <Text className="text-gray-400">Fuqaroligi:</Text>
+                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.citizen ?? "—"}</Text>
+                  </div>
+                  <div className="flex justify-between">
+                    <Text className="text-gray-400">Millati:</Text>
+                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.nation ?? "—"}</Text>
+                  </div>
+                  <div className="flex justify-between">
                     <Text className="text-gray-400">Doimiy manzil:</Text>
                     <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.permanent_address ?? "—"}</Text>
                   </div>
@@ -854,8 +871,10 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                     <Text className="text-gray-400">Tuman:</Text>
                     <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.district ?? "—"}</Text>
                   </div>
-                 
-               
+                  <div className="flex justify-between">
+                    <Text className="text-gray-400">Tashkilot:</Text>
+                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.organization ?? "—"}</Text>
+                  </div>
                 </>
               )}
               {typeof submission.applicant !== "object" && (
@@ -990,7 +1009,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         }
       `}</style>
 
-   <Drawer
+      <Drawer
         title={reviewAction === "approve" ? "Arizani Tasdiqlash" : reviewAction === "reject" ? "Arizani Rad Etish" : "Qayta topshirishga qaytarish"}
         placement="right"
         onClose={() => {
