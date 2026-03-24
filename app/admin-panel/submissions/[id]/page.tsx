@@ -101,6 +101,7 @@ interface ApplicationDetails {
 
 interface SubmissionDetail {
   id: number;
+  speciality?: ApplicationSpeciality;
   submission_number: string;
   application: unknown;
   application_title?: string;
@@ -677,18 +678,18 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                           : "—"}
                       </Text>
                     </div>
-                    {((submission.application as ApplicationDetails).specialities?.length ?? 0) > 0 && (
+                    {(submission.speciality && (
                       <div className="pt-2">
-                        <Text className="text-gray-400 block mb-2">Mutaxassisliklar:</Text>
+                        <Text className="text-gray-400 block mb-2">Mutaxassislik:</Text>
                         <div className="flex flex-wrap gap-2">
-                          {((submission.application as ApplicationDetails).specialities ?? []).map((s) => (
-                            <Tag key={s.id} style={{ margin: 0 }}>
-                              {s.code} — {s.name}
+                          {(submission.speciality && (
+                            <Tag style={{ margin: 0 }}>
+                              {submission.speciality.code} — {submission.speciality.name}
                             </Tag>
                           ))}
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               ) : null}
