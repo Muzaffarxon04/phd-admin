@@ -10,7 +10,7 @@ import { useThemeStore } from "@/lib/stores/themeStore";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, formatDateTime, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
+import { formatDateTime, getApplicationStatusLabel, getApplicationStatusColor, getExaminerRoleLabel, getFieldTypeLabel } from "@/lib/utils";
 import { PlusOutlined, DeleteOutlined, EditOutlined, MinusCircleOutlined, InboxOutlined, RollbackOutlined, HolderOutlined, UploadOutlined, FileTextOutlined } from "@ant-design/icons";
 import type { Speciality as SpecialityType, Examiner as ExaminerType } from "@/types";
 
@@ -375,8 +375,8 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     onSettled: () => setUnarchivingId(null),
   });
 
-  const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/");
-  const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true");
+  const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/?page_size=1000");
+  const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true&page_size=1000");
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];
 
@@ -945,8 +945,8 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
           </Descriptions.Item>
           <Descriptions.Item label="Jami arizalar">{application.total_submissions}</Descriptions.Item>
           <Descriptions.Item label="Yaratgan">{application.created_by_name}</Descriptions.Item>
-        <Descriptions.Item label="Yaratilgan sana">{formatDate(application.created_at)}</Descriptions.Item>
-           {/*  <Descriptions.Item label="Yangilangan sana">{formatDate(application.updated_at)}</Descriptions.Item> */}
+        <Descriptions.Item label="Yaratilgan sana">{formatDateTime(application.created_at)}</Descriptions.Item>
+           {/*  <Descriptions.Item label="Yangilangan sana">{formatDateTime(application.updated_at)}</Descriptions.Item> */}
         </Descriptions>
 
   </div>

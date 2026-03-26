@@ -26,7 +26,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
 import type { Examiner } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 const { Title, Text } = Typography;
 
@@ -205,7 +205,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
                   <div className="font-medium">Imtihonchi sifatida ro&apos;yxatdan o&apos;tdi</div>
                   <div className="text-sm text-gray-500 flex items-center gap-2">
                     <CalendarOutlined />
-                    {formatDate(examiner.created_at)}
+                    {formatDateTime(examiner.created_at)}
                   </div>
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
                     <div className="font-medium">Ma&apos;lumotlar yangilandi</div>
                     <div className="text-sm text-gray-500 flex items-center gap-2">
                       <CalendarOutlined />
-                      {formatDate(examiner.updated_at)}
+                      {formatDateTime(examiner.updated_at)}
                     </div>
                   </div>
                 </div>

@@ -35,7 +35,7 @@ import {
   UserOutlined,
   CalendarOutlined,
 } from "@ant-design/icons";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import type { Speciality, SpecialityStatistics } from "@/types";
 
@@ -683,7 +683,7 @@ export default function SpecialitiesPage() {
                               <div><strong>Unvon:</strong> {examiner.title}</div>
                               <div><strong>Kafedra:</strong> {examiner.department}</div>
                               <div className="text-xs text-gray-500">
-                                <CalendarOutlined /> Tayinlangan: {formatDate(examiner.assigned_at)}
+                                <CalendarOutlined /> Tayinlangan: {formatDateTime(examiner.assigned_at)}
                               </div>
                             </Space>
                           }

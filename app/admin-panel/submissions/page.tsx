@@ -25,7 +25,7 @@ import { tokenStorage } from "@/lib/utils";
 // import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import Link from "next/link";
-import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useQueryClient } from "@tanstack/react-query";
@@ -455,7 +455,7 @@ export default function AdminSubmissionsPage() {
       key: "submitted_at",
       render: (date?: string) => (
         <div className="py-2 text-xs font-medium text-gray-400">
-          {date ? formatDate(date) : "-"}
+          {date ? formatDateTime(date) : "-"}
         </div>
       ),
       width: 150,
@@ -756,7 +756,7 @@ export default function AdminSubmissionsPage() {
               </Descriptions.Item>
               <Descriptions.Item label="Transaction ID">{paymeStatusData.transaction_id || "-"}</Descriptions.Item>
               <Descriptions.Item label="Summa">{paymeStatusData.amount ? `${(paymeStatusData.amount / 100).toLocaleString()} UZS` : "-"}</Descriptions.Item>
-              <Descriptions.Item label="Vaqti">{paymeStatusData.paid_at ? formatDate(paymeStatusData.paid_at) : "-"}</Descriptions.Item>
+              <Descriptions.Item label="Vaqti">{paymeStatusData.paid_at ? formatDateTime(paymeStatusData.paid_at) : "-"}</Descriptions.Item>
               {paymeStatusData.reason && (
                 <Descriptions.Item label="Sabab">{paymeStatusData.reason}</Descriptions.Item>
               )}

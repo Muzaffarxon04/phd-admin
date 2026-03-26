@@ -37,7 +37,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import Link from "next/link";
 import {
-  formatDate,
+  formatDateTimeTime,
   getApplicationStatusLabel,
 } from "@/lib/utils";
 import {
@@ -638,13 +638,13 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
           {submission.submitted_at && (
                       <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
                         <Text style={textStyle}>Topshirilgan</Text>
-                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDate(submission.submitted_at)}</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDateTime(submission.submitted_at)}</Text>
                       </div>
                     )}
                     {submission.updated_at && (
                       <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
                         <Text style={textStyle}>So&apos;nggi o&apos;zgarish</Text>
-                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDate(submission.updated_at)}</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDateTime(submission.updated_at)}</Text>
                       </div>
                     )}
                     {submission.reviewed_by_name && (
@@ -772,7 +772,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                               <Text className="truncate" style={{ color: theme === 'dark' ? '#e5e7eb' : '#374151' }}>
                                 {doc.document_type}
                               </Text>
-                              <span className="text-xs" style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}>{formatDate(doc.uploaded_at)}</span>
+                              <span className="text-xs" style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}>{formatDateTime(doc.uploaded_at)}</span>
           </div>
         </div>
                           <DownloadOutlined style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }} />

@@ -465,7 +465,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
               </Tag>
             </div>
             <div className="text-gray-400 text-sm font-medium flex items-center gap-2 mt-1">
-              <CalendarOutlined /> Topshirilgan: {submission.submitted_at ? formatDate(submission.submitted_at) : formatDate(submission.created_at)}
+              <CalendarOutlined /> Topshirilgan: {submission.submitted_at ? formatDateTime(submission.submitted_at) : formatDateTime(submission.created_at)}
             </div>
           </div>
         </div>
@@ -919,23 +919,23 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             <div className="space-y-4">
               <div>
                 <Text className="text-gray-400 block mb-1">Yaratilgan:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDate(submission.created_at)}</Text>
+                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.created_at)}</Text>
               </div>
               <div>
                 <Text className="text-gray-400 block mb-1">Oxirgi o&apos;zgarish:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDate(submission.updated_at)}</Text>
+                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.updated_at)}</Text>
               </div>
               {submission.submitted_at && (
                 <div>
                   <Text className="text-gray-400 block mb-1">Topshirilgan:</Text>
-                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDate(submission.submitted_at)}</Text>
+                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.submitted_at)}</Text>
                 </div>
               )}
               {submission.mark?.marked_at && (
                 <div>
                   <Text className="text-gray-400 block mb-1">Baholangan:</Text>
                   <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                    {formatDate(submission.mark.marked_at)}
+                    {formatDateTime(submission.mark.marked_at)}
                   </Text>
                 </div>
               )}

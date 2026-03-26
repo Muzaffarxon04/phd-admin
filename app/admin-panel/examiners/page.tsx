@@ -29,7 +29,7 @@ import {
   ProjectOutlined,
   BookOutlined,
 } from "@ant-design/icons";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import type { Examiner, Speciality } from "@/types";
@@ -70,7 +70,7 @@ export default function ExaminersPage() {
     page_size: string
     to: number
     from: number;
-  }>("/speciality/list/");
+  }>("/speciality/list/?page_size=1000");
 
   // Fetch examiner statistics
   const { data: examinerStats, isLoading: isStatsLoading } = useGet<{ data: ExaminerStatistics }>(
@@ -743,7 +743,7 @@ export default function ExaminersPage() {
                           <Tag color="blue">{assignment.speciality.name}</Tag>
                         </div>
                         <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>Biriktirilgan: {formatDate(assignment.assigned_at)}</span>
+                          <span>Biriktirilgan: {formatDateTime(assignment.assigned_at)}</span>
                           <span>Kutilmoqda: {assignment.pending_reviews}</span>
                         </div>
                       </div>

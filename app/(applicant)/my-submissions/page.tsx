@@ -24,7 +24,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTimeTime, getApplicationStatusLabel } from "@/lib/utils";
 import React, { useState, useMemo, cloneElement, isValidElement } from "react";
 
 const { Title } = Typography;
@@ -116,7 +116,7 @@ export default function MySubmissionsPage() {
       key: "created_at",
       render: (date: string) => (
         <span className="text-xs text-gray-400 whitespace-nowrap">
-          {formatDate(date)}
+          {formatDateTime(date)}
         </span>
       ),
       width: 140,
@@ -128,7 +128,7 @@ export default function MySubmissionsPage() {
       key: "submitted_at",
       render: (date?: string) => (
         <span className="text-xs text-gray-400 whitespace-nowrap">
-          {date ? formatDate(date) : "-"}
+          {date ? formatDateTime(date) : "-"}
         </span>
       ),
       width: 140,
@@ -552,7 +552,7 @@ export default function MySubmissionsPage() {
                     <div>
                       <h4 className="font-bold text-base mb-1" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>{item.title}</h4>
                       <div className="text-xs font-medium text-gray-400">
-                        #{item.submissionNumber} • {formatDate(item.date)}
+                        #{item.submissionNumber} • {formatDateTime(item.date)}
                       </div>
                     </div>
                     <span

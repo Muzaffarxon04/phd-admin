@@ -25,7 +25,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
 import type { Speciality } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 const { Title, Text } = Typography;
 
@@ -238,7 +238,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
                   <div className="font-medium">Mutaxassislik yaratildi</div>
                   <div className="text-sm text-gray-500 flex items-center gap-2">
                     <CalendarOutlined />
-                    {formatDate(speciality.created_at)}
+                    {formatDateTime(speciality.created_at)}
                   </div>
                 </div>
               </div>
@@ -250,7 +250,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
                     <div className="font-medium">Ma&apos;lumotlar yangilandi</div>
                     <div className="text-sm text-gray-500 flex items-center gap-2">
                       <CalendarOutlined />
-                      {formatDate(speciality.updated_at)}
+                      {formatDateTime(speciality.updated_at)}
                     </div>
                   </div>
                 </div>

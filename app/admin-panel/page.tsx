@@ -4,6 +4,7 @@ import { Typography, Spin } from "antd";
 const { Title } = Typography;
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { useGet } from "@/lib/hooks";
+import { formatDateTime } from "@/lib/utils";
 import {
   FileTextOutlined,
   TeamOutlined,
@@ -897,7 +898,7 @@ export default function AdminPanelPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-400">
-                        {submission.created_at ? formatDate(submission.created_at) : "-"}
+                        {submission.created_at ? formatDateTime(submission.created_at) : "-"}
                     </div>
                     </td>
                     <td className="px-6 py-4 text-right">

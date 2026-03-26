@@ -30,7 +30,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 // import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDate, formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
 import { useState } from "react";
 import { useThemeStore } from "@/lib/stores/themeStore";
 // import router from "next/router";
@@ -150,22 +150,22 @@ function ApplicationsPage() {
       title: "Boshlanish",
       dataIndex: "start_date",
       key: "start_date",
-      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDate(date)}</span>,
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDateTime(date)}</span>,
       width: 125,
     },
     {
       title: "Tugash",
       dataIndex: "end_date",
       key: "end_date",
-      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDate(date)}</span>,
-      width: 90,
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{formatDateTime(date)}</span>,
+      width: 120,
     },
     {
       title: "Imtihon",
       dataIndex: "exam_date",
       key: "exam_date",
-      render: (date: string) => <span className="text-xs whitespace-nowrap">{date ? formatDate(date) : "-"}</span>,
-      width: 90,
+      render: (date: string) => <span className="text-xs whitespace-nowrap">{date ? formatDateTime(date) : "-"}</span>,
+      width: 120,
     },
    
     {

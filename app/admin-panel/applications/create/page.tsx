@@ -62,8 +62,8 @@ export default function CreateApplicationPage() {
   }, [dragFieldIndex]);
 
   // Fetch specialities and examiners
-  const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/");
-  const { data: examinersData } = useGet<{ data: { data: Examiner[] } }>("/examiner/list/?is_active=true");
+  const { data: specialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/?page_size=1000");
+  const { data: examinersData } = useGet<{ data: { data: Examiner[] } }>("/examiner/list/?is_active=true&page_size=1000");
 
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];
