@@ -26,6 +26,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 // import type { Dayjs } from "dayjs";
+import { formatDateTime } from "@/lib/utils";
 import {
   useGet,
   usePost,
@@ -37,7 +38,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import Link from "next/link";
 import {
-  formatDateTimeTime,
   getApplicationStatusLabel,
 } from "@/lib/utils";
 import {

@@ -24,7 +24,8 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDateTimeTime, getApplicationStatusLabel } from "@/lib/utils";
+import {  getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import React, { useState, useMemo, cloneElement, isValidElement } from "react";
 
 const { Title } = Typography;
