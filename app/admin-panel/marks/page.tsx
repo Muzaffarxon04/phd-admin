@@ -599,7 +599,7 @@ export default function MarksPage() {
                       />
                       <RechartsTooltip
                         contentStyle={tooltipStyle}
-                        formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Baholar soni"]}
+                        formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Baholar soni"]}
                         labelFormatter={(_, payload) =>
                           (payload?.[0]?.payload as { fullName?: string })?.fullName ?? ""
                         }
