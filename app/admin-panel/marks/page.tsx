@@ -499,7 +499,7 @@ export default function MarksPage() {
                           </Pie>
                           <RechartsTooltip
                             contentStyle={tooltipStyle}
-                            formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]}
+                            formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Son"]}
                           />
                         </PieChart>
                       </ResponsiveContainer>
