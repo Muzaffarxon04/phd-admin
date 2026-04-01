@@ -78,6 +78,13 @@ interface Submission {
   payment_reference?: string;
   review_notes?: string;
   reviewed_by_name?: string;
+  reviewed_at?: string;
+  education_form?: string;
+  speciality?: {
+    id: number;
+    name: string;
+    code: string;
+  };
   reviews?: unknown[]; // or define Review type if needed
   answers: Array<{
     id: number;
@@ -675,6 +682,51 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                       <Text style={textStyle}>Miqdori</Text>
                       <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>500,000 UZS</Text>
                     </div>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Application Details */}
+            <Row gutter={[24, 24]} className="mb-6">
+              {submission.speciality && (
+                <Col xs={24} md={12}>
+                  <Card className="h-full border-0" style={cardStyle}>
+                    <div className="flex items-center justify-between mb-6">
+                      <Title level={5} style={titleStyle}>Mutaxassislik</Title>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
+                        <Text style={textStyle}>Nomi</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{submission.speciality.name}</Text>
+                      </div>
+                      <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
+                        <Text style={textStyle}>Kod</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{submission.speciality.code}</Text>
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              )}
+
+              <Col xs={24} md={submission.speciality ? 12 : 12}>
+                <Card className="h-full border-0" style={cardStyle}>
+                  <div className="flex items-center justify-between mb-6">
+                    <Title level={5} style={titleStyle}>Qo&apos;shimcha ma&apos;lumot</Title>
+                  </div>
+                  <div className="space-y-4">
+                    {submission.education_form && (
+                      <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
+                        <Text style={textStyle}>Ta&apos;lim turi</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{submission.education_form}</Text>
+                      </div>
+                    )}
+                    {submission.reviewed_at && (
+                      <div className="flex items-center justify-between border-b pb-2 last:border-0" style={{ borderColor: theme === 'dark' ? '#374151' : '#f3f4f6' }}>
+                        <Text style={textStyle}>Ko&apos;rib chiqilgan</Text>
+                        <Text style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>{formatDateTime(submission.reviewed_at)}</Text>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </Col>
