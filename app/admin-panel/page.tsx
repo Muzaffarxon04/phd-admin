@@ -391,7 +391,7 @@ export default function AdminPanelPage() {
                       </Pie>
                       <RechartsTooltip
                         contentStyle={tooltipStyle}
-                        formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]}
+                        formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Son"]}
                         labelFormatter={(label) => label}
                       />
                     </PieChart>
@@ -470,7 +470,7 @@ export default function AdminPanelPage() {
                               <Pie data={chartData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" nameKey="name">
                                 {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />)}
                               </Pie>
-                              <RechartsTooltip contentStyle={tooltipStyle} formatter={(v: number | undefined) => [(v ?? 0).toLocaleString(), "Son"]} />
+                              <RechartsTooltip contentStyle={tooltipStyle} formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Son"]} />
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -567,7 +567,7 @@ export default function AdminPanelPage() {
                         />
                         <RechartsTooltip
                           contentStyle={tooltipStyle}
-                          formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Ekspertlar soni"]}
+                          formatter={(value) => [(typeof value === 'number' ? value : 0).toLocaleString(), "Ekspertlar soni"]}
                           labelFormatter={(_, payload) =>
                             payload?.[0]?.payload?.fullName ?? payload?.[0]?.payload?.name ?? ""
                           }
@@ -623,7 +623,7 @@ export default function AdminPanelPage() {
                         />
                         <RechartsTooltip
                           contentStyle={tooltipStyle}
-                          formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Topshiriqlar soni"]}
+                          formatter={(value) => [(typeof value === 'number' ? value : 0).toLocaleString(), "Topshiriqlar soni"]}
                           labelFormatter={(_, payload) =>
                             payload?.[0]?.payload?.fullName ?? payload?.[0]?.payload?.name ?? ""
                           }
@@ -685,7 +685,7 @@ export default function AdminPanelPage() {
                                 </Pie>
                                 <RechartsTooltip
                                   contentStyle={tooltipStyle}
-                                  formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), "Son"]}
+                                  formatter={(value) => [(typeof value === 'number' ? value : 0).toLocaleString(), "Son"]}
                                   labelFormatter={(label) => label}
                                 />
                               </PieChart>
