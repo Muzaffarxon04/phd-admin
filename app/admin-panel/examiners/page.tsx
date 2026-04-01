@@ -40,6 +40,8 @@ const { Option } = Select;
 
 export default function ExaminersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExaminer, setEditingExaminer] = useState<Examiner | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
@@ -59,7 +61,7 @@ export default function ExaminersPage() {
     data: {
       data: Examiner[]
     };
-  }>("/examiner/list/");
+  }>(`/examiner/list/?page=${currentPage}&page_size=${pageSize}`);
 
   // Fetch specialities for dropdown
   const { data: specialities } = useGet<{
@@ -403,9 +405,16 @@ export default function ExaminersPage() {
           scroll={{ x: 1000 }}
           pagination={{
             total: examinersData?.total_elements || 0,
-            pageSize: 20,
+            pageSize,
+            current: currentPage,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
             showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
             className: "px-6 py-4",
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size ?? 20);
+            },
           }}
         />
         <style jsx global>{`
