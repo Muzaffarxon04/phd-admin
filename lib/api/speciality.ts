@@ -62,6 +62,7 @@ export const specialityApi = {
     const params = new URLSearchParams({
       page: page.toString(),
       page_size: pageSize.toString(),
+      is_active: "true",
     });
     if (search) params.append("search", search);
 

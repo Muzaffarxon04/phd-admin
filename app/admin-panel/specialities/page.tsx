@@ -59,6 +59,7 @@ interface SpecialitiesListResponse {
 export default function SpecialitiesPage() {
   const { theme } = useThemeStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,13 +68,13 @@ export default function SpecialitiesPage() {
   const [statsSpecialityId, setStatsSpecialityId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
-  const specialitiesUrl = `/speciality/list/?page=${currentPage}&page_size=${pageSize}${searchTerm.trim() ? `&search=${encodeURIComponent(searchTerm.trim())}` : ""}`;
+  const specialitiesUrl = `/speciality/list/?page=${currentPage}&page_size=${pageSize}&is_active=${isActive}${searchTerm.trim() ? `&search=${encodeURIComponent(searchTerm.trim())}` : ""}`;
 
   // Fetch specialities for table (paginated)
   const { data: specialitiesData, refetch: refetchSpecialities, isLoading } = useGet<SpecialitiesListResponse>(specialitiesUrl);
 
   // Fetch all specialities for selects (use large page_size to avoid multiple pages)
-  const { data: allSpecialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/?page=1&page_size=999");
+  const { data: allSpecialitiesData } = useGet<{ data: { data: Speciality[] } }>("/speciality/list/?page=1&page_size=999&is_active=true");
 
   // Fetch speciality statistics
   const { data: specialityStats, isLoading: isStatsLoading } = useGet<{ data: SpecialityStatistics }>(
@@ -356,22 +357,36 @@ export default function SpecialitiesPage() {
         }}
       >
         <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-          <div className="relative max-w-md">
-
-            <Input
-              placeholder="Mutaxassislik nomini qidiring..."
-              className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
-              style={{
-                background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
-                border: "none",
-                color: theme === "dark" ? "#ffffff" : "#484650",
-              }}
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative max-w-md flex-1">
+              <Input
+                placeholder="Mutaxassislik nomini qidiring..."
+                className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
+                style={{
+                  background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
+                  border: "none",
+                  color: theme === "dark" ? "#ffffff" : "#484650",
+                }}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-medium" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
+                {isActive ? "Faollar" : "Nofaollar"}
+              </span>
+              <Switch
+                checked={isActive}
+                onChange={(val) => {
+                  setIsActive(val);
+                  setCurrentPage(1);
+                }}
+                style={{ background: isActive ? "#7367f0" : undefined }}
+              />
+            </div>
           </div>
         </div>
 

@@ -375,7 +375,7 @@ export default function AdminApplicationDetailPage({ params }: { params: Promise
     onSettled: () => setUnarchivingId(null),
   });
 
-  const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/?page_size=1000");
+  const { data: specialitiesData } = useGet<{ data: { data: SpecialityType[] } }>("/speciality/list/?page_size=1000&is_active=true");
   const { data: examinersData } = useGet<{ data: { data: ExaminerType[] } }>("/examiner/list/?is_active=true&page_size=1000");
   const specialitiesList = specialitiesData?.data?.data || [];
   const examinersList = examinersData?.data?.data || [];

@@ -411,7 +411,7 @@ export default function MarksPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 py-4 ">
               {[
          
-                { title: "O'rtacha ball", value: statistics.average_score || "0", icon: <TrophyOutlined />, color: "#28c76f" },
+                { title: "O'rtacha ball", value: statistics.average_score != null ? Number(statistics.average_score).toFixed(1) : "0", icon: <TrophyOutlined />, color: "#28c76f" },
                 { title: "O'rtacha foiz", value: statistics.average_percentage ? `${statistics.average_percentage}%` : "0%", icon: <PercentageOutlined />, color: "#ff9f43" },
                 { title: "Eng yuqori ball", value: statistics.highest_score || "0", icon: <RiseOutlined />, color: "#28c76f" },
                 { title: "Eng past ball", value: statistics.lowest_score || "0", icon: <FallOutlined />, color: "#ea5455" },

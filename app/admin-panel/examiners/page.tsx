@@ -10,6 +10,7 @@ import {
   Modal,
   Form,
   Select,
+  Switch,
   message,
   Popconfirm,
   Avatar,
@@ -40,6 +41,7 @@ const { Option } = Select;
 
 export default function ExaminersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,7 +63,7 @@ export default function ExaminersPage() {
     data: {
       data: Examiner[]
     };
-  }>(`/examiner/list/?page=${currentPage}&page_size=${pageSize}`);
+  }>(`/examiner/list/?page=${currentPage}&page_size=${pageSize}&is_active=${isActive}`);
 
   // Fetch specialities for dropdown
   const { data: specialities } = useGet<{
@@ -72,7 +74,7 @@ export default function ExaminersPage() {
     page_size: string
     to: number
     from: number;
-  }>("/speciality/list/?page_size=1000");
+  }>("/speciality/list/?page_size=1000&is_active=true");
 
   // Fetch examiner statistics
   const { data: examinerStats, isLoading: isStatsLoading } = useGet<{ data: ExaminerStatistics }>(
@@ -377,19 +379,36 @@ export default function ExaminersPage() {
         }}
       >
         <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-          <div className="relative max-w-md">
-
-            <Input
-              placeholder="Imtihonchi nomini qidiring..."
-              className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
-              style={{
-                background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
-                border: "none",
-                color: theme === "dark" ? "#ffffff" : "#484650",
-              }}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative max-w-md flex-1">
+              <Input
+                placeholder="Imtihonchi nomini qidiring..."
+                className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
+                style={{
+                  background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
+                  border: "none",
+                  color: theme === "dark" ? "#ffffff" : "#484650",
+                }}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-medium" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
+                {isActive ? "Faollar" : "Nofaollar"}
+              </span>
+              <Switch
+                checked={isActive}
+                onChange={(val) => {
+                  setIsActive(val);
+                  setCurrentPage(1);
+                }}
+                style={{ background: isActive ? "#7367f0" : undefined }}
+              />
+            </div>
           </div>
         </div>
 
