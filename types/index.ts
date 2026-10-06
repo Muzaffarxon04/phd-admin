@@ -321,3 +321,114 @@ export interface AuditLog {
   userAgent?: string;
   createdAt: string;
 }
+
+// ------------------------------------------------------------------
+// Applicant account / TSMU ID
+// ------------------------------------------------------------------
+
+export type Gender = "MALE" | "FEMALE";
+
+/** Authenticated user as returned by /auth/login/, /auth/me/ and TSMU ID endpoints. */
+export interface User {
+  id?: number | string;
+  phone_number?: string | null;
+  email?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  middle_name?: string | null;
+  full_name?: string | null;
+  role?: string;
+  is_verified?: boolean;
+  identity_verified_at?: string | null;
+  photo?: string | null;
+  photo_url?: string | null;
+  gender?: Gender | string | null;
+  nationality?: string | null;
+  citizenship?: string | null;
+  birth_place?: string | null;
+  birth_date?: string | null;
+  pinfl?: string | null;
+  [key: string]: unknown;
+}
+
+/** GET /applicant/profile/ */
+export interface ApplicantProfile extends User {
+  organization?: string | null;
+  permanent_address?: string | null;
+  citizen?: string | null;
+  nation?: string | null;
+  passport_seria?: string | null;
+  passport_series?: string | null;
+  passport_number?: string | null;
+  passport_issued_by?: string | null;
+  passport_issued_date?: string | null;
+  passport_expiry_date?: string | null;
+  locked_fields?: string[];
+}
+
+export interface AuthTokens {
+  access: string;
+  refresh: string;
+}
+
+export type VerificationStatus =
+  | "LOOKED_UP"
+  | "FACE_PASSED"
+  | "PHONE_PENDING"
+  | "PHONE_VERIFIED"
+  | "COMPLETED"
+  | "FAILED"
+  | "EXPIRED";
+
+export interface TsmuLookupResponse {
+  verification_id: string;
+  masked_name: string;
+  expires_at: string;
+}
+
+export type FaceFailReason = "NO_FACE" | "MULTIPLE_FACES" | "LOW_SIMILARITY" | "LIVENESS_FAILED";
+
+export interface FaceVerifyResponse {
+  passed: boolean;
+  similarity_pct: number;
+  attempts_left: number;
+  reason: FaceFailReason | null;
+}
+
+export interface TsmuPhoneResponse {
+  sent: boolean;
+  expires_in: number;
+}
+
+export interface TsmuCompleteResponse {
+  tokens: AuthTokens;
+  user: User;
+}
+
+/** Personal data frozen into a submission at creation time. */
+export interface ApplicantSnapshot {
+  full_name?: string | null;
+  last_name?: string | null;
+  first_name?: string | null;
+  middle_name?: string | null;
+  pinfl?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  passport_series?: string | null;
+  passport_seria?: string | null;
+  passport_number?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+  organization?: string | null;
+  permanent_address?: string | null;
+  photo_url?: string | null;
+  [key: string]: unknown;
+}
+
+/** Error envelope: {code, message} */
+export interface ApiErrorBody {
+  code?: string;
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
