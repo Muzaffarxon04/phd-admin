@@ -1,6 +1,69 @@
 @import "tailwindcss";
 
-/* Global Animations */
+/*
+ * Design tokens (mirrors lib/theme/tokens.ts).
+ * Light values live in @theme; .dark overrides the same variables so every
+ * Tailwind utility (bg-surface, text-muted, border-border, ...) follows the
+ * app-level theme toggle.
+ */
+@theme static {
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f4f5;
+  --color-border: #e4e4e7;
+  --color-border-strong: #d4d4d8;
+  --color-text: #18181b;
+  --color-muted: #71717a;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-on-primary: #ffffff;
+  --color-success: #16a34a;
+  --color-success-soft: #f0fdf4;
+  --color-warning: #d97706;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  --animate-enter: ui-enter 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.dark {
+  --color-bg: #09090b;
+  --color-surface: #18181b;
+  --color-surface-2: #27272a;
+  --color-border: #27272a;
+  --color-border-strong: #3f3f46;
+  --color-text: #fafafa;
+  --color-muted: #a1a1aa;
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-primary-soft: #1e1b4b;
+  --color-on-primary: #ffffff;
+  --color-success: #22c55e;
+  --color-success-soft: #052e16;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #2a1d05;
+  --color-danger: #ef4444;
+  --color-danger-soft: #2c0b0b;
+}
+
+@keyframes ui-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Global Animations (kept for existing pages) */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -47,7 +110,6 @@
   }
 }
 
-/* Utility Classes */
 .fade-in {
   animation: fadeIn 0.3s ease-out;
 }
@@ -56,21 +118,13 @@
   animation: slideIn 0.3s ease-out;
 }
 
-/* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Body background for light mode */
 body {
-  background-color: rgba(246, 246, 246, 1);
-}
-
-/* Dark mode body background */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1a1d29;
-  }
+  background-color: var(--color-bg);
 }
 
 /* Custom Scrollbar */
@@ -84,73 +138,119 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
+  background: rgba(113, 113, 122, 0.35);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
+  background: rgba(113, 113, 122, 0.55);
 }
 
-/* Selection */
 ::selection {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(79, 70, 229, 0.18);
   color: inherit;
 }
 
-/* Focus Styles */
 *:focus-visible {
-  outline: 2px solid rgba(102, 126, 234, 0.5);
+  outline: 2px solid rgba(79, 70, 229, 0.55);
   outline-offset: 2px;
 }
 
-/* Ant Design Table Global Styles */
-.ant-table {
-  color: #484650 !important;
+/* ------------------------------------------------------------------ */
+/* Applicant app                                                       */
+/* ------------------------------------------------------------------ */
+
+.applicant-app {
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-wrap: anywhere;
 }
 
-.ant-table-thead>tr>th {
-  color: #484650 !important;
+.applicant-app h1,
+.applicant-app h2,
+.applicant-app h3,
+.applicant-app h4 {
+  color: var(--color-text);
+  letter-spacing: -0.015em;
 }
 
-.ant-table-tbody>tr>td {
-  color: #484650 !important;
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-td, th {
-  padding: 6px 12px !important;
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Admin Panel Specific Table Styles */
-.admin-page-container .ant-table-thead>tr>th,
-.admin-page-container .ant-table-tbody>tr>td {
-  padding: 0 12px !important;
-  /* Reduced padding for smaller row height */
-  font-size: 13px !important;
-  /* Smaller font size */
+/* Bottom sheet (antd Drawer placement="bottom") */
+.ui-sheet .ant-drawer-content {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
-.admin-page-container .ant-table-thead>tr>th span,
-.admin-page-container .ant-table-tbody>tr>td div,
-.admin-page-container .ant-table-tbody>tr>td span {
-  font-size: 13px !important;
+.ui-sheet .ant-drawer-body {
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
 }
 
-/* Specific overrides for common classes used in tables */
-.admin-page-container .text-base {
-  font-size: 14px !important;
-  /* Reduced from default base */
+.ui-sheet .ant-drawer-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.admin-page-container .text-sm {
-  font-size: 12px !important;
+.ui-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  margin: 8px auto 0;
 }
 
-.admin-page-container .text-xs {
-  font-size: 11px !important;
+/* antd tables inside applicant pages: crisp, quiet header */
+.applicant-app .ant-table-thead>tr>th {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
-.profile-card tr, .profile-card th, .profile-card td {
-  padding:  12px 0 !important;
+/* Face capture */
+.face-video {
+  transform: scaleX(-1);
 }
 
+@keyframes ring-pulse {
+  0% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.7;
+  }
+}
+
+.face-oval-active {
+  animation: ring-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .applicant-app *,
+  .applicant-app *::before,
+  .applicant-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

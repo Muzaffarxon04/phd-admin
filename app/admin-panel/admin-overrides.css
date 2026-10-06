@@ -1,0 +1,56 @@
+/*
+ * Table overrides that used to live globally in app/globals.css.
+ * Moved here so they only apply while the admin panel is mounted
+ * (`.admin-page-container` is rendered by app/admin-panel/layout.tsx).
+ * `:where()` keeps the original selector specificity unchanged.
+ */
+
+:where(body:has(.admin-page-container)) .ant-table {
+  color: #484650 !important;
+}
+
+:where(body:has(.admin-page-container)) .ant-table-thead>tr>th {
+  color: #484650 !important;
+}
+
+:where(body:has(.admin-page-container)) .ant-table-tbody>tr>td {
+  color: #484650 !important;
+}
+
+:where(body:has(.admin-page-container)) td,
+:where(body:has(.admin-page-container)) th {
+  padding: 6px 12px !important;
+}
+
+/* Admin Panel Specific Table Styles */
+.admin-page-container .ant-table-thead>tr>th,
+.admin-page-container .ant-table-tbody>tr>td {
+  padding: 0 12px !important;
+  /* Reduced padding for smaller row height */
+  font-size: 13px !important;
+  /* Smaller font size */
+}
+
+.admin-page-container .ant-table-thead>tr>th span,
+.admin-page-container .ant-table-tbody>tr>td div,
+.admin-page-container .ant-table-tbody>tr>td span {
+  font-size: 13px !important;
+}
+
+/* Specific overrides for common classes used in tables */
+.admin-page-container .text-base {
+  font-size: 14px !important;
+  /* Reduced from default base */
+}
+
+.admin-page-container .text-sm {
+  font-size: 12px !important;
+}
+
+.admin-page-container .text-xs {
+  font-size: 11px !important;
+}
+
+.profile-card tr, .profile-card th, .profile-card td {
+  padding:  12px 0 !important;
+}

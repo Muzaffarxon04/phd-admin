@@ -8,6 +8,7 @@ import { tokenStorage } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
+import "./admin-overrides.css";
 
 const { Content } = Layout;
 
