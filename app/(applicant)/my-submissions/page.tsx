@@ -44,7 +44,7 @@ export default function MySubmissionsPage() {
     {
       key: "number",
       title: "Raqam",
-      width: 130,
+      width: 150,
       mobile: "meta",
       render: (r) => <span className="tabular font-medium text-primary">#{r.submission_number}</span>,
     },
@@ -57,7 +57,7 @@ export default function MySubmissionsPage() {
     {
       key: "form",
       title: "Ta'lim shakli",
-      width: 220,
+      width: 190,
       render: (r) => <span className="text-muted">{educationFormLabel(r.education_form) ?? "—"}</span>,
     },
     { key: "status", title: "Holat", width: 180, mobile: "badge", render: (r) => <StatusBadge status={r.status} /> },

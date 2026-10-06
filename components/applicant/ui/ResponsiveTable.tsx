@@ -55,7 +55,7 @@ export function ResponsiveTable<T>({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-xl border border-border bg-surface md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
         <Table<T>
           loading={loading}
           dataSource={data}

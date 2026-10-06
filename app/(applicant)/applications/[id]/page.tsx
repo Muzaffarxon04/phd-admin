@@ -40,7 +40,13 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
   const { data: res, isLoading, isError, error, refetch } = useGet<ApplicationResponse>(`/applicant/applications/${id}/`);
   const application = res?.data;
-  const { profile, isLoading: profileLoading } = useApplicantProfile();
+  const {
+    profile,
+    isLoading: profileLoading,
+    isError: profileError,
+    error: profileErrorObj,
+    refetch: refetchProfile,
+  } = useApplicantProfile();
 
   const [selection, setSelection] = useState<SpecialitySelection>({ speciality: null, foreign: [] });
   const [specialityError, setSpecialityError] = useState<string | null>(null);
@@ -115,7 +121,21 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const verified = profile?.is_verified === true && !gated;
+  // A failed profile request is an error, not "unverified": never send a verified user through the wizard for it.
+  if (!profile) {
+    return (
+      <>
+        <PageHeader title="Ariza topshirish" back={{ href: "/applications", label: "Arizalar" }} />
+        <EmptyState
+          title="Profil yuklanmadi"
+          description={profileError ? getErrorMessage(profileErrorObj) : "Profil ma'lumotlari topilmadi"}
+          action={<Button onClick={() => refetchProfile()}>Qayta urinish</Button>}
+        />
+      </>
+    );
+  }
+
+  const verified = profile.is_verified === true && !gated;
   const here = `/applications/${id}`;
 
   return (
@@ -146,12 +166,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             autoComplete="off"
             className="flex flex-col gap-5"
           >
-            {profile && (
-              <ApplicantSummaryCard
-                data={profile}
-                description="Bu ma'lumotlar ariza bilan birga muhrlanadi va keyin o'zgartirilmaydi"
-              />
-            )}
+            <ApplicantSummaryCard
+              data={profile}
+              description="Bu ma'lumotlar ariza bilan birga muhrlanadi va keyin o'zgartirilmaydi"
+            />
 
             <SpecialitySection
               applicationId={application.id}

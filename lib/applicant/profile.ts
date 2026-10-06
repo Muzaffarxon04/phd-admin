@@ -93,7 +93,6 @@ export function profileSections(p: ApplicantProfile): ProfileSection[] {
         item("passport_number", "Raqam", first(p.passport_number), { mono: true }),
         item("passport_issued_by", "Kim tomonidan berilgan", first(p.passport_issued_by), { span: 2 }),
         item("passport_issued_date", "Berilgan sana", first(p.passport_issued_date), { mono: true }),
-        item("passport_expiry_date", "Amal qilish muddati", first(p.passport_expiry_date), { mono: true }),
       ],
     },
     {

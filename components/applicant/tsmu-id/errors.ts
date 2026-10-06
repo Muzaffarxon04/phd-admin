@@ -1,5 +1,6 @@
 import { getErrorCode, getErrorMessage, getErrorStatus, isNetworkError } from "@/lib/applicant/errors";
-import type { FaceFailReason } from "@/types";
+import { ApiError } from "@/lib/hooks/useUniversalFetch";
+import type { ApiErrorBody, FaceFailReason } from "@/types";
 
 export type TsmuErrorAction = "restart" | "login";
 
@@ -61,7 +62,12 @@ export function tsmuError(error: unknown, opts: { authenticated?: boolean } = {}
 
   if (status === 429) return { code, message: MSG.rateLimited };
   if (status === 410) return { code, message: MSG.expired, action: "restart" };
-  if (status === 503) return { code, message: MSG.unavailable };
+  if (status === 503) {
+    // SMS_FAILED / FACE_SERVICE_UNAVAILABLE carry their own Uzbek text; only a bare 503 means docrest.
+    const body = error instanceof ApiError ? (error.data as ApiErrorBody | undefined) : undefined;
+    const own = typeof body?.message === "string" && body.message.trim() ? body.message : undefined;
+    return { code, message: own ?? MSG.unavailable };
+  }
   return { code, message: getErrorMessage(error, "Xatolik yuz berdi, qaytadan urinib ko'ring") };
 }
 

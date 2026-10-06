@@ -222,6 +222,33 @@ async function run() {
     await context.close();
   }
 
+  // Profile fetch failure must show an error state, never the identity gate.
+  {
+    const context = await browser.newContext({ viewport: { width: 375, height: 760 } });
+    await context.route("**/api/v1/**", async (route) => {
+      if (/\/applicant\/profile\/?$/.test(new URL(route.request().url()).pathname)) {
+        await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "boom" }) });
+        return;
+      }
+      const { status, body } = mockResponse(route.request().url(), true);
+      await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
+    });
+    await context.addInitScript((user) => {
+      localStorage.setItem("access_token", "t");
+      localStorage.setItem("refresh_token", "r");
+      localStorage.setItem("user", JSON.stringify(user));
+    }, { ...profile });
+    const page = await context.newPage();
+    await page.goto(BASE_URL + "/applications/1", { waitUntil: "networkidle", timeout: 45000 });
+    await page.waitForTimeout(1500); // react-query retries before settling into the error state
+    const gate = await page.getByText("Avval shaxsingizni tasdiqlang").count();
+    const errorState = await page.getByText("Profil yuklanmadi").count();
+    const ok = gate === 0 && errorState > 0;
+    if (!ok) failures++;
+    results.push({ width: 375, route: "/applications/1 (profile 500)", gate, form: errorState, ok });
+    await context.close();
+  }
+
   await browser.close();
   console.table(results.map(({ ok, width, route, scrollWidth, innerWidth, errors, gate, form, note }) => ({ ok: ok ? "✓" : "✗", width, route, scrollWidth, innerWidth, errors, gate, form, note })));
   console.log(`${results.length - failures}/${results.length} checks passed. Screenshots: ${path.resolve(OUT_DIR)}`);
