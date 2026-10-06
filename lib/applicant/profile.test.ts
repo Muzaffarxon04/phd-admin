@@ -91,6 +91,10 @@ describe("profileSections", () => {
     const all = profileSections(unverified).flatMap((s) => s.items);
     expect(all.filter((i) => i.key !== "phone_number").every((i) => !i.locked)).toBe(true);
   });
+  it("formats the phone number", () => {
+    const all = profileSections(verified).flatMap((s) => s.items);
+    expect(all.find((i) => i.key === "phone_number")?.value).toBe("+998 90 123 45 67");
+  });
   it("formats gender and falls back across aliases", () => {
     const all = profileSections({ ...verified, nation: null, nationality: "Qozoq" }).flatMap((s) => s.items);
     expect(all.find((i) => i.key === "gender")?.value).toBe("Erkak");

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "antd";
-import { CalendarOutlined, ClockCircleOutlined, WalletOutlined } from "@ant-design/icons";
+import { CalendarOutlined, WalletOutlined } from "@ant-design/icons";
 import { deadlineInfo, type AvailableApplication } from "@/lib/applicant/applications";
 import { formatDate, parseMoneyAmount } from "@/lib/utils";
 import { StatusBadge } from "@/components/applicant/ui/StatusBadge";
@@ -20,13 +20,12 @@ export function ApplicationCard({ application: app, now }: ApplicationCardProps)
   return (
     <article className="flex min-w-0 flex-col rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary/40 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="min-w-0 break-words text-[15px] font-semibold leading-6 text-text">
+        <h2 className="min-w-0 flex-1 break-words text-[15px] font-semibold leading-6 text-text">
           <Link href={href} className="hover:text-primary">
             {app.title}
           </Link>
         </h2>
         <StatusBadge tone={deadline.tone} className="shrink-0">
-          <ClockCircleOutlined className="text-[11px]" />
           {deadline.label}
         </StatusBadge>
       </div>

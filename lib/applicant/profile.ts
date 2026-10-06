@@ -1,3 +1,4 @@
+import { formatPhone } from "@/lib/utils";
 import type { ApplicantProfile } from "@/types";
 
 export const PROFILE_ENDPOINT = "/applicant/profile/";
@@ -99,7 +100,7 @@ export function profileSections(p: ApplicantProfile): ProfileSection[] {
       key: "contact",
       title: "Aloqa va ish joyi",
       items: [
-        item("phone_number", "Telefon", first(p.phone_number), { mono: true }),
+        item("phone_number", "Telefon", p.phone_number ? formatPhone(String(p.phone_number)) : undefined, { mono: true }),
         item("email", "Elektron pochta", first(p.email)),
         item("organization", "Tashkilot", first(p.organization), { span: 2 }),
         item("permanent_address", "Doimiy yashash manzili", first(p.permanent_address), { span: 2 }),

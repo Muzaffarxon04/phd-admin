@@ -60,7 +60,7 @@ export default function MySubmissionsPage() {
       width: 220,
       render: (r) => <span className="text-muted">{educationFormLabel(r.education_form) ?? "—"}</span>,
     },
-    { key: "status", title: "Holat", width: 150, mobile: "badge", render: (r) => <StatusBadge status={r.status} /> },
+    { key: "status", title: "Holat", width: 180, mobile: "badge", render: (r) => <StatusBadge status={r.status} /> },
     {
       key: "payment",
       title: "To'lov",
@@ -90,7 +90,7 @@ export default function MySubmissionsPage() {
       />
 
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <div className="-mx-4 min-w-0 overflow-x-auto px-4 md:mx-0 md:shrink-0 md:px-0">
           <Segmented options={FILTERS} value={status} onChange={(v) => setStatus(String(v))} />
         </div>
         <Input
@@ -99,7 +99,7 @@ export default function MySubmissionsPage() {
           placeholder="Raqam yoki ariza nomi"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full md:w-72"
+          className="w-full md:ml-auto md:w-72"
         />
       </div>
 
