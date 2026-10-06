@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/applicant/shell/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 interface AuthLayoutProps {
-  title: React.ReactNode;
+  title?: React.ReactNode;
   subtitle?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -90,9 +90,9 @@ export function AuthLayout({ title, subtitle, children, footer, wide, top }: Aut
         <main className="flex flex-1 justify-center px-4 pb-12 pt-4 sm:px-8 sm:pt-10 lg:items-center lg:pt-0">
           <div className={cn("w-full animate-enter", wide ? "max-w-[480px]" : "max-w-[400px]")}>
             {top}
-            <h1 className="text-2xl font-semibold tracking-tight text-text">{title}</h1>
+            {title && <h1 className="text-2xl font-semibold tracking-tight text-text">{title}</h1>}
             {subtitle && <p className="mt-2 text-sm leading-6 text-muted">{subtitle}</p>}
-            <div className="mt-8">{children}</div>
+            <div className={title || subtitle ? "mt-8" : undefined}>{children}</div>
             {footer && <div className="mt-8 text-center text-sm text-muted">{footer}</div>}
           </div>
         </main>
