@@ -58,6 +58,7 @@ export default function MySubmissionsPage() {
       key: "form",
       title: "Ta'lim shakli",
       width: 190,
+      desktopOnly: true,
       render: (r) => <span className="text-muted">{educationFormLabel(r.education_form) ?? "—"}</span>,
     },
     { key: "status", title: "Holat", width: 180, mobile: "badge", render: (r) => <StatusBadge status={r.status} /> },
@@ -71,6 +72,7 @@ export default function MySubmissionsPage() {
       key: "date",
       title: "Sana",
       width: 120,
+      desktopOnly: true,
       render: (r) => <span className="tabular text-muted">{formatDate(r.submitted_at || r.created_at)}</span>,
     },
   ];

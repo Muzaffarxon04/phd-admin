@@ -179,14 +179,22 @@ async function run() {
         try {
           await page.goto(BASE_URL + route, { waitUntil: "networkidle", timeout: 45000 });
           await page.waitForTimeout(400);
-          const m = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth, title: document.title }));
-          const overflow = m.sw > m.iw;
+          const m = await page.evaluate(() => ({
+            sw: document.documentElement.scrollWidth,
+            iw: window.innerWidth,
+            title: document.title,
+            // a labelled table header squeezed to 0px means a column silently disappeared
+            zeroCols: [...document.querySelectorAll("th")].filter(
+              (th) => th.textContent.trim() && th.getClientRects().length > 0 && th.getBoundingClientRect().width === 0
+            ).length,
+          }));
+          const overflow = m.sw > m.iw || m.zeroCols > 0;
           const dir = path.join(OUT_DIR, String(width));
           mkdirSync(dir, { recursive: true });
           await page.screenshot({ path: path.join(dir, `${slug(route)}.png`), fullPage: true });
           const ok = !overflow && errors.length === 0;
           if (!ok) failures++;
-          results.push({ width, route, scrollWidth: m.sw, innerWidth: m.iw, overflow, errors: errors.length, ok });
+          results.push({ width, route, scrollWidth: m.sw, innerWidth: m.iw, zeroCols: m.zeroCols, overflow, errors: errors.length, ok });
         } catch (e) {
           failures++;
           results.push({ width, route, overflow: null, errors: 1, ok: false, note: String(e.message || e).split("\n")[0] });
@@ -250,7 +258,7 @@ async function run() {
   }
 
   await browser.close();
-  console.table(results.map(({ ok, width, route, scrollWidth, innerWidth, errors, gate, form, note }) => ({ ok: ok ? "✓" : "✗", width, route, scrollWidth, innerWidth, errors, gate, form, note })));
+  console.table(results.map(({ ok, width, route, scrollWidth, innerWidth, zeroCols, errors, gate, form, note }) => ({ ok: ok ? "✓" : "✗", width, route, scrollWidth, innerWidth, zeroCols, errors, gate, form, note })));
   console.log(`${results.length - failures}/${results.length} checks passed. Screenshots: ${path.resolve(OUT_DIR)}`);
   process.exit(failures ? 1 : 0);
 }

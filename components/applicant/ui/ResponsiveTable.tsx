@@ -18,6 +18,8 @@ export interface RTColumn<T> {
    * - "hidden": not shown on mobile
    */
   mobile?: "title" | "badge" | "meta" | "hidden";
+  /** Hide this column in the desktop table below 1024px (tablet rail) — it still shows in the mobile card. */
+  desktopOnly?: boolean;
   className?: string;
 }
 
@@ -75,6 +77,7 @@ export function ResponsiveTable<T>({
             width: c.width,
             align: c.align,
             className: c.className,
+            responsive: c.desktopOnly ? ["lg"] : undefined,
             render: (_: unknown, record: T, index: number) => c.render(record, index),
           }))}
         />
