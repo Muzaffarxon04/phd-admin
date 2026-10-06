@@ -1,310 +1,179 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Card,
-  Steps,
-  App,
-  ConfigProvider,
-  Switch,
-} from "antd";
-import { useThemeStore } from "@/lib/stores/themeStore";
-import {
-  PhoneOutlined,
-  LockOutlined,
-  SafetyOutlined,
-  CheckCircleOutlined,
-  SunOutlined,
-  MoonOutlined,
-} from "@ant-design/icons";
+import { Form, Input, Button, App } from "antd";
 import { useRouter } from "next/navigation";
-import { usePost } from "@/lib/hooks";
 import Link from "next/link";
-import Image from "next/image";
-
-// interface RequestResetData {
-//   phone_number: string;
-// }
-
-// interface VerifyOTPData {
-//   phone_number: string;
-//   otp_code: string;
-// }
-
-// interface ResetPasswordData {
-//   phone_number: string;
-//   otp_code: string;
-//   new_password: string;
-//   confirm_password: string;
-// }
+import { usePost } from "@/lib/hooks";
+import { getErrorMessage } from "@/lib/applicant/errors";
+import { AuthLayout } from "@/components/applicant/auth/AuthLayout";
+import { PhoneInput, phoneRules, formatNational, nationalDigits } from "@/components/applicant/auth/PhoneInput";
+import { WizardProgress } from "@/components/applicant/tsmu-id/WizardProgress";
 
 export default function ForgotPasswordPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpId, setOtpId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState("");
-  const { theme, toggleTheme } = useThemeStore();
-  const isDark = theme === "dark";
 
   const router = useRouter();
   const { message } = App.useApp();
 
-  const { mutate: requestReset, isPending: isRequesting } = usePost(
-    "/auth/password/reset/",
-    {
-      onSuccess: (response: { data?: { otp_id?: string }; otp_id?: string }) => {
-        setCurrentStep(1);
-        message.success("OTP kod yuborildi");
-        const id = response.data?.otp_id ?? response.otp_id;
-        if (id) setOtpId(id);
-      },
-      onError: (error) => {
-        message.error(error.message || "Parolni tiklash so'rovini yuborishda xatolik yuz berdi");
-      },
-    }
-  );
+  const { mutate: requestReset, isPending: isRequesting } = usePost("/auth/password/reset/", {
+    onSuccess: (response: { data?: { otp_id?: string }; otp_id?: string }) => {
+      setCurrentStep(1);
+      message.success("OTP kod yuborildi");
+      const id = response.data?.otp_id ?? response.otp_id;
+      if (id) setOtpId(id);
+    },
+    onError: (error) => {
+      message.error(getErrorMessage(error, "Parolni tiklash so'rovini yuborishda xatolik yuz berdi"));
+    },
+  });
 
-  const { mutate: verifyOTP, isPending: isVerifying } = usePost(
-    "/auth/password/reset/verify/",
-    {
-      onSuccess: () => {
-        setCurrentStep(2);
-        message.success("OTP tasdiqlandi");
-      },
-      onError: (error) => {
-        message.error(error.message || "OTP tasdiqlashda xatolik yuz berdi");
-      },
-    }
-  );
+  const { mutate: verifyOTP, isPending: isVerifying } = usePost("/auth/password/reset/verify/", {
+    onSuccess: () => {
+      setCurrentStep(2);
+      message.success("OTP tasdiqlandi");
+    },
+    onError: (error) => {
+      message.error(getErrorMessage(error, "OTP tasdiqlashda xatolik yuz berdi"));
+    },
+  });
 
-  const { mutate: resetPassword, isPending: isResetting } = usePost(
-    "/auth/password/reset/confirm/",
-    {
-      onSuccess: () => {
-        message.success("Parol muvaffaqiyatli o‘zgartirildi");
-        router.push("/login");
-      },
-      onError: (error) => {
-        message.error(error.message || "Parolni o'zgartirishda xatolik yuz berdi");
-      },
-    }
-  );
+  const { mutate: resetPassword, isPending: isResetting } = usePost("/auth/password/reset/confirm/", {
+    onSuccess: () => {
+      message.success("Parol muvaffaqiyatli o'zgartirildi");
+      router.push("/login");
+    },
+    onError: (error) => {
+      message.error(getErrorMessage(error, "Parolni o'zgartirishda xatolik yuz berdi"));
+    },
+  });
+
+  const subtitles = [
+    "Akkauntingizga bog'langan telefon raqamni kiriting.",
+    `Kod +998 ${formatNational(nationalDigits(phoneNumber))} raqamiga yuborildi.`,
+    "Yangi parol o'rnating.",
+  ];
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: "#5B5BEA",
-          borderRadius: 14,
-          controlHeight: 48,
-          colorText: isDark ? "#E5E7EB" : "#111827",
-          colorTextSecondary: isDark ? "#9CA3AF" : "#6B7280",
-          colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
-        },
-        components: {
-          Card: {
-            colorBgContainer: isDark ? "#16161A" : "#FFFFFF",
-          },
-          Input: {
-            colorBgContainer: isDark ? "#1F1F23" : "#F9FAFB",
-          },
-        },
-      }}
+    <AuthLayout
+      title="Parolni tiklash"
+      subtitle={subtitles[currentStep]}
+      top={<WizardProgress steps={["Telefon", "SMS kod", "Yangi parol"]} current={currentStep} />}
+      footer={
+        <Link href="/login" className="font-medium text-primary hover:underline">
+          Kirish sahifasiga qaytish
+        </Link>
+      }
     >
-      <div
-        className="min-h-screen flex items-center justify-center px-4 relative"
-        style={{ background: isDark ? "#0B0B0E" : "#F5F6FA" }}
-      >
-        {/* THEME TOGGLE */}
-        <div className="absolute top-6 right-6 flex items-center gap-2">
-          <SunOutlined style={{ color: isDark ? "#6B7280" : "#5B5BEA" }} />
-          <Switch checked={isDark} onChange={toggleTheme} />
-          <MoonOutlined style={{ color: isDark ? "#5B5BEA" : "#6B7280" }} />
-        </div>
-
-        <Card
-          className="w-full max-w-md"
-          style={{
-            borderRadius: 24,
-            border: isDark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
-            boxShadow: isDark
-              ? "0 30px 80px rgba(0,0,0,0.7)"
-              : "0 20px 60px rgba(0,0,0,0.18)",
+      {currentStep === 0 && (
+        <Form
+          layout="vertical"
+          size="large"
+          requiredMark={false}
+          onFinish={(v) => {
+            setPhoneNumber(v.phone_number);
+            requestReset(v);
           }}
         >
-          {/* LOGO */}
-          <div className="flex justify-center mb-4">
-            <Image src="/logo.png" alt="logo" width={64} height={64} />
-          </div>
+          <Form.Item name="phone_number" label="Telefon raqam" rules={phoneRules}>
+            <PhoneInput autoFocus />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={isRequesting} block>
+            Davom etish
+          </Button>
+        </Form>
+      )}
 
-          {/* TITLES */}
-          <h2
-            style={{
-              textAlign: "center",
-              fontSize: 14,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              color: "#5B5BEA",
-              marginBottom: 4,
-            }}
+      {currentStep === 1 && (
+        <Form
+          layout="vertical"
+          size="large"
+          requiredMark={false}
+          onFinish={(v) => {
+            setOtpCode(v.otp_code);
+            verifyOTP({
+              phone_number: phoneNumber,
+              otp_code: v.otp_code,
+              ...(otpId && { otp_id: otpId }),
+            });
+          }}
+        >
+          <Form.Item
+            name="otp_code"
+            label="SMS kod"
+            rules={[{ required: true, len: 6, message: "6 xonali kodni kiriting" }]}
           >
-            ILM.TASHMEDUNI.UZ
-          </h2>
-
-          {/* HEADER */}
-          <h1 className="text-center text-xl font-bold mb-1">
-            Parolni tiklash
-          </h1>
-          <p
-            className="text-center mb-6"
-            style={{ color: isDark ? "#9CA3AF" : "#6B7280" }}
+            <Input.OTP length={6} autoFocus inputMode="numeric" className="otp-input" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={isVerifying} block>
+            Tasdiqlash
+          </Button>
+          <button
+            type="button"
+            className="mt-4 text-[13px] font-medium text-muted hover:text-text"
+            onClick={() => setCurrentStep(0)}
           >
-            Parol Tiklash
-          </p>
+            ← Orqaga
+          </button>
+        </Form>
+      )}
 
-          <Steps
-            current={currentStep}
-            className="mb-8"
-            items={[
-              { title: "Telefon", icon: <PhoneOutlined /> },
-              { title: "OTP", icon: <CheckCircleOutlined /> },
-              { title: "Yangi parol", icon: <LockOutlined /> },
+      {currentStep === 2 && (
+        <Form
+          layout="vertical"
+          size="large"
+          requiredMark={false}
+          onFinish={(v) =>
+            resetPassword({
+              phone_number: phoneNumber,
+              otp_code: otpCode,
+              new_password: v.new_password,
+              confirm_password: v.confirm_password,
+              ...(otpId && { otp_id: otpId }),
+            })
+          }
+        >
+          <Form.Item
+            name="new_password"
+            label="Yangi parol"
+            rules={[
+              { required: true, message: "Yangi parolni kiriting" },
+              { min: 8, message: "Parol kamida 8 ta belgidan iborat bo'lishi kerak" },
             ]}
-          />
-
-          {/* STEP 1 */}
-          {currentStep === 0 && (
-            <Form
-              layout="vertical"
-              onFinish={(v) => {
-                setPhoneNumber(v.phone_number);
-                requestReset(v);
-              }}
-            >
-              <Form.Item
-                name="phone_number"
-                rules={[
-                  { required: true },
-                  { pattern: /^\+998\d{9}$/, message: "+998901234567" },
-                ]}
-              >
-                <Input
-                  prefix={<PhoneOutlined />}
-                  placeholder="+998901234567"
-                />
-              </Form.Item>
-
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isRequesting}
-                block
-              >
-                Davom etish
-              </Button>
-            </Form>
-          )}
-
-          {/* STEP 2 */}
-          {currentStep === 1 && (
-            <Form
-              layout="vertical"
-              onFinish={(v) => {
-                setOtpCode(v.otp_code);
-                verifyOTP({
-                  phone_number: phoneNumber,
-                  otp_code: v.otp_code,
-                  ...(otpId && { otp_id: otpId }),
-                });
-              }}
-            >
-              <Form.Item name="otp_code" rules={[{ len: 6 }]}>
-                <Input
-                  placeholder="123456"
-                  maxLength={6}
-                  style={{ textAlign: "center", letterSpacing: 4 }}
-                  prefix={<SafetyOutlined />}
-                />
-              </Form.Item>
-
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isVerifying}
-                block
-              >
-                Tasdiqlash
-              </Button>
-
-              <div className="text-center mt-4">
-                <Button type="link" onClick={() => setCurrentStep(0)}>
-                  ← Orqaga
-                </Button>
-              </div>
-            </Form>
-          )}
-
-          {/* STEP 3 */}
-          {currentStep === 2 && (
-            <Form
-              layout="vertical"
-              onFinish={(v) =>
-                resetPassword({
-                  phone_number: phoneNumber,
-                  otp_code: otpCode,
-                  new_password: v.new_password,
-                  confirm_password: v.confirm_password,
-                  ...(otpId && { otp_id: otpId }),
-                })
-              }
-            >
-              <Form.Item
-                name="new_password"
-                rules={[{ required: true }, { min: 8 }]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Yangi parol"
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="confirm_password"
-                rules={[{ required: true }]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Parolni tasdiqlang"
-                />
-              </Form.Item>
-
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isResetting}
-                block
-              >
-                Parolni o‘zgartirish
-              </Button>
-
-              <div className="text-center mt-4">
-                <Button type="link" onClick={() => setCurrentStep(1)}>
-                  ← Orqaga
-                </Button>
-              </div>
-            </Form>
-          )}
-
-          <div className="text-center mt-6 text-sm">
-            <Link href="/login" style={{ color: "#5B5BEA" }}>
-              Kirish sahifasiga qaytish
-            </Link>
-          </div>
-        </Card>
-      </div>
-    </ConfigProvider>
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            name="confirm_password"
+            label="Parolni tasdiqlang"
+            dependencies={["new_password"]}
+            rules={[
+              { required: true, message: "Parolni tasdiqlang" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("new_password") === value) return Promise.resolve();
+                  return Promise.reject(new Error("Parollar bir xil emas"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={isResetting} block>
+            Parolni o&apos;zgartirish
+          </Button>
+          <button
+            type="button"
+            className="mt-4 text-[13px] font-medium text-muted hover:text-text"
+            onClick={() => setCurrentStep(1)}
+          >
+            ← Orqaga
+          </button>
+        </Form>
+      )}
+    </AuthLayout>
   );
 }

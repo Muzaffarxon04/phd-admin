@@ -1,18 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Form, Input, Button, Card, App, ConfigProvider, Switch, Checkbox } from "antd";
-import { MoonOutlined, SunOutlined } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
-import { usePost } from "@/lib/hooks";
-import { useQueryClient } from "@tanstack/react-query";
-import { tokenStorage } from "@/lib/utils";
-import { useThemeStore } from "@/lib/stores/themeStore";
+import { Suspense, useState } from "react";
+import { Form, Input, Button, App, Checkbox } from "antd";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { User } from "@/lib/api/auth";
-import Image from "next/image";
-
-
+import { useQueryClient } from "@tanstack/react-query";
+import { usePost } from "@/lib/hooks";
+import { tokenStorage } from "@/lib/utils";
+import { safeNext } from "@/lib/applicant/session";
+import { getErrorMessage } from "@/lib/applicant/errors";
+import { AuthLayout } from "@/components/applicant/auth/AuthLayout";
+import { PhoneInput, phoneRules } from "@/components/applicant/auth/PhoneInput";
+import type { User } from "@/types";
 
 interface LoginResponse {
   data: {
@@ -23,200 +22,81 @@ interface LoginResponse {
     user: User;
   };
 }
-export default function LoginPage() {
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
-  const { theme, toggleTheme } = useThemeStore();
-  const isDark = theme === "dark";
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   const { mutate: login, isPending } = usePost("/auth/login/", {
     onSuccess: (response: LoginResponse) => {
-      tokenStorage.setTokens(
-        response.data.tokens.access,
-        response.data.tokens.refresh
-      );
+      tokenStorage.setTokens(response.data.tokens.access, response.data.tokens.refresh);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       queryClient.invalidateQueries({ queryKey: ["/auth/me/"] });
       message.success("Muvaffaqiyatli kirildi!");
       if (response.data.user.role === "SUPER_ADMIN") {
         router.push("/admin-panel");
       } else {
-        router.push("/dashboard");
+        router.push(safeNext(searchParams.get("next")));
       }
     },
     onError: (error: Error) => {
-      message.error(error.message || "Login xatosi");
+      message.error(getErrorMessage(error, "Login xatosi"));
     },
   });
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: "#5B5BEA",
-          borderRadius: 14,
-          controlHeight: 48,
-          colorText: isDark ? "#E5E7EB" : "#111827",
-          colorTextSecondary: isDark ? "#9CA3AF" : "#6B7280",
-          colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
-        },
-        components: {
-          Card: {
-            colorBgContainer: isDark ? "#16161A" : "#FFFFFF",
-          },
-          Input: {
-            colorBgContainer: isDark ? "#1F1F23" : "#F9FAFB",
-            colorBorder: isDark ? "#2A2A2E" : "#E5E7EB",
-            activeBorderColor: "#5B5BEA",
-            hoverBorderColor: "#5B5BEA",
-          },
-        },
-      }}
+    <AuthLayout
+      title="Tizimga kirish"
+      subtitle="Telefon raqamingiz va parolingiz bilan kiring."
+      footer={
+        <>
+          Akkauntingiz yo&apos;qmi?{" "}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Ro&apos;yxatdan o&apos;tish
+          </Link>
+        </>
+      }
     >
-      {/* BACKGROUND */}
-      <div
-        className="min-h-screen flex items-center justify-center px-4 relative transition-all"
-        style={{
-          background: isDark ? "#0B0B0E" : "#F5F6FA",
-        }}
-      >
-        {/* TOGGLE */}
-        <div className="absolute top-6 right-6 flex items-center gap-2">
-          <SunOutlined style={{ color: isDark ? "#6B7280" : "#5B5BEA" }} />
-          <Switch checked={isDark} onChange={toggleTheme} />
-          <MoonOutlined style={{ color: isDark ? "#5B5BEA" : "#6B7280" }} />
+      <Form layout="vertical" onFinish={login} requiredMark={false} size="large">
+        <Form.Item name="phone_number" label="Telefon raqam" rules={phoneRules}>
+          <PhoneInput autoFocus />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          className="!mb-2"
+          rules={[{ required: true, message: "Parolni kiriting" }]}
+          label="Parol"
+        >
+          <Input.Password placeholder="Parolingiz" autoComplete="current-password" />
+        </Form.Item>
+        <div className="mb-5 flex justify-end">
+          <Link href="/forgot-password" className="text-[13px] font-medium text-primary hover:underline">
+            Parolni unutdingizmi?
+          </Link>
         </div>
 
-        {/* CARD */}
-        <Card
-          className="w-full max-w-md transition-all"
-          style={{
-            borderRadius: 24,
-            border: isDark ? "1px solid #1F1F23" : "1px solid #E5E7EB",
-            boxShadow: isDark
-              ? "0 30px 80px rgba(0,0,0,0.7)"
-              : "0 20px 60px rgba(0,0,0,0.18)",
-          }}
-        >
-          {/* LOGO */}
-          <div className="flex justify-center mb-4">
-            <Image src="/logo.png" alt="logo" width={64} height={64} />
-          </div>
+        <Form.Item className="!mb-6">
+          <Checkbox checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)}>
+            <span className="text-[13px] text-muted">Shaxsiy ma&apos;lumotlarim qayta ishlanishiga roziman</span>
+          </Checkbox>
+        </Form.Item>
 
-          {/* TITLES */}
-          <h2
-            style={{
-              textAlign: "center",
-              fontSize: 14,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              color: "#5B5BEA",
-              marginBottom: 4,
-            }}
-          >
-            ILM.TASHMEDUNI.UZ
-          </h2>
+        <Button type="primary" htmlType="submit" loading={isPending} disabled={!acceptedPrivacy} block>
+          Kirish
+        </Button>
+      </Form>
+    </AuthLayout>
+  );
+}
 
-          <h1
-            style={{
-              textAlign: "center",
-              fontSize: 22,
-              fontWeight: 700,
-              marginBottom: 2,
-            }}
-          >
-            Tizimga kirish
-          </h1>
-
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: 14,
-              marginBottom: 28,
-              color: isDark ? "#9CA3AF" : "#6B7280",
-            }}
-          >
-            PhD Qabul Tizimi
-          </p>
-
-          {/* FORM */}
-          <Form layout="vertical" onFinish={login}>
-            <Form.Item
-              name="phone_number"
-              rules={[
-                { required: true, message: "Telefon raqamni kiriting" },
-              ]}
-            >
-              <Input
-                //  addonBefore="+998" 
-                placeholder="Telefon raqamni kiriting" />
-            </Form.Item>
-
-            <Form.Item
-              style={{ marginBottom: 4 }}
-              name="password"
-              rules={[{ required: true, message: "Parolni kiriting" }]}
-            >
-              <Input.Password placeholder="Parol" />
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 18 }}>
-              <Checkbox
-                checked={acceptedPrivacy}
-                onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-              >
-                Shaxsiy ma&apos;lumotlarim qayta ishlatilishiga roziman
-              </Checkbox>
-            </Form.Item>
-
-            <div style={{ textAlign: "right", marginBottom: 18 }}>
-              <Link
-                href="/forgot-password"
-                style={{
-                  fontSize: 13,
-                  color: "#5B5BEA",
-                  fontWeight: 500,
-                }}
-              >
-                Parolni unutdingizmi?
-              </Link>
-            </div>
-
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isPending}
-              disabled={!acceptedPrivacy}
-              block
-              style={{
-                height: 48,
-                borderRadius: 14,
-                fontSize: 16,
-                fontWeight: 600,
-              }}
-            >
-              Kirish
-            </Button>
-          </Form>
-
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: 24,
-              fontSize: 14,
-              color: isDark ? "#9CA3AF" : "#6B7280",
-            }}
-            className="w-full text-indigo-500 dark:text-indigo-400 text-sm py-2 hover:underline"
-          >
-            Hisobingiz yo‘qmi?{" "}
-            <Link href="/register" className="w-full text-indigo-500 dark:text-indigo-400 text-sm py-2 hover:underline">
-              Ro‘yxatdan o‘ting
-            </Link>
-          </div>
-        </Card>
-      </div>
-    </ConfigProvider>
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
