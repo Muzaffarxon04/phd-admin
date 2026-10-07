@@ -1,9 +1,281 @@
 /*
- * Table overrides that used to live globally in app/globals.css.
- * Moved here so they only apply while the admin panel is mounted
- * (`.admin-page-container` is rendered by app/admin-panel/layout.tsx).
- * `:where()` keeps the original selector specificity unchanged.
+ * Admin panel shell + table overrides.
+ * Only applies while the admin panel is mounted (`.admin-page-container` /
+ * `.admin-shell` are rendered by app/admin-panel/layout.tsx).
+ * Design tokens (--admin-*) come from components/admin/ui/admin-ui.css.
+ *
+ * Breakpoints: phone < 640px, tablet 640–1023px, desktop >= 1024px.
  */
+
+/* ------------------------------------------------------------------ */
+/* Shell                                                               */
+/* ------------------------------------------------------------------ */
+
+:where(body:has(.admin-shell)) {
+  overflow-x: clip;
+}
+
+.admin-shell.ant-layout,
+.admin-shell {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  transition: background 0.3s ease;
+}
+
+/* Main column: leaves room for the fixed sidebar / rail. */
+.admin-main.ant-layout {
+  min-width: 0;
+  background: transparent;
+  margin: 0 8px;
+  padding-bottom: 16px;
+}
+
+@media (min-width: 640px) {
+  .admin-main.ant-layout {
+    /* 72px icon rail + 16px gutter */
+    margin: 0 16px 0 88px;
+    padding-bottom: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-main.ant-layout {
+    /* 260px sidebar + 20px gutter */
+    margin: 0 20px 0 280px;
+    padding-bottom: 24px;
+  }
+}
+
+/* Page surface */
+.admin-page-container {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  min-height: 280px;
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow), 0 0 0 1px var(--admin-border);
+  overflow-wrap: anywhere;
+  transition: background 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .admin-page-container {
+    margin-top: 16px;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-page-container {
+    margin-top: 20px;
+    padding: 24px;
+  }
+}
+
+/* Top bar */
+.admin-topbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  padding-top: 8px;
+  background: var(--admin-bg);
+}
+
+@media (min-width: 640px) {
+  .admin-topbar-wrap {
+    padding-top: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-topbar-wrap {
+    padding-top: 20px;
+  }
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 56px;
+  padding: 0 8px 0 4px;
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow), 0 0 0 1px var(--admin-border);
+}
+
+@media (min-width: 640px) {
+  .admin-topbar {
+    height: 60px;
+    padding: 0 12px 0 8px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-topbar {
+    padding: 0 16px 0 20px;
+  }
+}
+
+.admin-icon-btn.ant-btn {
+  width: var(--admin-touch);
+  height: var(--admin-touch);
+  min-width: var(--admin-touch);
+  border-radius: 10px;
+  font-size: 19px;
+  color: var(--admin-heading);
+}
+
+.admin-icon-btn.ant-btn:hover {
+  background: var(--admin-primary-soft) !important;
+  color: var(--admin-primary) !important;
+}
+
+.admin-avatar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--admin-touch);
+  height: var(--admin-touch);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.admin-avatar-btn__status {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #28c76f;
+  border: 2px solid var(--admin-surface);
+}
+
+/* Sidebar / drawer */
+.admin-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 72px;
+  padding: 0 24px;
+  flex: none;
+}
+
+.admin-sidebar__brand--compact {
+  justify-content: center;
+  padding: 0;
+}
+
+.admin-sidebar__brand-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--admin-primary);
+  white-space: nowrap;
+}
+
+.admin-sidebar-drawer .ant-drawer-content {
+  background: var(--admin-surface);
+}
+
+.admin-menu.ant-menu {
+  border-inline-end: 0 !important;
+  background: transparent;
+  padding: 4px 12px 16px;
+}
+
+.admin-menu.ant-menu-inline-collapsed {
+  width: 100%;
+  padding: 4px 10px 16px;
+}
+
+.admin-menu.ant-menu-inline-collapsed .ant-menu-title-content {
+  display: none !important;
+}
+
+.admin-menu.ant-menu .ant-menu-item {
+  display: flex;
+  align-items: center;
+  height: var(--admin-touch);
+  line-height: var(--admin-touch);
+  margin: 2px 0;
+  width: 100%;
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-heading);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.admin-menu.ant-menu .ant-menu-item .anticon {
+  font-size: 19px;
+  color: inherit;
+}
+
+.admin-menu.ant-menu-inline-collapsed .ant-menu-item {
+  justify-content: center;
+  padding-inline: 0 !important;
+}
+
+.admin-menu.ant-menu .ant-menu-item:not(.ant-menu-item-selected):hover {
+  background: var(--admin-primary-soft) !important;
+  color: var(--admin-primary) !important;
+}
+
+.admin-menu.ant-menu .ant-menu-item-selected {
+  background: var(--admin-primary-gradient) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px 1px rgba(115, 103, 240, 0.5);
+}
+
+.admin-sidebar .ant-layout-sider-children::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-sidebar .ant-layout-sider-children::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 3px;
+}
+
+/* Phones: every admin modal fits the screen even if not using ResponsiveModal. */
+@media (max-width: 639px) {
+  :where(body:has(.admin-shell)) .ant-modal:not(.admin-sheet-modal) {
+    max-width: calc(100vw - 16px) !important;
+    top: 12px;
+    padding-bottom: 12px;
+  }
+
+  :where(body:has(.admin-shell)) .ant-modal:not(.admin-sheet-modal) .ant-modal-content {
+    padding: 16px;
+  }
+}
+
+/* Wide tables scroll inside their own container, never the page. */
+.admin-page-container .ant-table-wrapper {
+  max-width: 100%;
+}
+
+.admin-page-container .ant-table-content,
+.admin-page-container .ant-table-body {
+  overscroll-behavior-x: contain;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tables (moved from app/globals.css). `:where()` keeps the original  */
+/* selector specificity unchanged.                                     */
+/* ------------------------------------------------------------------ */
 
 :where(body:has(.admin-page-container)) .ant-table {
   color: #484650 !important;
@@ -15,6 +287,12 @@
 
 :where(body:has(.admin-page-container)) .ant-table-tbody>tr>td {
   color: #484650 !important;
+}
+
+:where(html.dark body:has(.admin-page-container)) .ant-table,
+:where(html.dark body:has(.admin-page-container)) .ant-table-thead>tr>th,
+:where(html.dark body:has(.admin-page-container)) .ant-table-tbody>tr>td {
+  color: var(--admin-text) !important;
 }
 
 :where(body:has(.admin-page-container)) td,

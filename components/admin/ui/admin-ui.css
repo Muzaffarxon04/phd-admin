@@ -1,0 +1,355 @@
+/*
+ * Admin panel UI tokens + shared component styles.
+ *
+ * The admin panel keeps its own (legacy, purple) look that differs from the
+ * applicant design system in app/globals.css, so its tokens live here under
+ * an `--admin-*` prefix. Light values sit on :root; `html.dark` (toggled by
+ * components/AntdProvider.tsx) overrides them. Variables are on :root (not on
+ * a wrapper) so antd portals (Modal, Drawer, Dropdown) can use them too.
+ *
+ * Breakpoints used across admin components (match Tailwind defaults):
+ *   mobile  < 640px   (sm)
+ *   tablet  640–1023px
+ *   desktop >= 1024px (lg)
+ */
+
+:root {
+  --admin-bg: rgb(246, 246, 246);
+  --admin-surface: #ffffff;
+  --admin-surface-2: #f8f8fb;
+  --admin-surface-hover: rgba(115, 103, 240, 0.04);
+  --admin-border: rgb(235, 233, 241);
+  --admin-border-strong: rgb(214, 220, 225);
+  --admin-heading: #2f2b3d;
+  --admin-text: #484650;
+  --admin-muted: #8a8d93;
+  --admin-primary: #7367f0;
+  --admin-primary-soft: rgba(115, 103, 240, 0.1);
+  --admin-primary-gradient: linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7));
+  --admin-success: #28c76f;
+  --admin-warning: #ff9f43;
+  --admin-danger: #ea5455;
+  --admin-info: #00cfe8;
+  --admin-shadow: 0 4px 18px rgba(47, 43, 61, 0.06);
+  --admin-shadow-lg: 0 8px 28px rgba(47, 43, 61, 0.12);
+  --admin-radius: 12px;
+  --admin-radius-sm: 8px;
+  --admin-touch: 44px;
+}
+
+html.dark {
+  --admin-bg: rgb(22, 29, 49);
+  --admin-surface: rgb(40, 48, 70);
+  --admin-surface-2: rgb(30, 38, 60);
+  --admin-surface-hover: rgba(115, 103, 240, 0.08);
+  --admin-border: rgb(59, 66, 83);
+  --admin-border-strong: rgb(72, 80, 100);
+  --admin-heading: #ffffff;
+  --admin-text: #d0d2d6;
+  --admin-muted: #9aa0ac;
+  --admin-primary-soft: rgba(115, 103, 240, 0.16);
+  --admin-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --admin-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------------------------------ */
+/* Card                                                                */
+/* ------------------------------------------------------------------ */
+
+.admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  color: var(--admin-text);
+  min-width: 0;
+}
+
+.admin-card--sunken {
+  background: var(--admin-surface-2);
+  box-shadow: none;
+}
+
+.admin-card--tinted {
+  background: var(--admin-primary-soft);
+  border-color: rgba(115, 103, 240, 0.22);
+  box-shadow: none;
+}
+
+.admin-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-card__header--plain {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--admin-heading);
+}
+
+.admin-card__subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--admin-muted);
+}
+
+.admin-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-size: 16px;
+}
+
+.admin-card__body--sm {
+  padding: 12px;
+}
+
+.admin-card__body--md {
+  padding: 16px;
+}
+
+@media (min-width: 640px) {
+  .admin-card__header {
+    padding: 16px 20px;
+  }
+
+  .admin-card__body--sm {
+    padding: 16px;
+  }
+
+  .admin-card__body--md {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-card__body--md {
+    padding: 24px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Typography helpers                                                  */
+/* ------------------------------------------------------------------ */
+
+.admin-heading {
+  color: var(--admin-heading);
+}
+
+.admin-muted {
+  color: var(--admin-muted);
+}
+
+.admin-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive modal → bottom sheet on phones (ResponsiveModal)          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 639px) {
+  .admin-sheet-modal.ant-modal {
+    top: auto !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .admin-sheet-modal-wrap {
+    overflow: hidden !important;
+  }
+
+  .admin-sheet-modal .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 0 !important;
+    animation: admin-sheet-up 0.22s ease-out;
+  }
+
+  .admin-sheet-modal .ant-modal-content::before {
+    content: "";
+    display: block;
+    flex: none;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 999px;
+    background: var(--admin-border-strong);
+  }
+
+  .admin-sheet-modal .ant-modal-header {
+    flex: none;
+    margin: 0 !important;
+    padding: 10px 52px 12px 16px;
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .admin-sheet-modal .ant-modal-close {
+    top: 14px;
+    inset-inline-end: 10px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-sheet-modal .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 16px;
+  }
+
+  .admin-sheet-modal .ant-modal-footer {
+    flex: none;
+    display: flex;
+    gap: 8px;
+    margin: 0 !important;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--admin-border);
+  }
+
+  .admin-sheet-modal .ant-modal-footer > .ant-btn,
+  .admin-sheet-modal .ant-modal-footer > * > .ant-btn {
+    flex: 1 1 0;
+    height: var(--admin-touch);
+    margin: 0 !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-sheet-modal .ant-modal-content {
+      animation: none;
+    }
+  }
+}
+
+@keyframes admin-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive table / card list                                        */
+/* ------------------------------------------------------------------ */
+
+.admin-list-card {
+  display: block;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+.admin-list-card + .admin-list-card {
+  margin-top: 10px;
+}
+
+.admin-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.admin-kv > dt {
+  flex: none;
+  color: var(--admin-muted);
+}
+
+.admin-kv > dd {
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  color: var(--admin-text);
+}
+
+.admin-table-wrap {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Touch-friendly pagination on phones */
+@media (max-width: 639px) {
+  .admin-pagination.ant-pagination .ant-pagination-prev,
+  .admin-pagination.ant-pagination .ant-pagination-next,
+  .admin-pagination.ant-pagination .ant-pagination-item {
+    min-width: 40px;
+    height: 40px;
+    line-height: 38px;
+  }
+
+  .admin-pagination.ant-pagination .ant-pagination-simple-pager input {
+    height: 36px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Charts                                                              */
+/* ------------------------------------------------------------------ */
+
+.admin-chart {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-chart .recharts-wrapper,
+.admin-chart .recharts-surface {
+  outline: none;
+}
+
+.admin-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+}

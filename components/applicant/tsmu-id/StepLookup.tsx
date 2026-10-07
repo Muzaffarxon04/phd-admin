@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { Alert, Button, Checkbox, Form, Input } from "antd";
 import { tsmuIdApi } from "@/lib/api/tsmuId";
-import type { TsmuLookupResponse } from "@/types";
+import type { TsmuLookupResponse, TsmuPurpose } from "@/types";
 import { tsmuError, type TsmuErrorInfo } from "./errors";
 
 interface StepLookupProps {
   authenticated?: boolean;
+  /** Sent to lookup in the public flows; omitted in /verify-identity. */
+  purpose?: TsmuPurpose;
   /** Message shown when the user was sent back here (e.g. session expired). */
   notice?: string | null;
   onFound: (res: TsmuLookupResponse) => void;
@@ -37,7 +39,7 @@ export function toIsoDate(value: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function StepLookup({ authenticated, notice, onFound }: StepLookupProps) {
+export function StepLookup({ authenticated, purpose, notice, onFound }: StepLookupProps) {
   const [form] = Form.useForm<{ pinfl: string; birth_date: string; consent: boolean }>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<TsmuErrorInfo | null>(null);
@@ -49,7 +51,7 @@ export function StepLookup({ authenticated, notice, onFound }: StepLookupProps) 
     setLoading(true);
     setError(null);
     try {
-      const res = await tsmuIdApi.lookup(values.pinfl, iso, { authenticated });
+      const res = await tsmuIdApi.lookup(values.pinfl, iso, { authenticated, purpose });
       onFound(res);
     } catch (err) {
       setError(tsmuError(err, { authenticated }));
@@ -69,8 +71,12 @@ export function StepLookup({ authenticated, notice, onFound }: StepLookupProps) 
           message={error.message}
           description={
             error.action === "login" ? (
-              <Link href="/login" className="font-medium text-primary hover:underline">
+              <Link href="/login" className="inline-flex min-h-11 items-center font-medium text-primary hover:underline">
                 Kirish sahifasiga o&apos;tish →
+              </Link>
+            ) : error.action === "register" ? (
+              <Link href="/register" className="inline-flex min-h-11 items-center font-medium text-primary hover:underline">
+                Ro&apos;yxatdan o&apos;tish →
               </Link>
             ) : undefined
           }
@@ -131,7 +137,7 @@ export function StepLookup({ authenticated, notice, onFound }: StepLookupProps) 
         >
           <Checkbox>
             <span className="text-[13px] leading-5 text-muted">
-              Shaxsiy ma&apos;lumotlarimni davlat bazasidan olinishi va qayta ishlanishiga roziman
+              Shaxsimni tasdiqlash uchun ma&apos;lumotlarim qayta ishlanishiga roziman
             </span>
           </Checkbox>
         </Form.Item>

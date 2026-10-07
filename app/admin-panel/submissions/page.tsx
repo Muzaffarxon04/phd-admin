@@ -1,10 +1,9 @@
 "use client";
 
-import { Table, Button, Typography, Input, Select, App, Modal, Descriptions, Spin, Tag, Drawer, Form, InputNumber, Space } from "antd";
+import { Table, Button, Input, Select, App, Modal, Descriptions, Spin, Tag, Drawer, Form, InputNumber, Pagination, Skeleton } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
-  EyeOutlined,
-  // SearchOutlined,
+  SearchOutlined,
   FileTextOutlined,
   UserOutlined,
   PhoneOutlined,
@@ -12,25 +11,50 @@ import {
   DollarOutlined,
   CalendarOutlined,
   CreditCardOutlined,
-  CheckOutlined,
-  CloseOutlined,
   FileExcelOutlined,
   FileWordOutlined,
   StarOutlined,
-  RollbackOutlined,
 } from "@ant-design/icons";
 import { useGet, usePost, API_BASE_URL } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import { tokenStorage } from "@/lib/utils";
-// import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
-import Link from "next/link";
-import { formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { formatDateTime } from "@/lib/utils";
+import { useState, useMemo, type ReactNode } from "react";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  AdminCard,
+  AdminListStyles,
+  PageHeader,
+  PaymentStatusPill,
+  SubmissionStatusPill,
+  drawerWidth,
+  useAdminSurface,
+  useIsAdminMobile,
+} from "@/components/admin/submissions/AdminUi";
+import { SubmissionRowActions } from "@/components/admin/submissions/SubmissionRowActions";
+import { FormActions } from "@/components/admin/submissions/FormActions";
 
-const { Title } = Typography;
+const getSpecialityLabel = (record: Submission): string => {
+  const specialityObj =
+    record.speciality && typeof record.speciality === "object" && !Array.isArray(record.speciality)
+      ? (record.speciality as { id?: number; name?: string; code?: string; parent?: { name?: string } })
+      : null;
+  const baseName =
+    specialityObj?.name ||
+    record.speciality_name ||
+    (typeof record.speciality === "string" ? record.speciality : "") ||
+    "—";
+  const parentName =
+    specialityObj?.parent?.name ||
+    (record as unknown as { speciality_parent_name?: string }).speciality_parent_name ||
+    undefined;
+  const nameWithParent = parentName ? `${baseName} (${parentName})` : baseName;
+  const code = specialityObj?.code || (record.speciality_code ? String(record.speciality_code) : "");
+  return code ? `${code} - ${nameWithParent}` : nameWithParent;
+};
 
 interface Submission {
   id: number;
@@ -60,6 +84,9 @@ interface ApplicationItem {
 export default function AdminSubmissionsPage() {
   const { message } = App.useApp();
   const { theme } = useThemeStore();
+  const surface = useAdminSurface();
+  const isMobile = useIsAdminMobile();
+  const [mobilePage, setMobilePage] = useState(1);
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [searchTerm, setSearchTerm] = useState("");
@@ -259,21 +286,48 @@ export default function AdminSubmissionsPage() {
     }
   };
 
+  const headerCell = (icon: ReactNode, label: ReactNode, extraClass = "") => (
+    <div className={`flex items-center gap-2 py-3 ${extraClass}`}>
+      {icon}
+      <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{label}</span>
+    </div>
+  );
+
+  const strongText = theme === "dark" ? "text-gray-200" : "text-[#484650]";
+
+  const openPaymentCheck = (id: number) => {
+    setPaymentCheckId(id);
+    setIsPaymentModalOpen(true);
+  };
+
+  const openReturnDrawer = (id: number) => {
+    setSelectedReturnId(id);
+    setReturnDrawerOpen(true);
+  };
+
+  const renderActions = (record: Submission, variant: "table" | "card") => (
+    <SubmissionRowActions
+      record={record}
+      variant={variant}
+      detailHref={`/admin-panel/submissions/${record.id}`}
+      onPaymentCheck={() => openPaymentCheck(record.id)}
+      onApprove={() => openReviewDrawer(record.id, "approve")}
+      onReject={() => openReviewDrawer(record.id, "reject")}
+      onReturn={() => openReturnDrawer(record.id)}
+      onScore={() => openScoreModal(record)}
+    />
+  );
+
   const columns: ColumnsType<Submission> = [
     {
-      title: (
-        <div className="flex items-center gap-2 py-3 px-4">
-          <FileTextOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza ma&apos;lumotlari</span>
-        </div>
-      ),
+      title: headerCell(<FileTextOutlined className="text-[#7367f0]" />, <>Ariza ma&apos;lumotlari</>, "px-4"),
       key: "submission_info",
       render: (_, record) => (
         <div>
           <div className="font-bold text-base mb-1" style={{ color: "#7367f0" }}>
             #{record.submission_number}
           </div>
-          <div className={`text-sm font-bold ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+          <div className={`text-sm font-bold ${strongText}`}>
             {record.application_title}
           </div>
         </div>
@@ -281,47 +335,17 @@ export default function AdminSubmissionsPage() {
       width: 250,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <FileTextOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Mutaxassislik</span>
-        </div>
-      ),
+      title: headerCell(<FileTextOutlined className="text-[#7367f0]" />, "Mutaxassislik"),
       key: "speciality",
       width: 220,
-      render: (_: unknown, record) => {
-        const specialityObj =
-          record.speciality && typeof record.speciality === "object" && !Array.isArray(record.speciality)
-            ? (record.speciality as { id?: number; name?: string; code?: string; parent?: { name?: string } })
-            : null;
-        const baseName =
-          specialityObj?.name ||
-          record.speciality_name ||
-          (typeof record.speciality === "string" ? record.speciality : "") ||
-          "—";
-        const parentName =
-          specialityObj?.parent?.name ||
-          (record as unknown as { speciality_parent_name?: string }).speciality_parent_name ||
-          undefined;
-        const nameWithParent = parentName ? `${baseName} (${parentName})` : baseName;
-        const code = specialityObj?.code || (record.speciality_code ? String(record.speciality_code) : "");
-        const fullLabel = code ? `${code} - ${nameWithParent}` : nameWithParent;
-        return (
-          <div className="py-2">
-            <div className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-              {fullLabel}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CreditCardOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ta&apos;lim shakli</span>
+      render: (_: unknown, record) => (
+        <div className="py-2">
+          <div className={`font-bold text-sm ${strongText}`}>{getSpecialityLabel(record)}</div>
         </div>
       ),
+    },
+    {
+      title: headerCell(<CreditCardOutlined className="text-[#7367f0]" />, <>Ta&apos;lim shakli</>),
       key: "education_form",
       dataIndex: "education_form",
       width: 160,
@@ -338,16 +362,11 @@ export default function AdminSubmissionsPage() {
       ),
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <UserOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Talabgor</span>
-        </div>
-      ),
+      title: headerCell(<UserOutlined className="text-[#7367f0]" />, "Talabgor"),
       key: "applicant_info",
       render: (_, record) => (
         <div className="py-2">
-          <div className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+          <div className={`font-bold text-sm ${strongText}`}>
             {record.applicant_name}
           </div>
           <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -359,102 +378,53 @@ export default function AdminSubmissionsPage() {
       width: 200,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <ClockCircleOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holati</span>
-        </div>
-      ),
+      title: headerCell(<ClockCircleOutlined className="text-[#7367f0]" />, "Holati"),
       dataIndex: "status",
       key: "status",
-      width: 260,
-      render: (status: string) => {
-        const label = getApplicationStatusLabel(status);
-        return (
-          <div className="py-2">
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${status === "APPROVED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                status === "REJECTED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                  status === "DRAFT" ? "bg-gray-500/10 text-gray-500 border-gray-500/20" :
-                    "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                }`}
-            >
-              {label}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <DollarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">To&apos;lov</span>
+      width: 200,
+      render: (status: string) => (
+        <div className="py-2">
+          <SubmissionStatusPill status={status} />
         </div>
       ),
+    },
+    {
+      title: headerCell(<DollarOutlined className="text-[#7367f0]" />, <>To&apos;lov</>),
       dataIndex: "payment_status",
       key: "payment_status",
-      render: (status: string) => {
-        const labels: Record<string, string> = {
-          PENDING: "Kutilmoqda",
-          PAID: "To'langan",
-          FAILED: "Xatolik",
-        };
-        const colorClass =
-          status === "PAID" ? "text-green-500 bg-green-500/10 border-green-500/20" :
-            status === "FAILED" ? "text-red-500 bg-red-500/10 border-red-500/20" :
-              "text-orange-500 bg-orange-500/10 border-orange-500/20";
-
-        return (
-          <div className="py-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}>
-              {labels[status] || status}
-            </span>
-          </div>
-        );
-      },
+      render: (status: string) => (
+        <div className="py-2">
+          <PaymentStatusPill status={status} />
+        </div>
+      ),
       width: 130,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <StarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">O&apos;rtacha ball</span>
-        </div>
-      ),
+      title: headerCell(<StarOutlined className="text-[#7367f0]" />, <>O&apos;rtacha ball</>),
       dataIndex: "mark",
       key: "mark",
       width: 120,
       render: (_: Submission["mark"], record: Submission) => {
         const score = record.mark?.score;
         const display =
-          score !== null && score !== undefined 
+          score !== null && score !== undefined
             ? Number(score)
             : "—";
         return (
           <div className="py-2">
-            <span
-              className={`font-semibold text-sm ${
-                theme === "dark" ? "text-gray-200" : "text-[#484650]"
-              }`}
-            >
-              {display} 
+            <span className={`font-semibold text-sm ${strongText}`}>
+              {display}
             </span>
           </div>
         );
       },
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CalendarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Sana</span>
-        </div>
-      ),
+      title: headerCell(<CalendarOutlined className="text-[#7367f0]" />, "Sana"),
       dataIndex: "submitted_at",
       key: "submitted_at",
       render: (date?: string) => (
-        <div className="py-2 text-xs font-medium text-gray-400">
+        <div className="py-2 text-xs font-medium text-gray-400 whitespace-nowrap">
           {date ? formatDateTime(date) : "-"}
         </div>
       ),
@@ -467,81 +437,13 @@ export default function AdminSubmissionsPage() {
         </div>
       ),
       key: "actions",
-      render: (_, record) => (
-        <div className="flex justify-center gap-2 py-2">
-        <Link href={`/admin-panel/submissions/${record.id}`}>
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
-                : "bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
-                }`}
-              icon={<EyeOutlined style={{ fontSize: "18px" }} />}
-            />
-        </Link>
-          <Button
-            className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-              ? "bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white"
-              : "bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white"
-              }`}
-            icon={<CreditCardOutlined style={{ fontSize: "18px" }} />}
-            title="Payme statusini tekshirish"
-            onClick={() => {
-              setPaymentCheckId(record.id);
-              setIsPaymentModalOpen(true);
-            }}
-          />
-          {(record.status === "SUBMITTED" || record.status === "UNDER_REVIEW") && (
-            <>
-              <Button
-                className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                  ? "bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white"
-                  : "bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white"
-                  }`}
-                icon={<CheckOutlined style={{ fontSize: "18px" }} />}
-                title="Tasdiqlash"
-                onClick={() => openReviewDrawer(record.id, "approve")}
-              />
-              <Button
-                className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                  ? "bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white"
-                  : "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"
-                  }`}
-                icon={<CloseOutlined style={{ fontSize: "18px" }} />}
-                title="Rad etish"
-                onClick={() => openReviewDrawer(record.id, "reject")}
-              />
-            </>
-          )}
-          {(record.status === "SUBMITTED" || record.status === "UNDER_REVIEW" || record.status === "APPROVED" || record.status === "REJECTED") && (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white"
-                : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white"
-                }`}
-              icon={<RollbackOutlined style={{ fontSize: "18px" }} />}
-              title="Qaytarish"
-              onClick={() => {
-                setSelectedReturnId(record.id);
-                setReturnDrawerOpen(true);
-              }}
-            />
-          )}
-          {record.status === "APPROVED" && !record?.mark?.score && (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${useThemeStore.getState().theme === "dark"
-                ? "bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white"
-                : "bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white"
-                }`}
-              icon={<StarOutlined style={{ fontSize: "18px" }} />}
-              title="Baho qo'yish"
-              onClick={() => openScoreModal(record)}
-            />
-          )}
-        </div>
-      ),
-      width: 220,
+      fixed: "right",
+      render: (_, record) => renderActions(record, "table"),
+      width: 300,
     },
   ];
+
+  const pageTitle = "Qabul Hujjatlari";
 
   if (error) {
     // Handle array error format from backend
@@ -553,16 +455,9 @@ export default function AdminSubmissionsPage() {
     }
 
     return (
-      <div style={{ color: theme === "dark" ? "#ffffff" : "#000000" }}>
-        <h1 style={{ 
-          fontSize: "24px", 
-          fontWeight: 700,
-          marginBottom: 24,
-          color: theme === "dark" ? "#ffffff" : "#1a1a1a"
-        }}>
-          Qabul Hujjatlari
-        </h1>
-        <ErrorState 
+      <div className="space-y-6" style={{ color: surface.text }}>
+        <PageHeader title={pageTitle} />
+        <ErrorState
           description={errorMessage}
           onRetry={() => window.location.reload()}
         />
@@ -570,35 +465,48 @@ export default function AdminSubmissionsPage() {
     );
   }
 
-  return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Page Header */}
-      <div className="flex flex-col justify-between md:flex-row md:items-center  gap-4">
-        <div className="flex flex-col gap-2">
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Qabul Hujjatlari
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">Barcha talabgorlar arizalari ro&apos;yxati</div>
-        </div>
+  const MOBILE_PAGE_SIZE = 10;
+  const mobilePageCount = Math.max(1, Math.ceil(submissions.length / MOBILE_PAGE_SIZE));
+  const currentMobilePage = Math.min(mobilePage, mobilePageCount);
+  const mobileItems = submissions.slice(
+    (currentMobilePage - 1) * MOBILE_PAGE_SIZE,
+    currentMobilePage * MOBILE_PAGE_SIZE
+  );
 
-        <div className="flex  flex-1 flex-wrap justify-end items-start gap-3">
+  const exportButtonClass =
+    "!h-10 max-md:!h-11 w-full md:w-auto px-3 !rounded-xl !border-0 shadow-sm font-medium flex items-center justify-center gap-2";
+
+  return (
+    <div className="space-y-5 sm:space-y-6" style={{ color: surface.text }}>
+      <AdminListStyles />
+
+      {/* Page Header */}
+      <PageHeader
+        title={pageTitle}
+        subtitle={<>Barcha talabgorlar arizalari ro&apos;yxati</>}
+      />
+
+      {/* Filters */}
+      <AdminCard padded className="admin-touch">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_200px_240px_auto] lg:items-center">
           <Input
-          
+            allowClear
+            prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Qidirish..."
-            className="pl-9 pr-4 py-2  h-[40px] rounded-xl transition-all duration-300 w-[230px]!"
+            className="!h-10 max-md:!h-11 !rounded-xl sm:col-span-2 lg:col-span-1"
             style={{
               background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
               border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
               color: theme === "dark" ? "#ffffff" : "#484650",
             }}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setMobilePage(1); }}
           />
 
           <Select
-            className="w-48 premium-select"
+            className="w-full premium-select"
             placeholder="Holat bo&apos;yicha"
-            onChange={setStatusFilter}
+            onChange={(value) => { setStatusFilter(value); setMobilePage(1); }}
             value={statusFilter}
             options={[
               { value: "all", label: "Barcha holatlar" },
@@ -618,10 +526,10 @@ export default function AdminSubmissionsPage() {
             filterOption={(input, option) =>
               (option?.label ?? "").toString().toLowerCase().includes(input.toLowerCase())
             }
-            className="w-56 premium-select"
+            className="w-full premium-select"
             placeholder="Ariza (campaign) bo'yicha"
             value={applicationFilter === "all" ? undefined : applicationFilter}
-            onChange={(value) => setApplicationFilter(value ?? "all")}
+            onChange={(value) => { setApplicationFilter(value ?? "all"); setMobilePage(1); }}
             options={[
               { value: "all", label: "Barcha arizalar" },
               ...(applicationsData?.data?.data || []).map((app: ApplicationItem) => ({
@@ -631,10 +539,10 @@ export default function AdminSubmissionsPage() {
             ]}
           />
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-1 lg:flex">
             <Button
               icon={<FileWordOutlined />}
-              className="h-[40px] px-3 rounded-xl border-0 shadow-sm font-medium flex items-center gap-2"
+              className={exportButtonClass}
               style={{
                 background: theme === "dark" ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.08)",
                 color: "#2563eb",
@@ -646,7 +554,7 @@ export default function AdminSubmissionsPage() {
             </Button>
             <Button
               icon={<FileExcelOutlined />}
-              className="h-[40px] px-3 rounded-xl border-0 shadow-sm font-medium flex items-center gap-2"
+              className={exportButtonClass}
               style={{
                 background: theme === "dark" ? "rgba(34, 197, 94, 0.15)" : "rgba(34, 197, 94, 0.08)",
                 color: "#16a34a",
@@ -658,78 +566,121 @@ export default function AdminSubmissionsPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </AdminCard>
 
-      <div
-        className="rounded-xl overflow-hidden transition-all duration-300"
-        style={{
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        <Table
-          columns={columns}
-          dataSource={submissions}
-          rowKey="id"
-          loading={isLoading}
-          locale={{ emptyText: "Arizalar mavjud emas" }}
-          className="custom-admin-table"
-          scroll={{ x: "max-content" }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
-            className: "px-6 py-4",
-          }}
-        />
-        <style jsx global>{`
-          .custom-admin-table .ant-table {
-            background: transparent !important;
-            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
-          }
-          .custom-admin-table .ant-table-thead > tr > th {
-            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr > td {
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr:hover > td {
-            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
-          }
-          .custom-admin-table .ant-pagination-item-active {
-            border-color: #7367f0 !important;
-            background: #7367f0 !important;
-          }
-          .custom-admin-table .ant-pagination-item-active a {
-            color: #fff !important;
-          }
-          .premium-select .ant-select-selector {
-            background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
-            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
-            border-radius: 12px !important;
-            height: 40px !important;
-            display: flex !important;
-            align-items: center !important;
-          }
-          .premium-modal .ant-modal-content {
-            background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "none"} !important;
-            border-radius: 16px !important;
-          }
-          .premium-modal .ant-modal-header {
-            background: transparent !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-          }
-          .premium-modal .ant-modal-title {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-          }
-        `}</style>
-      </div>
+      {isMobile ? (
+        /* Mobile: card list */
+        <div className="space-y-3">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <AdminCard key={i} padded>
+                <Skeleton active paragraph={{ rows: 3 }} />
+              </AdminCard>
+            ))
+          ) : submissions.length === 0 ? (
+            <EmptyState description="Arizalar mavjud emas" />
+          ) : (
+            <>
+              <div className="px-1 text-xs font-medium" style={{ color: surface.muted }}>
+                Jami: {submissions.length} ta
+              </div>
+              {mobileItems.map((record) => (
+                <AdminCard key={record.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-base font-bold" style={{ color: "#7367f0" }}>
+                        #{record.submission_number}
+                      </div>
+                      <div className={`mt-0.5 text-sm font-semibold break-words ${strongText}`}>
+                        {record.application_title}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-[11px] uppercase tracking-wide" style={{ color: surface.muted }}>
+                        Ball
+                      </div>
+                      <div className={`text-base font-bold ${strongText}`}>
+                        {record.mark?.score !== null && record.mark?.score !== undefined ? Number(record.mark.score) : "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <SubmissionStatusPill status={record.status} />
+                    <PaymentStatusPill status={record.payment_status} />
+                    {record.education_form ? (
+                      <span
+                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase leading-5 tracking-wide"
+                        style={{ color: surface.muted, borderColor: surface.border }}
+                      >
+                        {record.education_form}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                    <div>
+                      <dt className="text-xs" style={{ color: surface.muted }}>Mutaxassislik</dt>
+                      <dd className={`m-0 font-medium break-words ${strongText}`}>{getSpecialityLabel(record)}</dd>
+                    </div>
+                    <div className="flex flex-wrap items-end justify-between gap-2">
+                      <div className="min-w-0">
+                        <dt className="text-xs" style={{ color: surface.muted }}>Talabgor</dt>
+                        <dd className={`m-0 font-semibold break-words ${strongText}`}>{record.applicant_name}</dd>
+                        <dd className="m-0 flex items-center gap-1 text-xs text-gray-400">
+                          <PhoneOutlined className="text-[10px]" />
+                          {record.applicant_phone}
+                        </dd>
+                      </div>
+                      <dd className="m-0 text-xs text-gray-400">
+                        {record.submitted_at ? formatDateTime(record.submitted_at) : "-"}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-4 border-t pt-3" style={{ borderColor: surface.divider }}>
+                    {renderActions(record, "card")}
+                  </div>
+                </AdminCard>
+              ))}
+              {submissions.length > MOBILE_PAGE_SIZE && (
+                <div className="flex justify-center pt-1">
+                  <Pagination
+                    className="admin-pagination"
+                    current={currentMobilePage}
+                    pageSize={MOBILE_PAGE_SIZE}
+                    total={submissions.length}
+                    showSizeChanger={false}
+                    showLessItems
+                    onChange={(page) => {
+                      setMobilePage(page);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <AdminCard className="overflow-hidden">
+          <Table
+            columns={columns}
+            dataSource={submissions}
+            rowKey="id"
+            loading={isLoading}
+            locale={{ emptyText: <EmptyState description="Arizalar mavjud emas" /> }}
+            className="custom-admin-table"
+            scroll={{ x: "max-content" }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
+              className: "!px-4 sm:!px-6 !py-4",
+            }}
+          />
+        </AdminCard>
+      )}
 
       <Modal
         title="Payme to'lov holati"
@@ -739,7 +690,7 @@ export default function AdminSubmissionsPage() {
           setPaymentCheckId(null);
         }}
         footer={null}
-        width={400}
+        width={440}
         className="premium-modal"
       >
         <div className="py-4">
@@ -748,7 +699,7 @@ export default function AdminSubmissionsPage() {
               <Spin size="large" />
             </div>
           ) : paymeStatusData ? (
-            <Descriptions column={1} bordered size="small">
+            <Descriptions column={1} bordered size="small" labelStyle={{ whiteSpace: "nowrap" }} contentStyle={{ wordBreak: "break-word" }}>
               <Descriptions.Item label="Holati">
                 <Tag color={paymeStatusData.state === 2 ? "green" : "red"}>
                   {paymeStatusData.state === 2 ? "To'langan" : "To'lanmagan"}
@@ -785,14 +736,14 @@ export default function AdminSubmissionsPage() {
       >
         {scoreModalSubmission && (
           <>
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
+            <div className="mb-6 space-y-2">
+              <div className="flex flex-wrap justify-between items-center gap-x-4">
                 <span className="text-gray-400 font-medium">Ariza raqami:</span>
                 <span className="font-bold text-[#7367f0]">#{scoreModalSubmission.submission_number}</span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-wrap justify-between items-center gap-x-4">
                 <span className="text-gray-400 font-medium">Arizachi:</span>
-                <span className="font-bold">{scoreModalSubmission.applicant_name}</span>
+                <span className="font-bold break-words">{scoreModalSubmission.applicant_name}</span>
               </div>
             </div>
 
@@ -811,6 +762,7 @@ export default function AdminSubmissionsPage() {
                   placeholder="Masalan: 85"
                   min={0}
                   max={100}
+                  inputMode="decimal"
                 />
               </Form.Item>
 
@@ -825,8 +777,8 @@ export default function AdminSubmissionsPage() {
                 />
               </Form.Item>
 
-              <Form.Item className="mb-0 text-right">
-                <Space>
+              <Form.Item className="mb-0">
+                <FormActions className="!mt-0">
                   <Button
                     onClick={() => {
                       setIsScoreModalOpen(false);
@@ -849,7 +801,7 @@ export default function AdminSubmissionsPage() {
                   >
                     Saqlash
                   </Button>
-                </Space>
+                </FormActions>
               </Form.Item>
             </Form>
           </>
@@ -864,15 +816,15 @@ export default function AdminSubmissionsPage() {
           form.resetFields();
         }}
         open={reviewDrawerOpen}
-        width={400}
+        width={drawerWidth(isMobile, 400)}
         styles={{
           header: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
             borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
           },
           body: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
           }
         }}
@@ -894,7 +846,7 @@ export default function AdminSubmissionsPage() {
             />
           </Form.Item>
 
-          <div className="flex gap-3 justify-end mt-4">
+          <FormActions>
             <Button
               onClick={() => {
                 setReviewDrawerOpen(false);
@@ -921,7 +873,7 @@ export default function AdminSubmissionsPage() {
             >
               {reviewAction === "approve" ? "Tasdiqlash" : "Rad etish"}
             </Button>
-          </div>
+          </FormActions>
         </Form>
       </Drawer>
 
@@ -933,15 +885,15 @@ export default function AdminSubmissionsPage() {
           returnForm.resetFields();
         }}
         open={returnDrawerOpen}
-        width={400}
+        width={drawerWidth(isMobile, 400)}
         styles={{
           header: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
             borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
           },
           body: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
           }
         }}
@@ -963,7 +915,7 @@ export default function AdminSubmissionsPage() {
             />
           </Form.Item>
 
-          <div className="flex gap-3 justify-end mt-4">
+          <FormActions>
             <Button
               onClick={() => {
                 setReturnDrawerOpen(false);
@@ -986,7 +938,7 @@ export default function AdminSubmissionsPage() {
             >
               Qaytarish
             </Button>
-          </div>
+          </FormActions>
         </Form>
       </Drawer>
     </div>

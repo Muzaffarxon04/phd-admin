@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Button, Typography, Popconfirm, App, Modal, Form, Input, Select, Row, Col, DatePicker, Space } from "antd";
-const { Title } = Typography;
+import { Table, Button, Popconfirm, App, Modal, Form, Pagination } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
@@ -21,11 +20,22 @@ import {
 import { useGet, usePatch } from "@/lib/hooks";
 import { apiRequest } from "@/lib/hooks/useUniversalFetch";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useThemeStore } from "@/lib/stores/themeStore";
 import { TableSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
-import { formatDateTime, getApplicationStatusLabel } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
+import {
+  AdminTableStyles,
+  ApplicationStatusPill,
+  ColumnTitle,
+  IconAction,
+  InfoItem,
+  ModalActions,
+  PageHeader,
+  useAdminSurface,
+} from "@/components/admin/applications/ui";
+import { ApplicationEditFields } from "@/components/admin/applications/ApplicationEditFields";
 
 interface Application {
   id: number;
@@ -46,7 +56,7 @@ interface Application {
 
 export default function AdminApplicationsPage() {
   const { message } = App.useApp();
-  const { theme } = useThemeStore();
+  const surface = useAdminSurface();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -213,226 +223,172 @@ export default function AdminApplicationsPage() {
     onSettled: () => setClosingId(null),
   });
 
+  const renderActions = (record: Application, mobile = false) => (
+    <div className={mobile ? "grid grid-cols-2 gap-2" : "flex flex-wrap items-center justify-center gap-2 py-2"}>
+      <Link href={`/admin-panel/applications/${record.id}`} className={mobile ? "contents" : undefined}>
+        <IconAction tone="primary" icon={<EyeOutlined />} label="Ko'rish" showLabel={mobile} />
+      </Link>
+      <IconAction
+        tone="success"
+        icon={<EditOutlined />}
+        label="Tahrirlash"
+        showLabel={mobile}
+        onClick={() => handleEdit(record)}
+      />
+      {record.status !== "PUBLISHED" && record.status !== "ARCHIVED" && (
+        <IconAction
+          tone="info"
+          icon={<CheckCircleOutlined />}
+          label="E'lon qilish"
+          showLabel={mobile}
+          loading={publishingId === record.id}
+          onClick={() => publishApplication(record.id)}
+        />
+      )}
+      {record.status === "PUBLISHED" && (
+        <IconAction
+          tone="warning"
+          icon={<StopOutlined />}
+          label="Yopish"
+          showLabel={mobile}
+          loading={closingId === record.id}
+          onClick={() => closeApplication(record.id)}
+        />
+      )}
+      {record.status !== "ARCHIVED" ? (
+        <IconAction
+          tone="neutral"
+          icon={<InboxOutlined />}
+          label="Arxivlash"
+          showLabel={mobile}
+          loading={archivingId === record.id}
+          onClick={() => archiveApplication(record.id)}
+        />
+      ) : (
+        <IconAction
+          tone="amber"
+          icon={<RollbackOutlined />}
+          label="Arxivdan chiqarish"
+          showLabel={mobile}
+          loading={unarchivingId === record.id}
+          onClick={() => unarchiveApplication(record.id)}
+        />
+      )}
+      <Popconfirm
+        title="O'chirish"
+        description="Haqiqatan ham bu arizani o'chirmoqchimisiz?"
+        onConfirm={() => handleDelete(record.id)}
+        okText="Ha"
+        cancelText="Yo'q"
+        overlayClassName="premium-popconfirm"
+      >
+        <span className={mobile ? "block" : "inline-flex"}>
+          <IconAction
+            tone="danger"
+            icon={<DeleteOutlined />}
+            label="O'chirish"
+            showLabel={mobile}
+            loading={deletingId === record.id}
+          />
+        </span>
+      </Popconfirm>
+    </div>
+  );
+
   const columns: ColumnsType<Application> = [
     {
-      title:"#",
+      title: "#",
       key: "id",
-      render: (_, record) => (
-        <div className="font-bold text-sm text-[#7367f0] mb-1">
-          #{record.id}
-        </div>
-      ),
-      // width: 45,
+      width: 64,
+      render: (_, record) => <div className="text-sm font-bold text-[#7367f0]">#{record.id}</div>,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3 px-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Ariza nomi</span>
-        </div>
-      ),
+      title: <ColumnTitle>Ariza nomi</ColumnTitle>,
       key: "title_info",
       render: (_, record) => (
-     
-          <div className={`font-bold text-sm ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
-            {record.title}
-          </div>
-    
+        <Link
+          href={`/admin-panel/applications/${record.id}`}
+          className="block max-w-[320px] text-sm font-bold hover:text-[#7367f0]!"
+          style={{ color: surface.text }}
+        >
+          {record.title}
+        </Link>
       ),
-      // width: 280,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CalendarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Muddati</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<CalendarOutlined />}>Muddati</ColumnTitle>,
       key: "dates",
       render: (_, record) => (
-        <div className=" flex items-center gap-2">
-          <div className="text-xs font-bold text-green-500 flex items-center gap-1">
-            {/* <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> */}
-            {formatDateTime(record.start_date)}
-          </div>
-          -
-          <div className="text-xs font-bold text-red-500 flex items-center gap-1">
-            {/* <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> */}
-            {formatDateTime(record.end_date)}
-          </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 whitespace-nowrap text-xs font-bold">
+          <span className="text-green-500">{formatDateTime(record.start_date)}</span>
+          <span style={{ color: surface.muted }}>—</span>
+          <span className="text-red-500">{formatDateTime(record.end_date)}</span>
         </div>
       ),
-      // width: 180,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CalendarOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Imtihon sanasi</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<CalendarOutlined />}>Imtihon sanasi</ColumnTitle>,
       key: "exam_date",
       render: (_, record) => (
-        <div className="text-xs font-bold text-[#7367f0]">
+        <div className="whitespace-nowrap text-xs font-bold text-[#7367f0]">
           {record.exam_date ? formatDateTime(record.exam_date) : "—"}
         </div>
       ),
-      // width: 140,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <TrophyOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Arizalar</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<TrophyOutlined />}>Arizalar</ColumnTitle>,
       dataIndex: "total_submissions",
       key: "total_submissions",
       render: (total: number) => (
-        <div className="py-2 font-bold text-sm text-[#7367f0]">
-          {total} ta
-        </div>
+        <div className="whitespace-nowrap py-2 text-sm font-bold text-[#7367f0]">{total} ta</div>
       ),
-      // width: 130,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holati</span>
-        </div>
-      ),
+      title: <ColumnTitle>Holati</ColumnTitle>,
       dataIndex: "status",
       key: "status",
-      width: 170,
-      render: (status: string) => {
-        const labels: Record<string, string> = {
-          DRAFT: "Qoralama",
-          PUBLISHED: "E'lon qilingan",
-          CLOSED: "Yopilgan",
-          ARCHIVED: "Arxivlangan",
-        };
-
-        return (
-          <div className="py-2">
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-bold break-words-nowrap uppercase tracking-wider border ${status === "PUBLISHED" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                status === "CLOSED" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                  "bg-gray-500/10 text-gray-500 border-gray-500/20"
-                }`}
-            >
-              {labels[status] || status}
-            </span>
-          </div>
-        );
-      },
-      // width: 150,
+      width: 150,
+      render: (status: string) => (
+        <div className="py-2">
+          <ApplicationStatusPill status={status} />
+        </div>
+      ),
     },
     {
-      title: (
-        <div className="flex items-center justify-center py-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Amallar</span>
-        </div>
-      ),
+      title: <ColumnTitle center>Amallar</ColumnTitle>,
       key: "actions",
       width: 280,
-      render: (_, record) => (
-        <div className="flex flex-wrap justify-center gap-2 py-2">
-          <Link href={`/admin-panel/applications/${record.id}`}>
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-[#7367f0]/20 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
-                : "bg-[#7367f0]/10 text-[#7367f0] hover:bg-[#7367f0] hover:text-white"
-                }`}
-              icon={<EyeOutlined style={{ fontSize: "18px" }} />}
-              title="Ko'rish"
-            />
-          </Link>
-          <Button
-            className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-              ? "bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white"
-              : "bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white"
-              }`}
-            icon={<EditOutlined style={{ fontSize: "18px" }} />}
-            title="Tahrirlash"
-            onClick={() => handleEdit(record)}
-          />
-          {record.status !== "PUBLISHED" && record.status !== "ARCHIVED" && (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white"
-                : "bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white"
-                }`}
-              icon={<CheckCircleOutlined style={{ fontSize: "18px" }} />}
-              title="E'lon qilish"
-              loading={publishingId === record.id}
-              onClick={() => publishApplication(record.id)}
-            />
-          )}
-          {record.status === "PUBLISHED" && (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white"
-                : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white"
-                }`}
-              icon={<StopOutlined style={{ fontSize: "18px" }} />}
-              title="Yopish"
-              loading={closingId === record.id}
-              onClick={() => closeApplication(record.id)}
-            />
-          )}
-          {record.status !== "ARCHIVED" ? (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-gray-500/20 text-gray-400 hover:bg-gray-500 hover:text-white"
-                : "bg-gray-500/10 text-gray-600 hover:bg-gray-500 hover:text-white"
-                }`}
-              icon={<InboxOutlined style={{ fontSize: "18px" }} />}
-              title="Arxivlash"
-              loading={archivingId === record.id}
-              onClick={() => archiveApplication(record.id)}
-            />
-          ) : (
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-white"
-                : "bg-amber-500/10 text-amber-600 hover:bg-amber-500 hover:text-white"
-                }`}
-              icon={<RollbackOutlined style={{ fontSize: "18px" }} />}
-              title="Arxivdan chiqarish"
-              loading={unarchivingId === record.id}
-              onClick={() => unarchiveApplication(record.id)}
-            />
-          )}
-          <Popconfirm
-            title="O'chirish"
-            description="Haqiqatan ham bu arizani o'chirmoqchimisiz?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Ha"
-            cancelText="Yo'q"
-            overlayClassName="premium-popconfirm"
-          >
-            <Button
-              className={`w-10 h-10 rounded-xl flex items-center justify-center border-0 transition-all duration-300 shadow-sm ${theme === "dark"
-                ? "bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white"
-                : "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"
-                }`}
-              icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
-              title="O'chirish"
-              loading={deletingId === record.id}
-            />
-          </Popconfirm>
-        </div>
-      ),
+      render: (_, record) => renderActions(record),
     },
   ];
 
+  const header = (
+    <PageHeader
+      title="Arizalar tizimi"
+      subtitle="Barcha e'lon qilingan arizalar va loyihalar boshqaruvi"
+      actions={
+        <Link href="/admin-panel/applications/create" className="block">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            block
+            className="h-11! rounded-xl! border-0 px-6 font-bold shadow-lg md:w-auto!"
+            style={{
+              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+              boxShadow: "0 8px 25px -8px #7367f0",
+            }}
+          >
+            Yangi ariza yaratish
+          </Button>
+        </Link>
+      }
+    />
+  );
+
   if (isLoading) {
     return (
-      <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-        <div className="flex justify-between items-center mb-6">
-          <Title level={4} className="mb-0!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Arizalar tizimi
-          </Title>
-        </div>
+      <div className="space-y-6" style={{ color: surface.text }}>
+        {header}
         <TableSkeleton />
       </div>
     );
@@ -446,52 +402,97 @@ export default function AdminApplicationsPage() {
     }
 
     return (
-      <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-        <Title level={4} className="mb-6!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-          Arizalar tizimi
-        </Title>
-        <ErrorState
-          description={errorMessage}
-          onRetry={() => window.location.reload()}
-        />
+      <div className="space-y-6" style={{ color: surface.text }}>
+        {header}
+        <ErrorState description={errorMessage} onRetry={() => window.location.reload()} />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <Title level={4} className="mb-1!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Arizalar tizimi
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">Barcha e&apos;lon qilingan arizalar va loyihalar boshqaruvi</div>
-        </div>
+  const onPageChange = (page: number, size: number) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
 
-        <div className="flex items-center gap-3">
-          <Link href="/admin-panel/applications/create">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+  return (
+    <div className="space-y-6" style={{ color: surface.text }}>
+      {header}
+
+      {/* Phones: card list */}
+      <div className="space-y-3 sm:hidden">
+        {applications.length === 0 ? (
+          <EmptyState description="Hozircha arizalar mavjud emas" />
+        ) : (
+          applications.map((record) => (
+            <article
+              key={record.id}
+              className="rounded-xl p-4"
               style={{
-                background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
-                boxShadow: "0 8px 25px -8px #7367f0",
+                background: surface.cardBg,
+                border: `1px solid ${surface.cardBorder}`,
+                boxShadow: surface.isDark ? "none" : "0 2px 8px rgba(0, 0, 0, 0.04)",
               }}
             >
-              Yangi ariza yaratish
-            </Button>
-          </Link>
-        </div>
+              <div className="flex items-start justify-between gap-3">
+                <Link
+                  href={`/admin-panel/applications/${record.id}`}
+                  className="min-w-0 flex-1 break-words text-base font-bold leading-snug"
+                  style={{ color: surface.heading }}
+                >
+                  <span className="mr-1 text-[#7367f0]">#{record.id}</span>
+                  {record.title}
+                </Link>
+                <ApplicationStatusPill status={record.status} />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <InfoItem label="Boshlanish">
+                  <span className="font-semibold text-green-500">{formatDateTime(record.start_date)}</span>
+                </InfoItem>
+                <InfoItem label="Tugash">
+                  <span className="font-semibold text-red-500">{formatDateTime(record.end_date)}</span>
+                </InfoItem>
+                <InfoItem label="Imtihon sanasi">
+                  <span className="font-semibold text-[#7367f0]">
+                    {record.exam_date ? formatDateTime(record.exam_date) : "—"}
+                  </span>
+                </InfoItem>
+                <InfoItem label="Arizalar">
+                  <span className="font-semibold text-[#7367f0]">{record.total_submissions} ta</span>
+                </InfoItem>
+              </div>
+
+              <div className="mt-4 border-t pt-3" style={{ borderColor: surface.divider }}>
+                {renderActions(record, true)}
+              </div>
+            </article>
+          ))
+        )}
+
+        {totalElements > 0 && (
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <Pagination
+              className="admin-mobile-pagination"
+              simple
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalElements}
+              onChange={onPageChange}
+            />
+            <span className="text-xs" style={{ color: surface.muted }}>
+              {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalElements)} dan {totalElements} ta
+            </span>
+          </div>
+        )}
       </div>
 
+      {/* Tablet & desktop: table (scrolls horizontally inside the card when needed) */}
       <div
-        className="rounded-xl overflow-hidden transition-all duration-300"
+        className="hidden overflow-hidden rounded-xl transition-all duration-300 sm:block"
         style={{
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+          background: surface.cardBg,
+          border: `1px solid ${surface.cardBorder}`,
+          boxShadow: surface.isDark ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
         }}
       >
         <Table
@@ -509,39 +510,12 @@ export default function AdminApplicationsPage() {
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
             pageSizeOptions: ["10", "20", "50", "100"],
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size);
-            },
-            className: "px-6 py-4",
+            onChange: onPageChange,
+            className: "px-4 py-4 sm:px-6",
           }}
         />
-        <style jsx global>{`
-          .custom-admin-table .ant-table {
-            background: transparent !important;
-            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
-          }
-          .custom-admin-table .ant-table-thead > tr > th {
-            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
-            font-weight: 700 !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr > td {
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr:hover > td {
-            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
-          }
-          .custom-admin-table .ant-pagination-item-active {
-            border-color: #7367f0 !important;
-            background: #7367f0 !important;
-          }
-          .custom-admin-table .ant-pagination-item-active a {
-            color: #fff !important;
-          }
-        `}</style>
       </div>
+      <AdminTableStyles />
 
       <Modal
         title="Arizani Tahrirlash"
@@ -552,93 +526,26 @@ export default function AdminApplicationsPage() {
         }}
         footer={null}
         width={600}
+        centered
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-          onFinish={handleUpdateApplication}
-          autoComplete="off"
-        >
-          <Form.Item
-            name="title"
-            label="Ariza nomi"
-            rules={[{ required: true, message: "Ariza nomini kiriting!" }]}
-          >
-            <Input placeholder="Ariza nomi" />
-          </Form.Item>
+        <Form form={editForm} layout="vertical" onFinish={handleUpdateApplication} autoComplete="off">
+          <ApplicationEditFields />
 
-          <Form.Item
-            name="description"
-            label="Tavsif"
-            rules={[{ required: true, message: "Tavsifni kiriting!" }]}
-          >
-            <Input.TextArea rows={4} placeholder="Ariza tavsifi" />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="start_date"
-                label="Boshlanish sanasi"
-                rules={[{ required: true, message: "Boshlanish sanasini tanlang!" }]}
-              >
-                <DatePicker className="w-full" format="YYYY-MM-DD" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="end_date"
-                label="Tugash sanasi"
-                rules={[{ required: true, message: "Tugash sanasini tanlang!" }]}
-              >
-                <DatePicker className="w-full" format="YYYY-MM-DD" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item name="exam_date" label="Imtihon sanasi">
-            <DatePicker
-              className="w-full"
-              format="YYYY-MM-DD"
-              disabledDate={(current) =>
-                current && editForm.getFieldValue("end_date")
-                  ? current.isBefore(editForm.getFieldValue("end_date"), "day")
-                  : false
-              }
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="status"
-            label="Holati"
-            rules={[{ required: true, message: "Holatni tanlang!" }]}
-          >
-            <Select placeholder="Holatni tanlang">
-              <Select.Option value="DRAFT">{getApplicationStatusLabel("DRAFT")}</Select.Option>
-              <Select.Option value="PUBLISHED">{getApplicationStatusLabel("PUBLISHED")}</Select.Option>
-              <Select.Option value="CLOSED">{getApplicationStatusLabel("CLOSED")}</Select.Option>
-              <Select.Option value="ARCHIVED">{getApplicationStatusLabel("ARCHIVED")}</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={isUpdatingApplication}>
-                Yangilash
-              </Button>
-              <Button
-                onClick={() => {
-                  setEditingApplication(null);
-                  editForm.resetFields();
-                }}
-              >
-                Bekor qilish
-              </Button>
-            </Space>
-          </Form.Item>
+          <ModalActions>
+            <Button
+              onClick={() => {
+                setEditingApplication(null);
+                editForm.resetFields();
+              }}
+            >
+              Bekor qilish
+            </Button>
+            <Button type="primary" htmlType="submit" loading={isUpdatingApplication}>
+              Yangilash
+            </Button>
+          </ModalActions>
         </Form>
       </Modal>
     </div>
   );
 }
-

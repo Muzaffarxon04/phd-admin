@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- local blob previews */
 import { useEffect, useRef, useState } from "react";
 import { Alert, Button, Spin } from "antd";
 import {
@@ -18,7 +17,7 @@ import {
 import { tsmuIdApi } from "@/lib/api/tsmuId";
 import { cn } from "@/lib/utils";
 import type { FacePose, FaceVerifyResponse } from "@/types";
-import { faceReasonMessage, MSG, tsmuError } from "./errors";
+import { faceReasonHint, MSG, tsmuError } from "./errors";
 import {
   type CameraError,
   type CapturedFrame,
@@ -30,7 +29,6 @@ import {
 
 interface StepFaceProps {
   verificationId: string;
-  maskedName?: string;
   /** Server-issued pose order for the first attempt (liveness challenge). */
   challenge?: FacePose[] | null;
   authenticated?: boolean;
@@ -65,6 +63,9 @@ const CAMERA_ERROR_TEXT: Record<CameraError, { title: string; text: string }> = 
     text: "Sahifani yangilab, qayta urinib ko'ring.",
   },
 };
+
+/** How long the "Shaxs tasdiqlandi" check stays before the wizard moves on. */
+const PASSED_DELAY_MS = 900;
 
 const TIPS = [
   { icon: <BulbOutlined />, text: "Yorug' joyda turing, yuzingizga soya tushmasin" },
@@ -112,43 +113,73 @@ function YawGauge({ yaw }: { yaw: number | null }) {
   );
 }
 
-function FrameSlots({ frames, order, className }: { frames: CapturedFrame[]; order: Pose[]; className?: string }) {
+/**
+ * Progress of the pose challenge — numbered steps only. Captured frames are never shown.
+ */
+function PoseSteps({ order, done, className }: { order: Pose[]; done: number; className?: string }) {
   return (
-    <div className={cn("grid grid-cols-3 gap-2", className)}>
-      {order.map((orderPose, i) => {
-        const f = frames[i];
-        // captured frames keep the pose they were taken in, even after the server issued a new order
-        const pose = f?.pose ?? orderPose;
+    <ol className={cn("grid grid-cols-3 gap-2", className)} aria-label={`Kadr ${Math.min(done + 1, order.length)} / ${order.length}`}>
+      {order.map((pose, i) => {
+        const complete = i < done;
+        const current = i === done;
         return (
-          <div key={i} className="min-w-0">
-            <div
+          <li
+            key={`${i}-${pose}`}
+            className={cn(
+              "flex min-w-0 items-center gap-2 rounded-lg border px-2 py-2 transition-colors sm:px-3",
+              complete
+                ? "border-success/40 bg-success-soft"
+                : current
+                  ? "border-primary/50 bg-primary-soft"
+                  : "border-border bg-surface"
+            )}
+            aria-current={current ? "step" : undefined}
+          >
+            <span
               className={cn(
-                "relative aspect-square overflow-hidden rounded-lg border",
-                f ? "border-success/50" : "border-dashed border-border bg-surface-2"
+                "tabular flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                complete
+                  ? "bg-success text-white"
+                  : current
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-2 text-muted"
               )}
             >
-              {f ? (
-                <>
-                  <img src={f.url} alt="" className="face-video h-full w-full object-cover" />
-                  <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-success text-[10px] text-white">
-                    <CheckOutlined />
-                  </span>
-                </>
-              ) : (
-                <span className="tabular absolute inset-0 flex items-center justify-center text-sm text-muted">
-                  {i + 1}
-                </span>
+              {complete ? <CheckOutlined /> : i + 1}
+            </span>
+            <span
+              className={cn(
+                "min-w-0 text-[11px] leading-4 sm:text-xs",
+                current ? "font-medium text-text" : "text-muted"
               )}
-            </div>
-            <p className="mt-1.5 truncate text-center text-[11px] text-muted">{POSE_INSTRUCTION[pose]}</p>
-          </div>
+            >
+              {POSE_INSTRUCTION[pose]}
+            </span>
+          </li>
         );
       })}
+    </ol>
+  );
+}
+
+function ResultCard({ ok, title, children }: { ok: boolean; title: string; children?: React.ReactNode }) {
+  return (
+    <div
+      className="flex flex-col items-center rounded-xl border border-border bg-surface px-5 py-8 text-center sm:px-6 sm:py-10"
+      role="status"
+    >
+      {ok ? (
+        <CheckCircleFilled className="text-[44px] text-success" />
+      ) : (
+        <CloseCircleFilled className="text-[44px] text-danger" />
+      )}
+      <p className="mt-4 text-lg font-semibold text-text">{title}</p>
+      {children}
     </div>
   );
 }
 
-export function StepFace({ verificationId, maskedName, challenge, authenticated, onPassed, onRestart }: StepFaceProps) {
+export function StepFace({ verificationId, challenge, authenticated, onPassed, onRestart }: StepFaceProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // Pose order for the current attempt; the server issues a new one after every failed attempt.
   const [order, setOrder] = useState<Pose[]>(() => normalizeOrder(challenge));
@@ -198,6 +229,17 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- upload is stable enough for a one-shot trigger
   }, [status, frames]);
 
+  // Passed: show the check for a moment, then continue automatically.
+  const onPassedRef = useRef(onPassed);
+  useEffect(() => {
+    onPassedRef.current = onPassed;
+  }, [onPassed]);
+  useEffect(() => {
+    if (!result?.passed) return;
+    const id = setTimeout(() => onPassedRef.current(result), PASSED_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [result]);
+
   const retry = () => {
     setResult(null);
     setApiError(null);
@@ -213,42 +255,35 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
   /* ---------------- result ---------------- */
   if (result && !uploading) {
     if (result.passed) {
+      // brief confirmation only — the wizard moves on by itself (see the effect above)
       return (
         <div className="animate-enter">
-          <div className="flex flex-col items-center rounded-xl border border-border bg-surface px-6 py-10 text-center">
-            <CheckCircleFilled className="text-[40px] text-success" />
-            <p className="mt-4 text-lg font-semibold text-text">Yuz tasdiqlandi</p>
-            <p className="tabular mt-1 text-sm text-muted">
-              O&apos;xshashlik: {Math.round(result.similarity_pct)}%
-            </p>
-          </div>
-          <Button type="primary" block size="large" className="!mt-6" onClick={() => onPassed(result)}>
-            Davom etish
-          </Button>
+          <ResultCard ok title={MSG.identified} />
         </div>
       );
     }
+    const hint = faceReasonHint(result.reason, result.attempts_left);
     return (
       <div className="animate-enter">
-        <div className="flex flex-col items-center rounded-xl border border-border bg-surface px-6 py-10 text-center">
-          <CloseCircleFilled className="text-[40px] text-danger" />
-          <p className="mt-4 text-lg font-semibold text-text">Tekshiruvdan o&apos;tmadi</p>
-          <p className="mt-1 max-w-sm text-sm leading-6 text-muted">
-            {faceReasonMessage(result.reason, result.attempts_left)}
-          </p>
+        <ResultCard ok={false} title={MSG.notIdentified}>
+          {hint && <p className="mt-1 max-w-sm text-sm leading-6 text-muted">{hint}</p>}
           {!exhausted && (
             <p className="tabular mt-3 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">
               Qolgan urinishlar: {result.attempts_left}
             </p>
           )}
-        </div>
-        <FrameSlots frames={frames} order={order} className="mt-4" />
+        </ResultCard>
+        {!exhausted && (
+          <p className="mt-4 text-center text-[13px] leading-5 text-muted">
+            Keyingi urinishda: <span className="font-medium text-text">{orderText}</span>.
+          </p>
+        )}
         {exhausted ? (
           <Button block size="large" className="!mt-6" onClick={() => onRestart(MSG.exhausted)}>
             Boshidan boshlash
           </Button>
         ) : (
-          <Button type="primary" block size="large" className="!mt-6" onClick={retry}>
+          <Button type="primary" block size="large" icon={<CameraOutlined />} className="!mt-6" onClick={retry}>
             Qayta urinish
           </Button>
         )}
@@ -260,15 +295,18 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
   if (status === "done") {
     return (
       <div className="animate-enter">
-        <FrameSlots frames={frames} order={order} />
         {uploading ? (
-          <div className="mt-6 flex items-center justify-center gap-3 rounded-xl border border-border bg-surface px-4 py-6 text-sm text-muted">
-            <Spin size="small" /> Yuz solishtirilmoqda…
+          <div
+            className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-surface px-4 py-12 text-[15px] font-medium text-text"
+            role="status"
+          >
+            <Spin size="large" />
+            Shaxsingiz tekshirilmoqda…
           </div>
         ) : (
           apiError && (
             <>
-              <Alert type="error" showIcon className="!mt-6" message={apiError} />
+              <Alert type="error" showIcon message={apiError} />
               {exhausted ? (
                 <Button block size="large" className="!mt-4" onClick={() => onRestart(MSG.exhausted)}>
                   Boshidan boshlash
@@ -287,7 +325,7 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
                     Qayta yuborish
                   </Button>
                   <Button size="large" className="flex-1" onClick={retry}>
-                    Qaytadan suratga olish
+                    Qaytadan boshlash
                   </Button>
                 </div>
               )}
@@ -303,19 +341,15 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
     <div>
       {status === "idle" && (
         <div className="animate-enter">
-          {maskedName && (
-            <p className="mb-4 text-sm text-muted">
-              Shaxs: <span className="font-medium text-text">{maskedName}</span>
-            </p>
-          )}
           <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <LockOutlined />
               </span>
-              <p className="text-[13px] leading-5 text-muted">
-                Kamera faqat shaxsingizni tasdiqlash uchun ishlatiladi. Uchta kadr olinib, pasport rasmingiz bilan
-                solishtiriladi. Suratlar serverda <span className="font-medium text-text">saqlanmaydi</span>.
+              <p className="text-[13px] leading-5 text-muted sm:text-sm sm:leading-6">
+                Kamera faqat shaxsingizni tasdiqlash uchun ishlatiladi. Ko&apos;rsatmaga ko&apos;ra boshingizni
+                burasiz, so&apos;ng shaxsingiz avtomatik tekshiriladi. Tekshiruv kadrlari xavfsizlik jurnalida
+                himoyalangan holda saqlanadi va faqat shaxsni tasdiqlash uchun ishlatiladi.
               </p>
             </div>
             <ul className="mt-4 flex flex-col gap-2.5 border-t border-border pt-4">
@@ -327,6 +361,9 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
               ))}
             </ul>
           </div>
+          <p className="mt-4 text-[13px] leading-5 text-muted">
+            Tartib: <span className="font-medium text-text">{orderText}</span>.
+          </p>
           <Button
             type="primary"
             size="large"
@@ -358,7 +395,7 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
 
       {/* Camera stage — the <video> stays mounted so the stream can attach before it is shown */}
       <div className={cn(!cameraVisible && "hidden")}>
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-[420px] overflow-hidden rounded-2xl bg-black sm:aspect-[4/3] sm:max-w-none">
+        <div className="face-stage relative mx-auto overflow-hidden rounded-2xl bg-black">
           <video
             ref={videoRef}
             className="face-video absolute inset-0 h-full w-full object-cover"
@@ -369,13 +406,15 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
           <OvalOverlay active={status === "capturing"} progress={cap.holdProgress} />
 
           {/* instruction */}
-          <div className="absolute inset-x-0 top-0 flex flex-col items-center gap-1.5 p-4 text-center">
+          <div className="absolute inset-x-0 top-0 flex flex-col items-center gap-1.5 bg-gradient-to-b from-black/50 to-transparent p-3 pb-6 text-center sm:p-4 sm:pb-8">
             {(status === "capturing" || status === "manual") && (
               <>
-                <span className="tabular rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-medium text-white/80">
+                <span className="tabular rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-medium text-white/85">
                   {stepNo} / {order.length}
                 </span>
-                <p className="text-xl font-semibold text-white drop-shadow sm:text-2xl">{instruction}</p>
+                <p className="text-xl font-semibold text-white drop-shadow sm:text-2xl" aria-live="polite">
+                  {instruction}
+                </p>
                 {status === "capturing" && cap.hint && <p className="text-sm text-white/85">{cap.hint}</p>}
               </>
             )}
@@ -395,7 +434,7 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
           )}
 
           {(status === "starting" || status === "loading-model") && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 text-sm text-white">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40 px-4 text-center text-sm text-white">
               <Spin />
               {status === "starting" ? "Kamera ishga tushirilmoqda…" : "Yuz aniqlash moduli yuklanmoqda…"}
             </div>
@@ -418,15 +457,12 @@ export function StepFace({ verificationId, maskedName, challenge, authenticated,
 
         {status === "manual" && (
           <p className="mt-3 text-center text-[13px] leading-5 text-muted">
-            {cap.modelFailed
-              ? "Avtomatik aniqlash ishlamadi. "
-              : ""}
+            {cap.modelFailed ? "Avtomatik aniqlash ishlamadi. " : ""}
             Ko&apos;rsatmaga amal qiling va har safar tugmani bosing: {orderText}.
           </p>
         )}
 
-        <FrameSlots frames={frames} order={order} className="mt-4" />
-
+        <PoseSteps order={order} done={frames.length} className="mx-auto mt-3 max-w-[480px]" />
       </div>
     </div>
   );

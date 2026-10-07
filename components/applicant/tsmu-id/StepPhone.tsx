@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Alert, Button, Form, Input } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { SafetyCertificateOutlined } from "@ant-design/icons";
 import { tsmuIdApi } from "@/lib/api/tsmuId";
 import { formatMMSS, useCountdown } from "@/lib/hooks/useCountdown";
 import { PhoneInput, phoneRules, formatNational, nationalDigits } from "@/components/applicant/auth/PhoneInput";
@@ -10,14 +10,13 @@ import { tsmuError } from "./errors";
 
 interface StepPhoneProps {
   verificationId: string;
-  maskedName: string;
   onVerified: (phone: string) => void;
   onRestart: (message: string) => void;
 }
 
 const RESEND_SECONDS = 60;
 
-export function StepPhone({ verificationId, maskedName, onVerified, onRestart }: StepPhoneProps) {
+export function StepPhone({ verificationId, onVerified, onRestart }: StepPhoneProps) {
   const [stage, setStage] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
   const [expiresIn, setExpiresIn] = useState<number | null>(null);
@@ -68,15 +67,9 @@ export function StepPhone({ verificationId, maskedName, onVerified, onRestart }:
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-          <UserOutlined />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs text-muted">Shaxs tasdiqlandi</p>
-          <p className="truncate text-[15px] font-semibold tracking-wide text-text">Siz: {maskedName}</p>
-        </div>
-      </div>
+      <p className="mb-6 inline-flex items-center gap-2 rounded-full bg-success-soft px-3 py-1.5 text-[13px] font-medium text-success">
+        <SafetyCertificateOutlined /> Shaxs tasdiqlandi
+      </p>
 
       {error && <Alert type="error" showIcon className="!mb-6" message={error} />}
 
@@ -125,10 +118,10 @@ export function StepPhone({ verificationId, maskedName, onVerified, onRestart }:
           <Button type="primary" htmlType="submit" block loading={loading}>
             Tasdiqlash
           </Button>
-          <div className="mt-4 flex items-center justify-between text-[13px]">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 text-[13px]">
             <button
               type="button"
-              className="font-medium text-muted hover:text-text"
+              className="min-h-11 font-medium text-muted hover:text-text"
               onClick={() => {
                 setStage("phone");
                 setError(null);
@@ -139,7 +132,7 @@ export function StepPhone({ verificationId, maskedName, onVerified, onRestart }:
             {timer.active ? (
               <span className="tabular text-muted">Qayta yuborish: {formatMMSS(timer.secondsLeft)}</span>
             ) : (
-              <Button type="link" size="small" className="!px-0" disabled={loading} onClick={() => void sendCode(phone)}>
+              <Button type="link" className="!min-h-11 !px-0" disabled={loading} onClick={() => void sendCode(phone)}>
                 Kodni qayta yuborish
               </Button>
             )}

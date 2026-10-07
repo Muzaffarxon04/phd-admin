@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
 import type { Examiner } from "@/types";
 import { formatDateTime } from "@/lib/utils";
+import { useIsAdminMobile } from "@/components/admin/submissions/AdminUi";
 
 const { Title, Text } = Typography;
 
@@ -37,12 +38,13 @@ interface PageProps {
 export default function ExaminerDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const isMobile = useIsAdminMobile();
 
   const { data: examiner, isLoading, error } = useGet<Examiner>(`/examiner/${id}/`);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <Spin size="large" />
       </div>
     );
@@ -50,7 +52,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="py-2 sm:py-4">
         <Alert
           message="Xatolik"
           description="Imtihonchi ma&apos;lumotlarini yuklashda xatolik yuz berdi"
@@ -63,7 +65,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
 
   if (!examiner) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="py-2 sm:py-4">
         <Alert
           message="Topilmadi"
           description="Bunday imtihonchi mavjud emas"
@@ -75,9 +77,9 @@ export default function ExaminerDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="py-2 sm:py-4">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6">
         <Breadcrumb
           items={[
             { href: "/admin-panel", title: "Admin Panel" },
@@ -91,18 +93,19 @@ export default function ExaminerDetailPage({ params }: PageProps) {
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => router.push("/admin-panel/examiners")}
+            className="max-md:!h-11 !rounded-xl"
           >
             Orqaga
           </Button>
         </div>
       </div>
 
-      <Row gutter={[24, 24]}>
+      <Row gutter={[{ xs: 16, sm: 24 }, { xs: 16, sm: 24 }]}>
         {/* Profile Card */}
         <Col xs={24} lg={8}>
-          <Card className="text-center">
+          <Card className="text-center rounded-xl">
             <Avatar
-              size={120}
+              size={isMobile ? 96 : 120}
               icon={<UserOutlined />}
               className="mb-4 mx-auto"
               style={{
@@ -110,7 +113,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
               }}
             />
 
-            <Title level={3} className="mb-2">
+            <Title level={3} className="mb-2 !text-xl sm:!text-2xl break-words">
               {examiner.first_name} {examiner.last_name}
             </Title>
 
@@ -131,7 +134,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
               type="primary"
               icon={<EditOutlined />}
               onClick={() => router.push(`/admin-panel/examiners/${id}/edit`)}
-              className="w-full"
+              className="w-full max-md:!h-11 !rounded-xl"
             >
               Tahrirlash
             </Button>
@@ -140,8 +143,14 @@ export default function ExaminerDetailPage({ params }: PageProps) {
 
         {/* Details */}
         <Col xs={24} lg={16}>
-          <Card title="Asosiy ma&apos;lumotlar" className="mb-6">
-            <Descriptions column={2} bordered>
+          <Card title="Asosiy ma&apos;lumotlar" className="mb-5 sm:mb-6 rounded-xl">
+            <Descriptions
+              column={{ xs: 1, sm: 1, md: 2 }}
+              bordered
+              size={isMobile ? "small" : "default"}
+              layout={isMobile ? "vertical" : "horizontal"}
+              contentStyle={{ wordBreak: "break-word" }}
+            >
               <Descriptions.Item label="To'liq ism">
                 <Text strong>{examiner.first_name} {examiner.last_name}</Text>
               </Descriptions.Item>
@@ -197,7 +206,7 @@ export default function ExaminerDetailPage({ params }: PageProps) {
           </Card>
 
           {/* Timeline */}
-          <Card title="Faoliyat tarixi">
+          <Card title="Faoliyat tarixi" className="rounded-xl">
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-2 shrink-0"></div>

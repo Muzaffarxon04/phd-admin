@@ -3,7 +3,9 @@ import type {
   FaceVerifyResponse,
   TsmuCompleteResponse,
   TsmuLookupResponse,
+  TsmuPasswordResetResponse,
   TsmuPhoneResponse,
+  TsmuPurpose,
   User,
 } from "@/types";
 
@@ -11,8 +13,11 @@ import type {
  * TSMU ID identity verification — /api/v1/auth/tsmu-id/
  *
  * `authenticated: true` (the /verify-identity flow) sends the Bearer token so the backend
- * records `initiated_by`; the public registration flow sends no token at all, so a stale
- * token in storage can never trigger the refresh/redirect logic of `apiRequest`.
+ * records `initiated_by`; the public registration and password-reset flows send no token at
+ * all, so a stale token in storage can never trigger the refresh/redirect logic of `apiRequest`.
+ *
+ * No endpoint returns personal data: lookup gives an opaque session id + pose challenge,
+ * face gives pass/fail only.
  */
 
 const BASE = "/auth/tsmu-id";
@@ -64,12 +69,17 @@ export interface TsmuCallOptions {
   authenticated?: boolean;
 }
 
+export interface TsmuLookupOptions extends TsmuCallOptions {
+  /** Left out in the authenticated /verify-identity flow (backend defaults to "registration"). */
+  purpose?: TsmuPurpose;
+}
+
 export const tsmuIdApi = {
   /** pinfl: 14 digits, birthDate: YYYY-MM-DD */
-  async lookup(pinfl: string, birthDate: string, opts: TsmuCallOptions = {}): Promise<TsmuLookupResponse> {
+  async lookup(pinfl: string, birthDate: string, opts: TsmuLookupOptions = {}): Promise<TsmuLookupResponse> {
     const res = await postJson<Envelope<TsmuLookupResponse>>(
       `${BASE}/lookup/`,
-      { pinfl, birth_date: birthDate },
+      { pinfl, birth_date: birthDate, ...(opts.purpose ? { purpose: opts.purpose } : {}) },
       !!opts.authenticated
     );
     return res.data;
@@ -106,6 +116,20 @@ export const tsmuIdApi = {
   async complete(verificationId: string, password: string, confirmPassword: string): Promise<TsmuCompleteResponse> {
     const res = await postJson<Envelope<TsmuCompleteResponse>>(
       `${BASE}/complete/`,
+      { verification_id: verificationId, password, confirm_password: confirmPassword },
+      false
+    );
+    return res.data;
+  },
+
+  /** Public: sets a new password once a `password_reset` session has passed the face check. */
+  async resetPassword(
+    verificationId: string,
+    password: string,
+    confirmPassword: string
+  ): Promise<TsmuPasswordResetResponse> {
+    const res = await postJson<Envelope<TsmuPasswordResetResponse>>(
+      `${BASE}/password/reset/`,
       { verification_id: verificationId, password, confirm_password: confirmPassword },
       false
     );

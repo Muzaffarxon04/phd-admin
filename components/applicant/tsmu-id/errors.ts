@@ -2,22 +2,25 @@ import { getErrorCode, getErrorMessage, getErrorStatus, isNetworkError } from "@
 import { ApiError } from "@/lib/hooks/useUniversalFetch";
 import type { ApiErrorBody, FaceFailReason } from "@/types";
 
-export type TsmuErrorAction = "restart" | "login";
+/** restart → back to step 1; login → show login link; register → show sign-up link */
+export type TsmuErrorAction = "restart" | "login" | "register";
 
 export interface TsmuErrorInfo {
   code?: string;
   message: string;
-  /** restart → back to step 1; login → show login link */
   action?: TsmuErrorAction;
 }
 
 export const MSG = {
   notFound: "JSHSHIR yoki tug'ilgan sana noto'g'ri",
-  unavailable: "Davlat xizmati vaqtincha javob bermayapti, keyinroq urinib ko'ring",
+  unavailable: "Xizmat vaqtincha ishlamayapti, keyinroq urinib ko'ring",
   pinflTaken: "Bu JSHSHIR bilan akkaunt mavjud — telefon va parol bilan kiring",
   pinflTakenAuthed: "Bu JSHSHIR boshqa akkauntga bog'langan",
+  accountNotFound: "Bu ma'lumotlar bilan akkaunt topilmadi",
+  /** Face check verdicts — the only thing the user learns about the comparison. */
+  identified: "Shaxs tasdiqlandi",
+  notIdentified: "Shaxs aniqlanmadi",
   noFace: "Kadrda faqat siz bo'lishingiz kerak, yorug' joyda turing",
-  lowSimilarity: (n: number) => `Yuz mos kelmadi (qolgan urinishlar: ${n})`,
   liveness: "Boshingizni ko'rsatilgandek buring",
   poseMismatch: "Boshingizni ko'rsatilgan tartibda buring — har urinishda tartib yangilanadi",
   exhausted: "Urinishlar tugadi, 30 daqiqadan keyin qaytadan boshlang",
@@ -29,7 +32,7 @@ export const MSG = {
   network: "Tarmoq bilan bog'lanib bo'lmadi. Internet aloqasini tekshiring.",
 };
 
-/** Map a TSMU ID API error to the Uzbek message from the spec (§3). */
+/** Map a TSMU ID API error to its Uzbek message and follow-up action. */
 export function tsmuError(error: unknown, opts: { authenticated?: boolean } = {}): TsmuErrorInfo {
   if (isNetworkError(error)) return { message: MSG.network };
   const code = getErrorCode(error);
@@ -44,6 +47,8 @@ export function tsmuError(error: unknown, opts: { authenticated?: boolean } = {}
       return opts.authenticated
         ? { code, message: MSG.pinflTakenAuthed }
         : { code, message: MSG.pinflTaken, action: "login" };
+    case "ACCOUNT_NOT_FOUND":
+      return { code, message: MSG.accountNotFound, action: "register" };
     case "RATE_LIMITED":
       return { code, message: MSG.rateLimited };
     case "INVALID_STATE":
@@ -72,8 +77,11 @@ export function tsmuError(error: unknown, opts: { authenticated?: boolean } = {}
   return { code, message: getErrorMessage(error, "Xatolik yuz berdi, qaytadan urinib ko'ring") };
 }
 
-/** Message for a failed face check. */
-export function faceReasonMessage(reason: FaceFailReason | null, attemptsLeft: number): string {
+/**
+ * Practical hint for a failed face check, or null when there is nothing to add to the
+ * "Shaxs aniqlanmadi" verdict (LOW_SIMILARITY: no score or other detail is ever shown).
+ */
+export function faceReasonHint(reason: FaceFailReason | null, attemptsLeft: number): string | null {
   if (attemptsLeft <= 0) return MSG.exhausted;
   switch (reason) {
     case "NO_FACE":
@@ -83,8 +91,12 @@ export function faceReasonMessage(reason: FaceFailReason | null, attemptsLeft: n
       return MSG.liveness;
     case "POSE_MISMATCH":
       return MSG.poseMismatch;
-    case "LOW_SIMILARITY":
     default:
-      return MSG.lowSimilarity(attemptsLeft);
+      return null;
   }
+}
+
+/** One-line message for a failed face check. */
+export function faceReasonMessage(reason: FaceFailReason | null, attemptsLeft: number): string {
+  return faceReasonHint(reason, attemptsLeft) ?? MSG.notIdentified;
 }

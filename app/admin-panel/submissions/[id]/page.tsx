@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, type CSSProperties } from "react";
 import {
   Spin,
   Tag,
@@ -10,12 +10,10 @@ import {
   Typography,
   Tabs,
   Avatar,
-  Divider,
   Modal,
   Form,
   Input,
   InputNumber,
-  Space,
   message,
   Drawer,
   Tooltip,
@@ -41,8 +39,22 @@ import {
   TableOutlined,
   RollbackOutlined,
   EditOutlined,
+  ExportOutlined,
 } from "@ant-design/icons";
 import { useThemeStore } from "@/lib/stores/themeStore";
+import {
+  AdminCard,
+  AdminListStyles,
+  InfoRow,
+  PageHeader,
+  SectionHeader,
+  StickyActionBar,
+  SubmissionStatusPill,
+  drawerWidth,
+  useAdminSurface,
+  useIsAdminMobile,
+} from "@/components/admin/submissions/AdminUi";
+import { FormActions } from "@/components/admin/submissions/FormActions";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -131,7 +143,7 @@ interface DataObject {
   answer_text: string | null;
 }
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const formatAnswer = (item: DataObject, onPreviewFile?: (path: string) => void) => {
   if (item.field_type === "FILE" && item.answer) {
@@ -141,7 +153,7 @@ const formatAnswer = (item: DataObject, onPreviewFile?: (path: string) => void) 
         <button
           type="button"
           onClick={() => onPreviewFile(path)}
-          className="text-[#7367f0] hover:underline font-bold flex items-center gap-2 bg-transparent border-0 cursor-pointer p-0"
+          className="text-[#7367f0] hover:underline font-bold inline-flex items-center gap-2 bg-transparent border-0 cursor-pointer p-0 min-h-11 text-left"
         >
           📎 Hujjatni ko&apos;rish
         </button>
@@ -152,22 +164,26 @@ const formatAnswer = (item: DataObject, onPreviewFile?: (path: string) => void) 
         href={API_BASE_URL?.replace("/api/v1", "") + path}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[#7367f0] hover:underline font-bold flex items-center gap-2"
+        className="text-[#7367f0] hover:underline font-bold inline-flex items-center gap-2 min-h-11"
       >
         📎 Hujjatni ko&apos;rish
       </a>
     );
   }
 
-  return <span className="font-medium">{item.answer_text || item.answer || "—"}</span>;
+  return (
+    <span className="font-medium break-words" style={{ overflowWrap: "anywhere" }}>
+      {item.answer_text || item.answer || "—"}
+    </span>
+  );
 };
 
 const CardView = ({ answers, theme, onPreviewFile }: { answers: DataObject[]; theme: string; onPreviewFile?: (path: string) => void }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-2">
     {answers.map((item: DataObject) => (
       <div
         key={item.id}
-        className="rounded-xl p-5 transition-all duration-300"
+        className="rounded-xl p-4 transition-all duration-300 min-w-0"
         style={{
           background: theme === "dark" ? "rgb(48, 56, 78)" : "#f8f9fa",
           border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
@@ -189,7 +205,7 @@ const TableView = ({ answers, theme, onPreviewFile }: { answers: DataObject[]; t
     {
       title: "№",
       key: "index",
-      width: 80,
+      width: 56,
       render: (_: unknown, __: unknown, index: number) => (
         <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
           {index + 1}
@@ -224,6 +240,7 @@ const TableView = ({ answers, theme, onPreviewFile }: { answers: DataObject[]; t
         columns={columns}
         dataSource={answers}
         pagination={false}
+        scroll={{ x: 560 }}
         className={`premium-table ${theme === "dark" ? "dark-table" : ""}`}
         style={{
           background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
@@ -239,6 +256,8 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
   const { id } = use(params);
   const queryClient = useQueryClient();
   const { theme } = useThemeStore();
+  const surface = useAdminSurface();
+  const isMobile = useIsAdminMobile();
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [scoreForm] = Form.useForm();
   const [form] = Form.useForm();
@@ -419,284 +438,233 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
 
   if (!submission) {
     return (
-      <div className="p-12 text-center">
+      <div className="px-0 py-8 sm:p-12 text-center">
         <Alert
           message="Ariza topilmadi"
           description="Siz so'ragan ariza mavjud emas yoki o'chirilgan bo'lishi mumkin."
           type="error"
           showIcon
-          className="rounded-xl border-0 shadow-lg"
+          className="rounded-xl border-0 shadow-lg text-left"
         />
         <Link href="/admin-panel/submissions" className="inline-block mt-6">
-          <Button icon={<ArrowLeftOutlined />} className="rounded-xl">Ro&apos;yxatga qaytish</Button>
+          <Button icon={<ArrowLeftOutlined />} className="rounded-xl !h-11">Ro&apos;yxatga qaytish</Button>
         </Link>
       </div>
     );
   }
 
+  const application =
+    submission.application && typeof submission.application === "object" && "title" in submission.application
+      ? (submission.application as ApplicationDetails)
+      : null;
+  const applicant = typeof submission.applicant === "object" && submission.applicant != null ? submission.applicant : null;
+  const applicantFullName =
+    typeof submission.applicant === "object" && submission.applicant?.first_name != null
+      ? [submission.applicant.last_name, submission.applicant.first_name, submission.applicant.middle_name].filter(Boolean).join(" ")
+      : submission.applicant_name;
+
+  const canReview = submission.status === "SUBMITTED" || submission.status === "UNDER_REVIEW";
+  const hasActions = canReview || submission.status === "APPROVED";
+
+  const actionButtonClass = "!h-[42px] px-5 !rounded-xl !border-0 shadow-lg font-bold flex items-center justify-center gap-2";
+
+  const reviewActions = (
+    <>
+      {canReview && (
+        <>
+          <Button
+            danger
+            icon={<CloseOutlined />}
+            onClick={() => openReviewDrawer("reject")}
+            className={`${actionButtonClass} !text-white`}
+            style={{
+              background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
+              boxShadow: "0 8px 25px -8px #ea5455",
+              color: "white",
+            }}
+          >
+            Rad etish
+          </Button>
+          <Button
+            icon={<RollbackOutlined />}
+            onClick={() => openReviewDrawer("withdrawn")}
+            className={`${actionButtonClass} !text-white`}
+            style={{
+              background: "linear-gradient(118deg, #f59e0b, rgba(245, 158, 11, 0.7))",
+              boxShadow: "0 8px 25px -8px #f59e0b",
+              color: "white",
+            }}
+          >
+            Qayta topshirish
+          </Button>
+          <Button
+            type="primary"
+            icon={<CheckOutlined />}
+            onClick={() => openReviewDrawer("approve")}
+            className={actionButtonClass}
+            style={{
+              background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
+              boxShadow: "0 8px 25px -8px #7367f0",
+            }}
+          >
+            Qabul qilish
+          </Button>
+        </>
+      )}
+      {submission.status === "APPROVED" &&
+        (submission.mark ? (
+          <>
+            <Tooltip
+              title={submission.mark?.comments?.trim() ? submission.mark.comments : "Izoh yo'q"}
+              placement="top"
+            >
+              <span
+                className="min-h-[42px] max-md:min-h-11 px-4 rounded-xl font-bold flex items-center justify-center gap-2 border border-[#28c76f]/30 cursor-pointer text-center"
+                style={{
+                  background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
+                  color: "#28c76f",
+                }}
+              >
+                Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
+              </span>
+            </Tooltip>
+            <Button
+              type="default"
+              icon={<EditOutlined />}
+              onClick={() => {
+                scoreForm.setFieldsValue({
+                  score: Number(submission.mark?.score) ?? undefined,
+                  comments: submission.mark?.comments ?? "",
+                });
+                setIsScoreModalOpen(true);
+              }}
+              className="!h-[42px] px-4 !rounded-xl font-bold flex items-center justify-center gap-2"
+              style={{
+                borderColor: theme === "dark" ? "rgba(115, 103, 240, 0.5)" : "#7367f0",
+                color: "#7367f0",
+                background: "transparent",
+              }}
+            >
+              Tahrirlash
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            onClick={() => setIsScoreModalOpen(true)}
+            className={actionButtonClass}
+            style={{
+              background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))",
+              boxShadow: "0 8px 25px -8px #28c76f",
+            }}
+          >
+            Baho qo&apos;yish
+          </Button>
+        ))}
+    </>
+  );
+
+  const dash = (v: string | null | undefined) => v ?? "—";
+
   return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+    <div className="space-y-5 sm:space-y-6" style={{ color: surface.text }}>
+      <AdminListStyles />
+
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/admin-panel/submissions">
+      <PageHeader
+        leading={
+          <Link href="/admin-panel/submissions" aria-label="Ro'yxatga qaytish" className="shrink-0">
             <Button
               icon={<ArrowLeftOutlined />}
-              className="w-10 h-10 rounded-xl flex items-center justify-center border-0 shadow-md transition-all duration-300"
+              className="!w-11 !h-11 !rounded-xl flex items-center justify-center !border-0 shadow-md transition-all duration-300"
               style={{
                 background: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "#ffffff",
                 color: theme === "dark" ? "#ffffff" : "#484650",
               }}
             />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <Title level={4} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                Ariza #{submission.submission_number}
-              </Title>
-              <Tag
-                className="rounded-lg border-0 px-3 py-1 text-[11px] font-bold uppercase tracking-wider"
-                style={{
-                  background: `${getApplicationStatusColor(submission.status)}15`,
-                  color: getApplicationStatusColor(submission.status),
-                }}
-              >
-                {getApplicationStatusLabel(submission.status)}
-              </Tag>
-            </div>
-            <div className="text-gray-400 text-sm font-medium flex items-center gap-2 mt-1">
-              <CalendarOutlined /> Topshirilgan: {submission.submitted_at ? formatDateTime(submission.submitted_at) : formatDateTime(submission.created_at)}
-            </div>
-          </div>
-        </div>
+        }
+        title={
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>Ariza #{submission.submission_number}</span>
+            <SubmissionStatusPill status={submission.status} />
+          </span>
+        }
+        subtitle={
+          <span className="flex items-center gap-2">
+            <CalendarOutlined /> Topshirilgan: {submission.submitted_at ? formatDateTime(submission.submitted_at) : formatDateTime(submission.created_at)}
+          </span>
+        }
+        extra={!isMobile && hasActions ? <div className="flex flex-wrap items-center gap-3 lg:justify-end">{reviewActions}</div> : null}
+      />
 
-        <div className="flex items-center gap-3">
-          {(submission.status === "SUBMITTED" || submission.status === "UNDER_REVIEW") && (
-            <>
-              <Button
-                danger
-                icon={<CloseOutlined />}
-                onClick={() => openReviewDrawer("reject")}
-                className="h-[42px] px-6 !text-white rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-                style={{
-                  background: "linear-gradient(118deg, #ea5455, rgba(234, 84, 85, 0.7))",
-                  boxShadow: "0 8px 25px -8px #ea5455",
-                  color: "white",
-                }}
-              >
-                Rad etish
-              </Button>
-              <Button
-                icon={<RollbackOutlined />}
-                onClick={() => openReviewDrawer("withdrawn")}
-                className="h-[42px] px-6 !text-white rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-                style={{
-                  background: "linear-gradient(118deg, #f59e0b, rgba(245, 158, 11, 0.7))",
-                  boxShadow: "0 8px 25px -8px #f59e0b",
-                  color: "white",
-                }}
-              >
-                Qayta topshirish
-              </Button>
-              <Button
-                type="primary"
-                icon={<CheckOutlined />}
-                onClick={() => openReviewDrawer("approve")}
-                className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-                style={{
-                  background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
-                  boxShadow: "0 8px 25px -8px #7367f0",
-                }}
-              >
-                Qabul qilish
-              </Button>
-            </>
-          )}
-          {submission.status === "APPROVED" &&
-            (submission.mark ? (
-              <div className="flex items-center gap-2">
-                <Tooltip
-                  title={submission.mark?.comments?.trim() ? submission.mark.comments : "Izoh yo'q"}
-                  placement="top"
-                >
-                  <span
-                    className="h-[42px] px-6 rounded-xl font-bold flex items-center gap-2 border border-[#28c76f]/30 cursor-pointer"
-                    style={{
-                      background: theme === "dark" ? "rgba(40, 199, 111, 0.15)" : "rgba(40, 199, 111, 0.08)",
-                      color: "#28c76f",
-                    }}
-                  >
-                    Qo&apos;yilgan Baho: {Number(submission.mark?.score)}
-                  </span>
-                </Tooltip>
-                <Button
-                  type="default"
-                  icon={<EditOutlined />}
-                  onClick={() => {
-                    scoreForm.setFieldsValue({
-                      score: Number(submission.mark?.score) ?? undefined,
-                      comments: submission.mark?.comments ?? "",
-                    });
-                    setIsScoreModalOpen(true);
-                  }}
-                  className="h-[42px] px-4 rounded-xl font-bold flex items-center gap-2"
-                  style={{
-                    borderColor: theme === "dark" ? "rgba(115, 103, 240, 0.5)" : "#7367f0",
-                    color: "#7367f0",
-                  }}
-                >
-                  Tahrirlash
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={() => setIsScoreModalOpen(true)}
-                className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
-                style={{
-                  background: "linear-gradient(118deg, #28c76f, rgba(40, 199, 111, 0.7))",
-                  boxShadow: "0 8px 25px -8px #28c76f",
-                }}
-              >
-                Baho qo&apos;yish
-              </Button>
-            ))}
-        </div>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-start">
+        <div className="lg:col-span-2 space-y-5 sm:space-y-6 min-w-0">
+          <AdminCard className="overflow-hidden">
+            <SectionHeader icon={<FileTextOutlined />} title={<>Ariza Ma&apos;lumotlari</>} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div
-            className="rounded-xl overflow-hidden transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.05)",
-            }}
-          >
-            <div className="px-6 py-2 border-b" style={{ borderColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7367f0]15 flex items-center justify-center text-[#7367f0]">
-                  <FileTextOutlined style={{ fontSize: "20px" }} />
-                </div>
-                <Title level={5} className="!m-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                  Ariza Ma&apos;lumotlari
-                </Title>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {submission.application &&
-                typeof submission.application === "object" &&
-                submission.application !== null &&
-                "title" in submission.application ? (
+            <div className="p-4 sm:p-6">
+              {application ? (
                 <div
-                  className="rounded-xl p-5 mb-6"
+                  className="rounded-xl px-4 py-2 sm:px-5 sm:py-3 mb-6"
                   style={{
-                    background: theme === "dark" ? "rgba(255,255,255,0.03)" : "#f8f9fa",
-                    border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgb(235, 233, 241)",
+                    background: surface.subtle,
+                    border: `1px solid ${surface.border}`,
+                    borderColor: surface.border,
                   }}
                 >
-                  <div className="space-y-3">
-
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Sarlavha:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit", textAlign: "right" }}>
-                        {(submission.application as ApplicationDetails).title ?? "—"}
-                      </Text>
-                    </div>
-                    {(submission.application as ApplicationDetails).description != null && (
-                      <div className="flex justify-between gap-4 items-start">
-                        <Text className="text-gray-400 shrink-0">Tavsif:</Text>
-                        <Text style={{ color: theme === "dark" ? "#e2e8f0" : "inherit", textAlign: "right" }}>
-                          {(submission.application as ApplicationDetails).description || "—"}
-                        </Text>
-                      </div>
+                  <div className="divide-y divide-[var(--admin-divider)]" style={{ "--admin-divider": surface.divider } as CSSProperties}>
+                    <InfoRow label="Sarlavha:">{application.title ?? "—"}</InfoRow>
+                    {application.description != null && (
+                      <InfoRow label="Tavsif:">
+                        <span className="font-normal">{application.description || "—"}</span>
+                      </InfoRow>
                     )}
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Boshlanish sanasi:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).start_date
-                          ? formatDateTime((submission.application as ApplicationDetails).start_date!)
-                          : "—"}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Tugash sanasi:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).end_date
-                          ? formatDateTime((submission.application as ApplicationDetails).end_date!)
-                          : "—"}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Imtihon sanasi:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).exam_date
-                          ? formatDateTime((submission.application as ApplicationDetails).exam_date!)
-                          : "—"}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Holat:</Text>
+                    <InfoRow label="Boshlanish sanasi:">
+                      {application.start_date ? formatDateTime(application.start_date) : "—"}
+                    </InfoRow>
+                    <InfoRow label="Tugash sanasi:">
+                      {application.end_date ? formatDateTime(application.end_date) : "—"}
+                    </InfoRow>
+                    <InfoRow label="Imtihon sanasi:">
+                      {application.exam_date ? formatDateTime(application.exam_date) : "—"}
+                    </InfoRow>
+                    <InfoRow label="Holat:">
                       <Tag
-                        color={getApplicationStatusColor((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
+                        color={getApplicationStatusColor(application.status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
                         className="m-0"
                       >
-                        {getApplicationStatusLabel((submission.application as ApplicationDetails).status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
+                        {getApplicationStatusLabel(application.status as "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED")}
                       </Tag>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Ta&apos;lim shakli:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {submission.education_form ?? "—"}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Ariza to&apos;lovi:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).application_fee != null
-                          ? `${Number((submission.application as ApplicationDetails).application_fee).toLocaleString()} UZS`
-                          : "—"}
-                      </Text>
-                    </div>
-
-
-
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Yaratuvchi:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).created_by_name ?? "—"}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <Text className="text-gray-400 shrink-0">Yaratilgan:</Text>
-                      <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                        {(submission.application as ApplicationDetails).created_at
-                          ? formatDateTime((submission.application as ApplicationDetails).created_at!)
-                          : "—"}
-                      </Text>
-                    </div>
-                    {(submission.speciality && (
-                      <div className="pt-2">
-                        <Text className="text-gray-400 block mb-2">Mutaxassislik:</Text>
+                    </InfoRow>
+                    <InfoRow label="Ta'lim shakli:">{submission.education_form ?? "—"}</InfoRow>
+                    <InfoRow label="Ariza to'lovi:">
+                      {application.application_fee != null
+                        ? `${Number(application.application_fee).toLocaleString()} UZS`
+                        : "—"}
+                    </InfoRow>
+                    <InfoRow label="Yaratuvchi:">{application.created_by_name ?? "—"}</InfoRow>
+                    <InfoRow label="Yaratilgan:">
+                      {application.created_at ? formatDateTime(application.created_at) : "—"}
+                    </InfoRow>
+                    {submission.speciality && (
+                      <div className="py-2">
+                        <span className="block mb-2 text-[13px]" style={{ color: surface.muted }}>Mutaxassislik:</span>
                         <div className="flex flex-wrap gap-2">
-                          {(submission.speciality && (
-                            <Tag style={{ margin: 0 }}>
-                              {submission.speciality.code} — {submission.speciality.name}
-                            </Tag>
-                          ))}
+                          <Tag style={{ margin: 0, whiteSpace: "normal", wordBreak: "break-word" }}>
+                            {submission.speciality.code} — {submission.speciality.name}
+                          </Tag>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               ) : null}
 
-              <Title level={5} className="!mb-4" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+              <h3 className="m-0 mb-2 text-base font-semibold" style={{ color: surface.text }}>
                 Javoblar
-              </Title>
+              </h3>
               <Tabs
                 defaultActiveKey="card"
                 className={`premium-tabs ${theme === "dark" ? "dark-tabs" : ""}`}
@@ -724,168 +692,88 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 ]}
               />
             </div>
-          </div>
+          </AdminCard>
 
-          {submission.documents && submission.documents.length > 0 ? <div
-            className="rounded-xl overflow-hidden transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.05)",
-            }}
-          >
-            <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#28c76f]15 flex items-center justify-center text-[#28c76f]">
-                  <CheckCircleOutlined style={{ fontSize: "20px" }} />
-                </div>
-                <Title level={5} className="!m-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                  Hujjatlar
-                </Title>
-              </div>
-            </div>
-            {submission.documents && submission.documents.length > 0 ? <div className="p-6">
-              {submission.documents && submission.documents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {submission.documents && submission.documents.length > 0 ? (
+            <AdminCard className="overflow-hidden">
+              <SectionHeader icon={<CheckCircleOutlined />} title="Hujjatlar" accent="#28c76f" />
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {(submission.documents as { id?: number; file?: string }[]).map((doc, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-xl border flex items-center justify-between"
+                      className="p-3 sm:p-4 rounded-xl border flex items-center justify-between gap-3"
                       style={{
-                        background: theme === "dark" ? "rgba(255,255,255,0.02)" : "#f8f9fa",
-                        borderColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgb(235, 233, 241)"
+                        background: surface.subtle,
+                        borderColor: surface.border,
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <FileTextOutlined className="text-gray-400 text-lg" />
-                        <span className="font-medium text-sm">Hujjat #{doc.id || idx + 1}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <FileTextOutlined className="text-gray-400 text-lg shrink-0" />
+                        <span className="font-medium text-sm truncate">Hujjat #{doc.id || idx + 1}</span>
                       </div>
                       <a
                         href={(API_BASE_URL?.replace("/api/v1", "") || "") + (doc.file || "")}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#7367f0] text-xs font-bold hover:underline"
+                        className="shrink-0 inline-flex items-center justify-center min-h-11 px-4 rounded-lg text-[#7367f0] text-xs font-bold hover:underline"
+                        style={{ background: "rgba(115, 103, 240, 0.1)" }}
                       >
                         YUKLASH
                       </a>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400 italic">Hujjatlar biriktirilmagan</div>
-              )}
-            </div> : null}
-          </div> : null}
+              </div>
+            </AdminCard>
+          ) : null}
         </div>
 
-        <div className="space-y-6">
-          <div
-            className="rounded-xl p-6 transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.05)",
-            }}
-          >
-            <div className="flex items-center gap-4 mb-6">
+        <div className="space-y-5 sm:space-y-6 min-w-0">
+          <AdminCard padded>
+            <div className="flex items-center gap-4 mb-4">
               <Avatar size={56} icon={<UserOutlined />} className="bg-[#7367f0] shrink-0" />
-              <div>
-                <Title level={5} className="!mb-0" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-                  {typeof submission.applicant === "object" && submission.applicant?.first_name != null
-                    ? [submission.applicant.last_name, submission.applicant.first_name, submission.applicant.middle_name].filter(Boolean).join(" ")
-                    : submission.applicant_name}
-                </Title>
+              <div className="min-w-0">
+                <div className="text-base font-semibold break-words" style={{ color: surface.text }}>
+                  {applicantFullName}
+                </div>
                 <Text className="text-gray-400 font-medium">Talabgor</Text>
               </div>
             </div>
 
-            <Divider className="my-4 opacity-10" />
-
-            <div className="space-y-4">
-              {typeof submission.applicant === "object" && submission.applicant != null && (
+            <div className="border-t divide-y divide-[var(--admin-divider)]" style={{ borderColor: surface.divider, "--admin-divider": surface.divider } as CSSProperties}>
+              {applicant && (
                 <>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Ism:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.first_name ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Familiya:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.last_name ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Otasining ismi:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.middle_name ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Telefon:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.phone_number ?? submission.applicant_phone ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Email:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.email ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">PINFL:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.pinfl ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Pasport seriyasi:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_seria ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Pasport raqami:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_number ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Pasport berilgan sana:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_issued_date ? formatDate(submission.applicant.passport_issued_date) : "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Pasport berilgan joy:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.passport_issued_by ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Tug&apos;ilgan sana:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.birth_date ? formatDate(submission.applicant.birth_date) : "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Tug&apos;ilgan joy:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.birth_place ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Fuqaroligi:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.citizen ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Millati:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.nation ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Doimiy manzil:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.permanent_address ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Viloyat:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.region ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Tuman:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.district ?? "—"}</Text>
-                  </div>
-                  <div className="flex justify-between">
-                    <Text className="text-gray-400">Tashkilot:</Text>
-                    <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant.organization ?? "—"}</Text>
-                  </div>
+                  <InfoRow label="Ism:">{dash(applicant.first_name)}</InfoRow>
+                  <InfoRow label="Familiya:">{dash(applicant.last_name)}</InfoRow>
+                  <InfoRow label="Otasining ismi:">{dash(applicant.middle_name)}</InfoRow>
+                  <InfoRow label="Telefon:">
+                    {applicant.phone_number ?? submission.applicant_phone ?? "—"}
+                  </InfoRow>
+                  <InfoRow label="Email:">{dash(applicant.email)}</InfoRow>
+                  <InfoRow label="PINFL:">{dash(applicant.pinfl)}</InfoRow>
+                  <InfoRow label="Pasport seriyasi:">{dash(applicant.passport_seria)}</InfoRow>
+                  <InfoRow label="Pasport raqami:">{dash(applicant.passport_number)}</InfoRow>
+                  <InfoRow label="Pasport berilgan sana:">
+                    {applicant.passport_issued_date ? formatDate(applicant.passport_issued_date) : "—"}
+                  </InfoRow>
+                  <InfoRow label="Pasport berilgan joy:">{dash(applicant.passport_issued_by)}</InfoRow>
+                  <InfoRow label="Tug'ilgan sana:">
+                    {applicant.birth_date ? formatDate(applicant.birth_date) : "—"}
+                  </InfoRow>
+                  <InfoRow label="Tug'ilgan joy:">{dash(applicant.birth_place)}</InfoRow>
+                  <InfoRow label="Fuqaroligi:">{dash(applicant.citizen)}</InfoRow>
+                  <InfoRow label="Millati:">{dash(applicant.nation)}</InfoRow>
+                  <InfoRow label="Doimiy manzil:">{dash(applicant.permanent_address)}</InfoRow>
+                  <InfoRow label="Viloyat:">{dash(applicant.region)}</InfoRow>
+                  <InfoRow label="Tuman:">{dash(applicant.district)}</InfoRow>
+                  <InfoRow label="Tashkilot:">{dash(applicant.organization)}</InfoRow>
                 </>
               )}
               {typeof submission.applicant !== "object" && (
-                <div className="flex justify-between">
-                  <Text className="text-gray-400">Telefon:</Text>
-                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.applicant_phone}</Text>
-                </div>
+                <InfoRow label="Telefon:">{submission.applicant_phone}</InfoRow>
               )}
-              <div className="flex justify-between">
-                <Text className="text-gray-400">To&apos;lov holati:</Text>
+              <InfoRow label="To'lov holati:">
                 <Tag
                   className="rounded-lg border-0 m-0"
                   style={{
@@ -896,71 +784,64 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 >
                   {submission.payment_status === "PAID" ? "TO'LANGAN" : submission.payment_status}
                 </Tag>
-              </div>
-              <div className="flex justify-between">
-                <Text className="text-gray-400">Ariza ID:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{submission.id}</Text>
-              </div>
+              </InfoRow>
+              <InfoRow label="Ariza ID:">{submission.id}</InfoRow>
             </div>
-          </div>
+          </AdminCard>
 
-          <div
-            className="rounded-xl p-6 transition-all duration-300"
-            style={{
-              background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-              border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-              boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Title level={5} className="mb-6 flex items-center gap-2" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+          <AdminCard padded>
+            <h3 className="m-0 mb-4 flex items-center gap-2 text-base font-semibold" style={{ color: surface.text }}>
               <ClockCircleOutlined className="text-[#ff9f43]" />
               Muhim Sanalar
-            </Title>
-            <div className="space-y-4">
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               <div>
                 <Text className="text-gray-400 block mb-1">Yaratilgan:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.created_at)}</Text>
+                <Text strong style={{ color: surface.text }}>{formatDateTime(submission.created_at)}</Text>
               </div>
               <div>
                 <Text className="text-gray-400 block mb-1">Oxirgi o&apos;zgarish:</Text>
-                <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.updated_at)}</Text>
+                <Text strong style={{ color: surface.text }}>{formatDateTime(submission.updated_at)}</Text>
               </div>
               {submission.submitted_at && (
                 <div>
                   <Text className="text-gray-400 block mb-1">Topshirilgan:</Text>
-                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>{formatDateTime(submission.submitted_at)}</Text>
+                  <Text strong style={{ color: surface.text }}>{formatDateTime(submission.submitted_at)}</Text>
                 </div>
               )}
               {submission.mark?.marked_at && (
                 <div>
                   <Text className="text-gray-400 block mb-1">Baholangan:</Text>
-                  <Text strong style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
+                  <Text strong style={{ color: surface.text }}>
                     {formatDateTime(submission.mark.marked_at)}
                   </Text>
                 </div>
               )}
             </div>
-          </div>
+          </AdminCard>
 
           {submission.review_notes && (
             <div
-              className="rounded-xl p-6 transition-all duration-300"
+              className="rounded-xl p-4 sm:p-6 transition-all duration-300"
               style={{
                 background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff",
                 border: "1px solid rgba(115, 103, 240, 0.2)",
               }}
             >
-              <Title level={5} className="mb-4 flex items-center gap-2" style={{ color: "#7367f0" }}>
+              <h3 className="m-0 mb-3 flex items-center gap-2 text-base font-semibold" style={{ color: "#7367f0" }}>
                 <MessageOutlined />
                 Ko&apos;rib chiqish eslatmasi
-              </Title>
-              <Text style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+              </h3>
+              <Text className="whitespace-pre-line break-words" style={{ color: surface.text }}>
                 {submission.review_notes}
               </Text>
             </div>
           )}
         </div>
       </div>
+
+      {/* Mobile: review actions pinned to the bottom of the viewport */}
+      {isMobile && hasActions && <StickyActionBar isMobile>{reviewActions}</StickyActionBar>}
 
       <style jsx global>{`
         .premium-tabs .ant-tabs-nav::before {
@@ -969,6 +850,15 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         .premium-tabs .ant-tabs-tab {
           padding: 12px 0;
           margin-right: 32px;
+        }
+        .premium-tabs .ant-tabs-tab + .ant-tabs-tab {
+          margin-left: 0;
+        }
+        @media (max-width: 639px) {
+          .premium-tabs .ant-tabs-tab {
+            margin-right: 20px;
+            min-height: 44px;
+          }
         }
         .premium-tabs .ant-tabs-tab-btn {
           color: ${theme === "dark" ? "#888ea8" : "#8b8b8b"};
@@ -1018,15 +908,15 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
           form.resetFields();
         }}
         open={reviewDrawerOpen}
-        width={400}
+        width={drawerWidth(isMobile, 400)}
         styles={{
           header: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
             borderBottom: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
           },
           body: {
-            background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
+            background: surface.surface,
             color: theme === "dark" ? "#ffffff" : "#000000",
           }
         }}
@@ -1048,7 +938,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             />
           </Form.Item>
 
-          <div className="flex gap-3 justify-end mt-4">
+          <FormActions>
             <Button
               onClick={() => {
                 setReviewDrawerOpen(false);
@@ -1079,7 +969,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
             >
               {reviewAction === "approve" ? "Tasdiqlash" : reviewAction === "reject" ? "Rad etish" : "Qaytarish"}
             </Button>
-          </div>
+          </FormActions>
         </Form>
       </Drawer>
 
@@ -1092,14 +982,14 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
       >
         {submission && (
           <>
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
+            <div className="mb-6 space-y-2">
+              <div className="flex flex-wrap justify-between items-center gap-x-4">
                 <span className="text-gray-400 font-medium">Ariza raqami:</span>
                 <span className="font-bold text-[#7367f0]">#{submission.submission_number}</span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-wrap justify-between items-center gap-x-4">
                 <span className="text-gray-400 font-medium">Arizachi:</span>
-                <span className="font-bold">{submission.applicant_name}</span>
+                <span className="font-bold break-words">{submission.applicant_name}</span>
               </div>
             </div>
 
@@ -1118,6 +1008,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   placeholder="Masalan: 85"
                   min={0}
                   max={100}
+                  inputMode="decimal"
                 />
               </Form.Item>
 
@@ -1132,8 +1023,8 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                 />
               </Form.Item>
 
-              <Form.Item className="mb-0 text-right">
-                <Space>
+              <Form.Item className="mb-0">
+                <FormActions className="!mt-0">
                   <Button onClick={() => setIsScoreModalOpen(false)} className="rounded-xl">
                     Bekor qilish
                   </Button>
@@ -1149,7 +1040,7 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
                   >
                     Saqlash
                   </Button>
-                </Space>
+                </FormActions>
               </Form.Item>
             </Form>
           </>
@@ -1160,16 +1051,33 @@ export default function AdminSubmissionDetailPage({ params }: { params: Promise<
         title="Fayl ko'rinishi"
         open={!!previewFileUrl}
         onCancel={handleClosePreview}
-        footer={<Button onClick={handleClosePreview}>Yopish</Button>}
-        width={800}
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            {previewFileUrl && (
+              <a
+                href={previewFileUrl.startsWith("blob:") ? previewFileUrl : getProxyUrl(previewFileUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button icon={<ExportOutlined />} className="max-sm:!h-11">Yangi tabda oching</Button>
+              </a>
+            )}
+            <Button onClick={handleClosePreview} className="max-sm:!h-11">Yopish</Button>
+          </div>
+        }
+        width={isMobile ? "100%" : 800}
+        className="admin-responsive-modal"
         destroyOnClose
         zIndex={1100}
         styles={{ wrapper: { zIndex: 1100 } }}
       >
         {previewFileUrl && (
-          <div className="relative flex justify-center" style={{ minHeight: 300 }}>
+          <div className="relative flex justify-center overflow-auto" style={{ minHeight: isMobile ? 240 : 300 }}>
             {previewLoading && (
-              <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/80 dark:bg-gray-900/80 rounded z-10">
+              <div
+                className="absolute inset-0 flex flex-col justify-center items-center rounded z-10"
+                style={{ background: theme === "dark" ? "rgba(17, 24, 39, 0.8)" : "rgba(255, 255, 255, 0.8)" }}
+              >
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7367f0] mb-4" />
                 <Text style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}>Fayl yuklanmoqda...</Text>
               </div>

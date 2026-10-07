@@ -215,7 +215,8 @@ export const authApi = {
 
   /**
    * POST /auth/register/
-   * Register with phone number
+   * @deprecated The backend is removing `auth/register/*`; registration is TSMU ID only
+   * (`tsmuIdApi` in lib/api/tsmuId.ts). Kept only for lib/stores/authStore.ts until it is cleaned up.
    */
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
     return apiRequest<RegisterResponse>("/auth/register/", {
@@ -226,7 +227,7 @@ export const authApi = {
 
   /**
    * POST /auth/register/complete/
-   * Complete registration with additional details
+   * @deprecated Removed on the backend — use `tsmuIdApi.complete`.
    */
   completeRegistration: async (data: CompleteRegistrationRequest): Promise<User> => {
     return apiRequest<User>("/auth/register/complete/", {
@@ -237,7 +238,7 @@ export const authApi = {
 
   /**
    * POST /auth/register/verify/
-   * Verify OTP during registration
+   * @deprecated Removed on the backend — use `tsmuIdApi.phoneVerify`.
    */
   verifyRegistrationOTP: async (data: VerifyOTPRequest): Promise<VerifyOTPResponse> => {
     return apiRequest<VerifyOTPResponse>("/auth/register/verify/", {

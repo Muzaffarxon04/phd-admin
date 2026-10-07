@@ -12,31 +12,38 @@ import {
   Select,
   Switch,
   message,
-  Popconfirm,
   Avatar,
-  Typography,
+  Pagination,
+  Skeleton,
 } from "antd";
 import {
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
   UserOutlined,
   SolutionOutlined,
   ClusterOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   StarOutlined,
-  LineChartOutlined,
   ProjectOutlined,
   BookOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import { useThemeStore } from "@/lib/stores/themeStore";
 import type { Examiner, Speciality } from "@/types";
 import type { ExaminerWorkloadResponse, ExaminerStatistics } from "@/lib/api/examiner";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  AdminCard,
+  AdminListStyles,
+  PageHeader,
+  useAdminSurface,
+  useIsAdminMobile,
+} from "@/components/admin/submissions/AdminUi";
+import { FormActions } from "@/components/admin/submissions/FormActions";
+import { ExaminerRowActions } from "@/components/admin/examiners/ExaminerRowActions";
 
-const { Title } = Typography;
 const { Option } = Select;
 
 export default function ExaminersPage() {
@@ -191,6 +198,29 @@ export default function ExaminersPage() {
 
 
   const { theme } = useThemeStore();
+  const surface = useAdminSurface();
+  const isMobile = useIsAdminMobile();
+
+  const openStats = (id: string) => {
+    setStatsExaminerId(id);
+    setIsStatsModalOpen(true);
+  };
+
+  const openWorkload = (id: string) => {
+    setWorkloadExaminerId(id);
+    setIsWorkloadModalOpen(true);
+  };
+
+  const renderActions = (record: Examiner, size = 40, className?: string) => (
+    <ExaminerRowActions
+      size={size}
+      className={className}
+      onEdit={() => handleEdit(record)}
+      onStats={() => openStats(record.id)}
+      onWorkload={() => openWorkload(record.id)}
+      onDelete={() => handleDelete(record.id)}
+    />
+  );
 
   const columns = [
     {
@@ -299,67 +329,39 @@ export default function ExaminersPage() {
         </div>
       ),
       key: "actions",
-      width: 150,
-      render: (_: unknown, record: Examiner) => (
-        <div className="flex items-center justify-center gap-2 py-2">
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
-            icon={<EditOutlined style={{ fontSize: "18px" }} />}
-            onClick={() => handleEdit(record)}
-          />
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 border-0 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-sm"
-            icon={<LineChartOutlined style={{ fontSize: "18px" }} />}
-            onClick={() => {
-              setStatsExaminerId(record.id);
-              setIsStatsModalOpen(true);
-            }}
-          />
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-500 border-0 hover:bg-purple-500 hover:text-white transition-all duration-300 shadow-sm"
-            icon={<ProjectOutlined style={{ fontSize: "18px" }} />}
-            title="Yuklama"
-            onClick={() => {
-              setWorkloadExaminerId(record.id);
-              setIsWorkloadModalOpen(true);
-            }}
-          />
-          <Popconfirm
-            title="O&apos;chirish"
-            description="Haqiqatan ham o&apos;chirmoqchimisiz?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Ha"
-            cancelText="Yo&apos;q"
-            overlayClassName="premium-popconfirm"
-          >
-            <Button
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 text-red-500 border-0 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm"
-              icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
-            />
-          </Popconfirm>
-        </div>
-      ),
+      width: 210,
+      fixed: "right" as const,
+      render: (_: unknown, record: Examiner) => renderActions(record),
     },
   ];
 
+  const filteredExaminers = examiners.filter(examiner =>
+    examiner?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    examiner.department?.toLowerCase().includes(searchTerm.toLowerCase()) || examiner.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const statusPill = (active: boolean) => (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${active ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+      }`}>
+      {active ? "Faol" : "Nofaol"}
+    </span>
+  );
+
 
   return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Imtihonchilar Boshqaruvi
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">PhD imtihonlarida qatnashuvchi imtihonchilarni boshqarish</div>
-        </div>
+    <div className="space-y-5 sm:space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
+      <AdminListStyles />
 
-        <div className="flex items-center gap-3">
+      {/* Page Header */}
+      <PageHeader
+        title="Imtihonchilar Boshqaruvi"
+        subtitle="PhD imtihonlarida qatnashuvchi imtihonchilarni boshqarish"
+        extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
-            className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+            className="!h-[42px] max-md:!h-11 w-full lg:w-auto px-6 !rounded-xl !border-0 shadow-lg font-bold flex items-center justify-center gap-2"
             style={{
               background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
               boxShadow: "0 8px 25px -8px #7367f0",
@@ -367,23 +369,18 @@ export default function ExaminersPage() {
           >
             Yangi imtihonchi
           </Button>
-        </div>
-      </div>
+        }
+      />
 
-      <div
-        className="rounded-xl overflow-hidden transition-all duration-300"
-        style={{
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-          <div className="flex items-center gap-4">
-            <div className="relative max-w-md flex-1">
+      <AdminCard className="overflow-hidden">
+        <div className="p-4 sm:p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="relative w-full sm:max-w-md flex-1">
               <Input
+                allowClear
+                prefix={<SearchOutlined className="text-gray-400" />}
                 placeholder="Imtihonchi nomini qidiring..."
-                className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
+                className="!h-10 max-md:!h-11 w-full !rounded-xl transition-all duration-300"
                 style={{
                   background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
                   border: "none",
@@ -412,68 +409,111 @@ export default function ExaminersPage() {
           </div>
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={examiners.filter(examiner =>
-            examiner?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            examiner.department?.toLowerCase().includes(searchTerm.toLowerCase()) || examiner.title?.toLowerCase().includes(searchTerm.toLowerCase())
-          )}
-          loading={isLoading}
-          rowKey="id"
-          className="custom-admin-table"
-          scroll={{ x: 1000 }}
-          pagination={{
-            total: examinersData?.total_elements || 0,
-            pageSize,
-            current: currentPage,
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
-            showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
-            className: "px-6 py-4",
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size ?? 20);
-            },
-          }}
-        />
+        {isMobile ? (
+          <div className="p-3 space-y-3">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-xl p-4" style={{ border: `1px solid ${surface.border}` }}>
+                  <Skeleton active avatar paragraph={{ rows: 2 }} />
+                </div>
+              ))
+            ) : filteredExaminers.length === 0 ? (
+              <EmptyState />
+            ) : (
+              filteredExaminers.map((record) => (
+                <div
+                  key={record.id}
+                  className="rounded-xl p-4"
+                  style={{ background: surface.subtle, border: `1px solid ${surface.border}` }}
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      className="shrink-0 ring-2 ring-[#7367f0]/20"
+                      style={{ backgroundColor: theme === "dark" ? "#7367f020" : "#7367f010", color: "#7367f0" }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className={`font-bold text-sm break-words ${theme === "dark" ? "text-gray-200" : "text-[#484650]"}`}>
+                          {record.full_name}
+                        </span>
+                        <span className="shrink-0">{statusPill(record.is_active)}</span>
+                      </div>
+                      <span className="text-xs text-gray-400 font-medium">#{record.id}</span>
+                    </div>
+                  </div>
+
+                  {record.title ? (
+                    <div className="mt-3">
+                      <span className="inline-block px-2 py-px rounded-lg bg-purple-500/10 text-purple-500 text-[10px]! font-bold uppercase border border-purple-500/20 whitespace-normal wrap-break-word max-w-full">
+                        {record.title}
+                      </span>
+                    </div>
+                  ) : null}
+                  {record.department ? (
+                    <div className="mt-2 text-xs font-medium break-words" style={{ color: surface.muted }}>
+                      {record.department}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+                    <span>
+                      <span className="text-green-500 font-bold uppercase">Ko&apos;rilgan:</span>{" "}
+                      <span className="font-bold">{record.reviews_count || 0}</span>
+                    </span>
+                    <span>
+                      <span className="text-orange-500 font-bold uppercase">Kutilayotgan:</span>{" "}
+                      <span className="font-bold">{record.pending_reviews || 0}</span>
+                    </span>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t" style={{ borderColor: surface.divider }}>
+                    {renderActions(record, 44, "flex items-center justify-between gap-2")}
+                  </div>
+                </div>
+              ))
+            )}
+            {(examinersData?.total_elements || 0) > pageSize && (
+              <div className="flex justify-center pt-1">
+                <Pagination
+                  className="admin-pagination"
+                  total={examinersData?.total_elements || 0}
+                  pageSize={pageSize}
+                  current={currentPage}
+                  showSizeChanger={false}
+                  showLessItems
+                  onChange={(page, size) => {
+                    setCurrentPage(page);
+                    setPageSize(size ?? 20);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredExaminers}
+            loading={isLoading}
+            rowKey="id"
+            className="custom-admin-table"
+            scroll={{ x: 1000 }}
+            pagination={{
+              total: examinersData?.total_elements || 0,
+              pageSize,
+              current: currentPage,
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50"],
+              showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
+              className: "!px-4 sm:!px-6 !py-4",
+              onChange: (page, size) => {
+                setCurrentPage(page);
+                setPageSize(size ?? 20);
+              },
+            }}
+          />
+        )}
         <style jsx global>{`
-          .custom-admin-table .ant-table {
-            background: transparent !important;
-            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
-          }
-          .custom-admin-table .ant-table-thead > tr > th {
-            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
-            font-weight: 700 !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr > td {
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr:hover > td {
-            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
-          }
-          .custom-admin-table .ant-pagination-item-active {
-            border-color: #7367f0 !important;
-            background: #7367f0 !important;
-          }
-          .custom-admin-table .ant-pagination-item-active a {
-            color: #fff !important;
-          }
-          
-          .premium-modal .ant-modal-content {
-            background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "none"} !important;
-            border-radius: 16px !important;
-          }
-          .premium-modal .ant-modal-header {
-            background: transparent !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-          }
-          .premium-modal .ant-modal-title {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-          }
           .premium-modal .ant-form-item-label > label {
             color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
           }
@@ -488,7 +528,7 @@ export default function ExaminersPage() {
             color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
           }
         `}</style>
-      </div>
+      </AdminCard>
 
       {/* Create/Edit Modal */}
       <Modal
@@ -556,7 +596,7 @@ export default function ExaminersPage() {
             </Form.Item>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <FormActions className="sm:!mt-6">
             <Button
               onClick={() => {
                 setIsModalOpen(false);
@@ -573,7 +613,7 @@ export default function ExaminersPage() {
             >
               {editingExaminer ? "Yangilash" : "Yaratish"}
             </Button>
-          </div>
+          </FormActions>
         </Form>
       </Modal>
 
@@ -589,7 +629,7 @@ export default function ExaminersPage() {
         width={700}
         className="premium-modal"
       >
-        <div className="py-4 overflow-y-auto max-h-[650px]">
+        <div className="py-2 sm:py-4 overflow-y-auto max-h-[70vh] sm:max-h-[650px]">
           {isStatsLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
@@ -604,7 +644,7 @@ export default function ExaminersPage() {
               </Card>
 
               {/* Period Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
             { !!examinerStats.data.period.start_date &&  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Boshlanish</div>
                   <div className="text-sm font-medium">
@@ -634,10 +674,10 @@ export default function ExaminersPage() {
                       {examinerStats.data.assignments.by_speciality.map((spec, index) => (
                         <div
                           key={index}
-                          className="flex justify-between items-center py-2 px-3 rounded text-sm mb-2"
+                          className="flex justify-between items-center gap-3 py-2 px-3 rounded-lg text-sm mb-2"
                           style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)" }}
                         >
-                          <span>
+                          <span className="min-w-0 break-words">
                             <BookOutlined className="mr-2" />
                             {spec.speciality__code} - {spec.speciality__name}
                           </span>
@@ -652,7 +692,7 @@ export default function ExaminersPage() {
               {/* Reviews Statistics */}
               <div>
                 <div className="text-sm font-medium mb-3 text-center">Ko&apos;rib chiqishlar</div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
                     <div className="text-gray-400 text-xs mb-1">Jami</div>
                     <div className="text-lg font-bold text-[#28c76f]">{examinerStats.data.reviews.total}</div>
@@ -717,7 +757,7 @@ export default function ExaminersPage() {
         width={700}
         className="premium-modal"
       >
-        <div className="py-4 overflow-y-auto max-h-[650px]">
+        <div className="py-2 sm:py-4 overflow-y-auto max-h-[70vh] sm:max-h-[650px]">
           {isWorkloadLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
@@ -732,7 +772,7 @@ export default function ExaminersPage() {
               </Card>
 
               {/* Workload Stats */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
                   <div className="text-gray-400 text-xs mb-1">Jami biriktirilgan</div>
                   <div className="text-xl font-bold text-[#7367f0]">{workloadStats?.total_assignments || 0}</div>
@@ -766,11 +806,11 @@ export default function ExaminersPage() {
                         className="p-3 rounded-xl flex flex-col gap-2"
                         style={{ background: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "#f8f9fa" }}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="font-medium text-sm">{assignment.application.title}</span>
                           <Tag color="blue">{assignment.speciality.name}</Tag>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-gray-500">
                           <span>Biriktirilgan: {formatDateTime(assignment.assigned_at)}</span>
                           <span>Kutilmoqda: {assignment.pending_reviews}</span>
                         </div>

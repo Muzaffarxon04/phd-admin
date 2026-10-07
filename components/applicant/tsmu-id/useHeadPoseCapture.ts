@@ -56,10 +56,10 @@ export type CaptureStatus =
   | "done" // 3 frames captured
   | "error"; // camera error
 
+/** A captured frame stays in memory only until it is uploaded — it is never previewed. */
 export interface CapturedFrame {
   pose: Pose;
   blob: Blob;
-  url: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -244,7 +244,6 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
   }, [stopLoop, videoRef]);
 
   const clearFrames = useCallback(() => {
-    framesRef.current.forEach((f) => URL.revokeObjectURL(f.url));
     framesRef.current = [];
     setFrames([]);
   }, []);
@@ -256,7 +255,7 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
       busyRef.current = true;
       try {
         const blob = await grabFrame(video);
-        const frame: CapturedFrame = { pose, blob, url: URL.createObjectURL(blob) };
+        const frame: CapturedFrame = { pose, blob };
         framesRef.current = [...framesRef.current, frame];
         setFrames(framesRef.current);
         if (framesRef.current.length >= orderRef.current.length) {
@@ -429,7 +428,6 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
       streamRef.current = null;
       landmarkerRef.current?.close();
       landmarkerRef.current = null;
-      framesRef.current.forEach((f) => URL.revokeObjectURL(f.url));
     };
   }, []);
 

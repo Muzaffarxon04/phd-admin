@@ -130,7 +130,7 @@ function mockResponse(url, verified) {
 /* Pages                                                               */
 /* ------------------------------------------------------------------ */
 
-const PUBLIC_PAGES = ["/", "/login", "/register", "/register?method=phone", "/register/tsmu-id", "/forgot-password"];
+const PUBLIC_PAGES = ["/", "/login", "/register", "/forgot-password", "/forgot-password?method=sms"];
 const AUTH_PAGES = ["/dashboard", "/applications", "/applications/1", "/my-submissions", "/my-submissions/1", "/verify-identity"];
 
 function slug(route) {

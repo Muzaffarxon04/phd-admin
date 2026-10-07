@@ -10,7 +10,6 @@ import {
   Col,
   Breadcrumb,
   Descriptions,
-  Spin,
   Alert,
   Statistic,
 } from "antd";
@@ -26,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { useGet } from "@/lib/hooks";
 import type { Speciality } from "@/types";
 import { formatDateTime } from "@/lib/utils";
+import { CardSkeleton } from "@/components/LoadingSkeleton";
 
 const { Title, Text } = Typography;
 
@@ -48,15 +48,16 @@ export default function SpecialityDetailPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Spin size="large" />
+      <div className="space-y-6">
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="space-y-6">
         <Alert
           message="Xatolik"
           description="Mutaxassislik ma&apos;lumotlarini yuklashda xatolik yuz berdi"
@@ -69,7 +70,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
 
   if (!speciality) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="space-y-6">
         <Alert
           message="Topilmadi"
           description="Bunday mutaxassislik mavjud emas"
@@ -81,22 +82,23 @@ export default function SpecialityDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div>
         <Breadcrumb
           items={[
             { href: "/admin-panel", title: "Admin Panel" },
             { href: "/admin-panel/specialities", title: "Mutaxassisliklar" },
             { title: speciality.name },
           ]}
-          className="mb-4"
+          className="mb-3 [&_ol]:flex-wrap"
         />
 
         <div className="flex items-center gap-4">
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => router.push("/admin-panel/specialities")}
+            className="min-h-[44px] sm:min-h-0"
           >
             Orqaga
           </Button>
@@ -104,24 +106,24 @@ export default function SpecialityDetailPage({ params }: PageProps) {
       </div>
 
       {/* Header Card */}
-      <Card className="mb-6">
-        <Row gutter={[24, 24]} align="middle">
+      <Card styles={{ body: { padding: "clamp(16px, 4vw, 24px)" } }}>
+        <Row gutter={[24, 16]} align="middle">
           <Col xs={24} md={16}>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <BookOutlined className="text-2xl text-white" />
+            <div className="mb-4 flex items-center gap-3 sm:gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 sm:h-16 sm:w-16">
+                <BookOutlined className="text-xl text-white sm:text-2xl" />
               </div>
-              <div>
-                <Title level={2} className="mb-1">
+              <div className="min-w-0">
+                <Title level={3} className="mb-1! break-words text-xl! sm:text-2xl!">
                   {speciality.name}
                 </Title>
-                <Tag color="blue" className="text-lg px-3 py-1">
+                <Tag color="blue" className="px-3 py-1 text-sm sm:text-base">
                   {speciality.code}
                 </Tag>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
               <div className="flex items-center gap-2">
                 <ExperimentOutlined className="text-purple-500" />
                 <Text strong>{speciality.field_of_science}</Text>
@@ -133,19 +135,19 @@ export default function SpecialityDetailPage({ params }: PageProps) {
             </div>
 
             {speciality.description && (
-              <Text className="text-gray-600 dark:text-gray-400 text-lg">
+              <Text className="text-base text-gray-600 dark:text-gray-400">
                 {speciality.description}
               </Text>
             )}
           </Col>
 
-          <Col xs={24} md={8} className="text-right">
+          <Col xs={24} md={8} className="md:text-right">
             <Button
               type="primary"
               size="large"
               icon={<EditOutlined />}
               onClick={() => router.push(`/admin-panel/specialities/${id}/edit`)}
-              className="mb-4"
+              className="w-full md:w-auto"
             >
               Tahrirlash
             </Button>
@@ -154,8 +156,8 @@ export default function SpecialityDetailPage({ params }: PageProps) {
       </Card>
 
       {/* Statistics */}
-      <Row gutter={[24, 24]} className="mb-6">
-        <Col xs={24} md={8}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="Imtihonchilar soni"
@@ -166,7 +168,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
           </Card>
         </Col>
 
-        <Col xs={24} md={8}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="Jami arizalar"
@@ -177,7 +179,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
           </Card>
         </Col>
 
-        <Col xs={24} md={8}>
+        <Col xs={24} sm={8}>
           <Card>
             <Statistic
               title="Faol arizalar"
@@ -192,8 +194,8 @@ export default function SpecialityDetailPage({ params }: PageProps) {
       <Row gutter={[24, 24]}>
         {/* Details */}
         <Col xs={24} lg={16}>
-          <Card title="Batafsil ma'lumotlar" className="mb-6">
-            <Descriptions column={2} bordered>
+          <Card title="Batafsil ma'lumotlar">
+            <Descriptions column={{ xs: 1, sm: 1, md: 2 }} bordered size="middle">
               <Descriptions.Item label="Kod">
                 <Tag color="blue" className="font-mono text-base">
                   {speciality.code}
@@ -201,7 +203,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
               </Descriptions.Item>
 
               <Descriptions.Item label="Nomi">
-                <Text strong className="text-lg">{speciality.name}</Text>
+                <Text strong className="break-words text-base">{speciality.name}</Text>
               </Descriptions.Item>
 
               <Descriptions.Item label="Fan sohasi">
@@ -218,7 +220,7 @@ export default function SpecialityDetailPage({ params }: PageProps) {
               </Descriptions.Item>
 
               {speciality.description && (
-                <Descriptions.Item label="Tavsif" span={2}>
+                <Descriptions.Item label="Tavsif" span={{ xs: 1, sm: 1, md: 2 }}>
                   <Text className="text-gray-600 dark:text-gray-400">
                     {speciality.description}
                   </Text>

@@ -62,7 +62,7 @@ export function Topbar() {
           <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
             <button
               type="button"
-              className="flex h-10 items-center gap-2.5 rounded-lg pl-1 pr-1 transition-colors hover:bg-surface-2 md:pr-2.5"
+              className="flex h-11 min-w-11 items-center gap-2.5 rounded-lg pl-1.5 pr-1.5 transition-colors hover:bg-surface-2 md:pr-2.5"
               aria-label="Foydalanuvchi menyusi"
             >
               <UserAvatar user={user} size={30} />

@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 import type { TsmuCompleteResponse } from "@/types";
 import { tsmuError } from "./errors";
 
-interface StepPasswordProps {
+type StepPasswordProps = {
   verificationId: string;
-  onComplete: (res: TsmuCompleteResponse) => void;
   onRestart: (message: string) => void;
-}
+} & (
+  | { /** register: creates the account and returns tokens */ mode?: "register"; onComplete: (res: TsmuCompleteResponse) => void }
+  | { /** reset: sets a new password on the existing account */ mode: "reset"; onComplete: () => void }
+);
 
 export function passwordScore(pw: string): number {
   if (!pw) return 0;
@@ -52,7 +54,9 @@ function StrengthMeter({ password }: { password: string }) {
   );
 }
 
-export function StepPassword({ verificationId, onComplete, onRestart }: StepPasswordProps) {
+export function StepPassword(props: StepPasswordProps) {
+  const { verificationId, onRestart } = props;
+  const reset = props.mode === "reset";
   const [form] = Form.useForm<{ password: string; confirm_password: string }>();
   const password = Form.useWatch("password", form) ?? "";
   const [loading, setLoading] = useState(false);
@@ -62,8 +66,13 @@ export function StepPassword({ verificationId, onComplete, onRestart }: StepPass
     setLoading(true);
     setError(null);
     try {
-      const res = await tsmuIdApi.complete(verificationId, v.password, v.confirm_password);
-      onComplete(res);
+      if (props.mode === "reset") {
+        await tsmuIdApi.resetPassword(verificationId, v.password, v.confirm_password);
+        props.onComplete();
+      } else {
+        const res = await tsmuIdApi.complete(verificationId, v.password, v.confirm_password);
+        props.onComplete(res);
+      }
     } catch (err) {
       const info = tsmuError(err);
       if (info.action === "restart") onRestart(info.message);
@@ -79,7 +88,7 @@ export function StepPassword({ verificationId, onComplete, onRestart }: StepPass
       <Form form={form} layout="vertical" size="large" requiredMark={false} onFinish={submit}>
         <Form.Item
           name="password"
-          label="Parol"
+          label={reset ? "Yangi parol" : "Parol"}
           rules={[
             { required: true, message: "Parolni kiriting" },
             { min: 8, message: "Parol kamida 8 ta belgidan iborat bo'lishi kerak" },
@@ -111,7 +120,7 @@ export function StepPassword({ verificationId, onComplete, onRestart }: StepPass
           <Input.Password autoComplete="new-password" />
         </Form.Item>
         <Button type="primary" htmlType="submit" block loading={loading} className="!mt-2">
-          Akkaunt yaratish
+          {reset ? "Parolni saqlash" : "Akkaunt yaratish"}
         </Button>
       </Form>
     </div>

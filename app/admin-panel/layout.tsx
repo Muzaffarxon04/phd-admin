@@ -1,13 +1,12 @@
 "use client";
 
-import { Layout } from "antd";
+import { Layout, Spin } from "antd";
 import Sidebar from "@/components/admin/Sidebar";
-import Header from "@/components/applicant/Header";
-import { useThemeStore } from "@/lib/stores/themeStore";
+import AdminHeader from "@/components/admin/AdminHeader";
 import { tokenStorage } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Spin } from "antd";
+import "@/components/admin/ui/admin-ui.css";
 import "./admin-overrides.css";
 
 const { Content } = Layout;
@@ -18,8 +17,9 @@ export default function AdminPanelLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { theme } = useThemeStore();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     // Use requestAnimationFrame to avoid setState in effect warning
@@ -38,61 +38,26 @@ export default function AdminPanelLayout({
     requestAnimationFrame(checkAuth);
   }, [router]);
 
+  // Close the navigation drawer whenever the route changes.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setDrawerOpen(false));
+    return () => cancelAnimationFrame(id);
+  }, [pathname]);
+
   if (isChecking) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          background: theme === "dark" ? "rgb(22, 29, 49)" : "rgb(246, 246, 246)"
-        }}
-      >
+      <div className="admin-shell flex min-h-dvh items-center justify-center">
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: theme === "dark"
-          ? "rgb(22, 29, 49)"
-          : "rgb(246, 246, 246)",
-        transition: "background 0.3s ease"
-      }}
-    >
-      <Sidebar />
-      <Layout
-        style={{
-          marginLeft: 280,
-          marginRight: 20,
-          background: "transparent",
-          transition: "margin-left 0.3s ease"
-        }}
-      >
-        <Header />
-        <Content
-          className="admin-page-container"
-          style={{
-            marginTop: "20px",
-            padding: 22,
-            minHeight: 280,
-            background: theme === "dark"
-              ? "rgb(40, 48, 70)"
-              : "rgba(255, 255, 255, 0.98)",
-            borderRadius: 6,
-            color: theme === "dark" ? "#ffffff" : "#000000",
-            boxShadow: theme === "dark"
-              ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)"
-              : "0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)",
-            transition: "all 0.3s ease",
-          }}
-        >
-          {children}
-        </Content>
+    <Layout className="admin-shell" style={{ minHeight: "100dvh" }}>
+      <Sidebar drawerOpen={drawerOpen} onDrawerClose={() => setDrawerOpen(false)} />
+      <Layout className="admin-main">
+        <AdminHeader onMenuClick={() => setDrawerOpen(true)} />
+        <Content className="admin-page-container">{children}</Content>
       </Layout>
     </Layout>
   );

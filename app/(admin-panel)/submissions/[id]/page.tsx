@@ -19,6 +19,7 @@ import {
   Progress
 } from "antd";
 import { useGet } from "@/lib/hooks";
+import { useIsAdminMobile } from "@/components/admin/submissions/AdminUi";
 import Link from "next/link";
 // import { useThemeStore } from "@/lib/stores/themeStore";
 import { formatDate, getApplicationStatusLabel, getApplicationStatusColor, getPaymentStatusColor } from "@/lib/utils";
@@ -67,6 +68,7 @@ interface SubmissionsResponse {
 
 export default function SubmissionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const isMobile = useIsAdminMobile();
 
   const { data: submissionResponse, isLoading } = useGet<SubmissionsResponse>(`/admin/submissions/${id}/`);
   const submission = submissionResponse?.data;
@@ -84,7 +86,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-8">
         <div className="max-w-4xl mx-auto text-center">
           <Result
             status="error"
@@ -117,8 +119,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     },
     {
       status: "UNDER_REVIEW",
-      title: "Ko&apos;rib chiqilmoqda",
-      description: "Komissiya ko&apos;rib chiqmoqda",
+      title: "Ko'rib chiqilmoqda",
+      description: "Komissiya ko'rib chiqmoqda",
       icon: <TeamOutlined />,
       color: "processing"
     },
@@ -138,8 +140,8 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
     },
     {
       status: "WITHDRAWN",
-      title: "O&apos;chirilgan",
-      description: "Ariza o&apos;chirildi",
+      title: "O'chirilgan",
+      description: "Ariza o'chirildi",
       icon: <UserOutlined />,
       color: "default"
     }
@@ -153,43 +155,45 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
   const currentStep = getStatusTimeline(submission.status);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
       {/* Header */}
-      <div className=" from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/admin-panel/submissions">
+      <div className="bg-linear-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+          <div className="flex flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+            <Link href="/admin-panel/submissions" className="shrink-0">
               <Button
                 type="primary"
                 icon={<ArrowLeftOutlined />}
-                className="bg-white/20 hover:bg-white/30 border-white/20"
+                className="!h-11 sm:!h-10 bg-white/20 hover:bg-white/30 border-white/20"
               >
                 Orqaga
               </Button>
             </Link>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">Ariya #{submission.submission_number}</h1>
-              <p className="text-purple-100">
+            <div className="flex-1 min-w-[200px]">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 break-words">Ariya #{submission.submission_number}</h1>
+              <p className="text-purple-100 m-0 break-words">
                 {submission.application_title}
               </p>
             </div>
-            <div className="text-right">
+            <div className="w-full sm:w-auto sm:text-right">
               <Badge
-                count={getApplicationStatusLabel(submission.status)}
                 status={getApplicationStatusColor(submission.status) as "success" | "processing" | "default" | "error" | "warning"}
-                className="bg-white/20 text-white"
+                text={<span className="text-white font-semibold">{getApplicationStatusLabel(submission.status)}</span>}
+                className="inline-flex items-center rounded-full bg-white/20 px-3 py-1"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         <Tabs defaultActiveKey="1" type="card">
           <TabPane tab="Umumiy ma&apos;lumot" key="1">
             {/* Timeline */}
-            <Card className="mb-8">
+            <Card className="mb-6 sm:mb-8 rounded-xl">
               <Steps
+                direction={isMobile ? "vertical" : "horizontal"}
+                size={isMobile ? "small" : "default"}
                 current={currentStep}
                 items={statusTimeline.map((step) => ({
                   key: step.status,
@@ -201,7 +205,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             </Card>
 
             {/* Status Overview */}
-            <Row gutter={[24, 24]} className="mb-8">
+            <Row gutter={[16, 16]} className="mb-6 sm:mb-8">
               <Col xs={24} sm={12}>
                 <Card className="h-full">
                   <div className="flex items-center justify-between mb-4">
@@ -234,7 +238,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                   <div className="flex items-center justify-between mb-4">
                     <Title level={4}>To&apos;lov holati</Title>
                     <Tag color={getPaymentStatusColor(submission.payment_status)}>
-                      {submission.payment_status === "PAID" ? "To&apos;langan" : submission.payment_status}
+                      {submission.payment_status === "PAID" ? "To'langan" : submission.payment_status}
                     </Tag>
                   </div>
                   <Space direction="vertical" className="w-full">
@@ -248,9 +252,10 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                         <Text>{submission.payment_amount.toLocaleString()} UZS</Text>
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span>Status</span>
-                      <Progress 
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="shrink-0">Status</span>
+                      <Progress
+                        className="!m-0 flex-1 max-w-[220px]"
                         percent={submission.payment_status === "PAID" ? 100 : 50} 
                         status={submission.payment_status === "PAID" ? "success" : "active"}
                       />
@@ -261,9 +266,15 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             </Row>
 
             {/* Applicant Information */}
-            <Card className="mb-8">
+            <Card className="mb-6 sm:mb-8 rounded-xl">
               <Title level={4} className="mb-6">Ariza beruvchi ma&apos;lumotlari</Title>
-              <Descriptions bordered column={2}>
+              <Descriptions
+                bordered
+                column={{ xs: 1, sm: 1, md: 2 }}
+                size={isMobile ? "small" : "default"}
+                layout={isMobile ? "vertical" : "horizontal"}
+                contentStyle={{ wordBreak: "break-word" }}
+              >
                 <Descriptions.Item label="Ism">
                   <div className="flex items-center gap-2">
                     <Avatar icon={<UserOutlined />} />
@@ -305,7 +316,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
 
             {/* Review Notes */}
             {submission.review_notes && (
-              <Card className="mb-8 border-l-4 border-l-blue-500">
+              <Card className="mb-6 sm:mb-8 rounded-xl border-l-4 border-l-blue-500">
                 <Title level={4} className="mb-4 flex items-center gap-2">
                   <SafetyOutlined className="text-blue-500" />
                   Komissiya izohi
@@ -317,9 +328,9 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
             )}
 
             {/* Action Buttons */}
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 [&_.ant-result-extra]:flex [&_.ant-result-extra]:flex-wrap [&_.ant-result-extra]:justify-center [&_.ant-result-extra]:gap-2 [&_.ant-result-extra_.ant-btn]:max-sm:!w-full [&_.ant-result-extra_.ant-btn]:!m-0">
               {submission.status === "SUBMITTED" && (
-                <Space>
+                <Space wrap className="justify-center [&_.ant-btn]:max-sm:!w-full [&_.ant-space-item]:max-sm:w-full w-full sm:w-auto" direction={isMobile ? "vertical" : "horizontal"}>
                   <Button 
                     type="primary" 
                     size="large"
@@ -420,7 +431,7 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
                     <div>
                       <Text type="secondary">To&apos;lov holati:</Text>
                       <Tag color={getPaymentStatusColor(submission.payment_status)} className="text-base">
-                        {submission.payment_status === "PAID" ? "To&apos;langan" : submission.payment_status}
+                        {submission.payment_status === "PAID" ? "To'langan" : submission.payment_status}
                       </Tag>
                     </div>
                     {submission.payment_amount && (

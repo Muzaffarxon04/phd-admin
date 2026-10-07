@@ -3,8 +3,6 @@
 import { useState } from "react";
 import {
   Button,
-  Table,
-  Modal,
   Form,
   Input,
   InputNumber,
@@ -13,12 +11,9 @@ import {
   Popconfirm,
   Progress,
   Avatar,
-  Typography,
 } from "antd";
-const { Title } = Typography;
 import { useThemeStore } from "@/lib/stores/themeStore";
 import {
-  // PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
@@ -37,18 +32,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { marksApi, ApplicantMark, ApplicantMarkCreate, ApplicantMarkUpdate } from "@/lib/api/marks";
 import { adminApi, type ApplicationSubmissionListResponse } from "@/lib/api/admin";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  LabelList,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+  AdminCard,
+  DonutChart,
+  HorizontalBarChart,
+  PageHeader,
+  ResponsiveModal,
+  ResponsiveTable,
+  StatCard,
+  StatGrid,
+} from "@/components/admin/ui";
 
 const { Option } = Select;
 
@@ -194,6 +186,85 @@ export default function MarksPage() {
 
   const { theme } = useThemeStore();
 
+
+  const getSpecialityInfo = (record: ApplicantMark) => {
+    const details = record.submission_details as unknown as {
+      speciality_name?: string;
+      speciality?: { name?: string; parent?: { name?: string } };
+      speciality_parent_name?: string;
+      application_title?: string;
+    } | undefined;
+    const baseName =
+      details?.speciality_name ||
+      details?.speciality?.name ||
+      "-";
+    const parentName =
+      details?.speciality?.parent?.name ||
+      details?.speciality_parent_name ||
+      "";
+    const displayName = parentName ? `${baseName} (${parentName})` : baseName;
+    return { displayName, applicationTitle: details?.application_title || "-" };
+  };
+
+  const renderScore = (record: ApplicantMark) => (
+    <div className="flex items-center gap-3 py-1">
+      <Progress
+        type="circle"
+        percent={record.percentage ? parseFloat(record.percentage) : parseFloat(record.score)}
+        size={36}
+        strokeWidth={10}
+        strokeColor={getScoreColor(record.score)}
+        trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
+        format={() => (
+          <span className="text-[10px] font-bold" style={{ color: getScoreColor(record.score) }}>
+            {getGradeText(record.score)}
+          </span>
+        )}
+      />
+      <div>
+        <div className="font-bold text-sm whitespace-nowrap" style={{ color: getScoreColor(record.score) }}>
+          {record.score} ball
+        </div>
+        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+          {record.percentage || record.score}%
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStatus = (isActive: boolean) => (
+    <span className={`inline-block whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
+      }`}>
+      {isActive ? "Faol" : "Bekor"}
+    </span>
+  );
+
+  const renderActions = (record: ApplicantMark) => (
+    <div className="flex items-center justify-center gap-2 py-2">
+      <Button
+        aria-label="Tahrirlash"
+        className="marks-action-btn marks-action-btn--edit"
+        icon={<EditOutlined style={{ fontSize: "18px" }} />}
+        onClick={() => openEditModal(record)}
+      />
+      <Popconfirm
+        title="O'chirish"
+        description="Haqiqatan ham o'chirmoqchimisiz?"
+        onConfirm={() => handleDelete(record)}
+        okText="Ha"
+        cancelText="Yo'q"
+        overlayClassName="premium-popconfirm"
+      >
+        <Button
+          aria-label="O'chirish"
+          className="marks-action-btn marks-action-btn--delete"
+          icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
+          loading={deleteMutation.isPending && deleteMutation.variables === record.id.toString()}
+        />
+      </Popconfirm>
+    </div>
+  );
+
   const columns = [
     {
       title: (
@@ -231,28 +302,14 @@ export default function MarksPage() {
       ),
       key: "speciality_info",
       render: (_: unknown, record: ApplicantMark) => {
-        const details = record.submission_details as unknown as {
-          speciality_name?: string;
-          speciality?: { name?: string; parent?: { name?: string } };
-          speciality_parent_name?: string;
-          application_title?: string;
-        } | undefined;
-        const baseName =
-          details?.speciality_name ||
-          details?.speciality?.name ||
-          "-";
-        const parentName =
-          details?.speciality?.parent?.name ||
-          details?.speciality_parent_name ||
-          "";
-        const displayName = parentName ? `${baseName} (${parentName})` : baseName;
+        const { displayName, applicationTitle } = getSpecialityInfo(record);
         return (
           <div className="py-2">
             <div className="font-bold text-xs text-[#7367f0] mb-1">
               {displayName}
             </div>
             <div className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]">
-              {details?.application_title || "-"}
+              {applicationTitle}
             </div>
           </div>
         );
@@ -267,31 +324,7 @@ export default function MarksPage() {
         </div>
       ),
       key: "score_info",
-      render: (_: unknown, record: ApplicantMark) => (
-        <div className="flex items-center gap-3 py-1">
-          <Progress
-            type="circle"
-            percent={record.percentage ? parseFloat(record.percentage) : parseFloat(record.score)}
-            size={36}
-            strokeWidth={10}
-            strokeColor={getScoreColor(record.score)}
-            trailColor={theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}
-            format={() => (
-              <span className="text-[10px] font-bold" style={{ color: getScoreColor(record.score) }}>
-                {getGradeText(record.score)}
-              </span>
-            )}
-          />
-          <div>
-            <div className="font-bold text-sm" style={{ color: getScoreColor(record.score) }}>
-              {record.score} ball
-            </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-              {record.percentage || record.score}%
-            </div>
-          </div>
-        </div>
-      ),
+      render: (_: unknown, record: ApplicantMark) => renderScore(record),
       width: 180,
     },
     {
@@ -319,15 +352,7 @@ export default function MarksPage() {
       ),
       dataIndex: "is_active",
       key: "is_active",
-      render: (isActive: boolean) => (
-        <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
-            }`}>
-            {isActive ? "Faol" : "Bekor"}
-          </span>
-     
-        </div>
-      ),
+      render: (isActive: boolean) => <div className="flex items-center gap-2">{renderStatus(isActive)}</div>,
       width: 150,
     },
     {
@@ -338,61 +363,77 @@ export default function MarksPage() {
       ),
       key: "actions",
       width: 120,
-      render: (_: unknown, record: ApplicantMark) => (
-        <div className="flex items-center justify-center gap-2 py-2">
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
-            icon={<EditOutlined style={{ fontSize: "18px" }} />}
-            onClick={() => openEditModal(record)}
-          />
-          <Popconfirm
-            title="O'chirish"
-            description="Haqiqatan ham o'chirmoqchimisiz?"
-            onConfirm={() => handleDelete(record)}
-            okText="Ha"
-            cancelText="Yo'q"
-            overlayClassName="premium-popconfirm"
-          >
-            <Button
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 text-red-500 border-0 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm"
-              icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
-              loading={deleteMutation.isPending && deleteMutation.variables === record.id.toString()}
-            />
-          </Popconfirm>
-        </div>
-      ),
+      render: (_: unknown, record: ApplicantMark) => renderActions(record),
     },
   ];
 
-  return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <Title level={4} className="mb-1!" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Baholar Boshqaruvi
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">Abituriyentlarga baho qoyish va natijalarni boshqarish</div>
+  const renderMarkCard = (record: ApplicantMark) => {
+    const { displayName, applicationTitle } = getSpecialityInfo(record);
+    return (
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <Avatar
+            icon={<UserOutlined />}
+            className="shrink-0"
+            style={{ backgroundColor: theme === "dark" ? "#7367f020" : "#7367f010", color: "#7367f0" }}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="admin-heading font-semibold text-[14px] leading-snug break-words">
+              {record.submission_details?.applicant_name || "Noma'lum"}
+            </div>
+            <div className="admin-muted font-mono text-[12px]">
+              {record.submission_details?.submission_number || `ID: ${record.submission}`}
+            </div>
+          </div>
+          {renderStatus(record.is_active)}
         </div>
+        <div className="text-[13px] leading-snug">
+          <div className="font-semibold text-[#7367f0] break-words">{displayName}</div>
+          <div className="admin-muted text-[12px] break-words">{applicationTitle}</div>
+        </div>
+        {record.comments ? <div className="admin-muted text-[12px] break-words">{record.comments}</div> : null}
+        <div
+          className="flex items-center justify-between gap-3 pt-2"
+          style={{ borderTop: "1px solid var(--admin-border)" }}
+        >
+          {renderScore(record)}
+          {renderActions(record)}
+        </div>
+      </div>
+    );
+  };
 
-        <div className="flex items-center gap-3">
+  const statItems = statistics
+    ? [
+        { title: "O'rtacha ball", value: statistics.average_score != null ? Number(statistics.average_score).toFixed(1) : "0", icon: <TrophyOutlined />, color: "#28c76f" },
+        { title: "O'rtacha foiz", value: statistics.average_percentage ? `${statistics.average_percentage}%` : "0%", icon: <PercentageOutlined />, color: "#ff9f43" },
+        { title: "Eng yuqori ball", value: statistics.highest_score || "0", icon: <RiseOutlined />, color: "#28c76f" },
+        { title: "Eng past ball", value: statistics.lowest_score || "0", icon: <FallOutlined />, color: "#ea5455" },
+        { title: "Tasdiqlangan baholar", value: statistics.approved_marks || 0, icon: <CheckCircleOutlined />, color: "#00cfe8" },
+        { title: "Kutilayotgan baholar", value: statistics.pending_marks || 0, icon: <ClockCircleOutlined />, color: "#ff9f43" },
+        { title: "Jami baholar", value: statistics.total_marks || 0, icon: <StarOutlined />, color: "#7367f0" },
+      ]
+    : [];
+
+  return (
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader
+        title="Baholar Boshqaruvi"
+        subtitle="Abituriyentlarga baho qoyish va natijalarni boshqarish"
+        actions={
           <Button
-            className="h-[42px] px-6 rounded-xl border-0 shadow-sm font-bold flex items-center gap-2 transition-all duration-300 hover:shadow-md"
+            size="large"
             icon={<BarChartOutlined />}
             onClick={() => setIsStatsModalOpen(true)}
-            style={{
-              background: theme === "dark" ? "rgb(60, 68, 90)" : "#ffffff",
-              color: theme === "dark" ? "#ffffff" : "#484650",
-              border: theme === "dark" ? "1px solid rgb(80, 88, 110)" : "1px solid #e2e8f0",
-            }}
+            className="font-semibold"
           >
             Statistika
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Statistics in Modal */}
-      <Modal
+      <ResponsiveModal
         title={
           <div className="flex items-center gap-2">
             <BarChartOutlined className="text-[#7367f0]" />
@@ -406,45 +447,16 @@ export default function MarksPage() {
         className="premium-modal"
       >
         {statistics && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 py-2">
             {/* Main Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 py-4 ">
-              {[
-         
-                { title: "O'rtacha ball", value: statistics.average_score != null ? Number(statistics.average_score).toFixed(1) : "0", icon: <TrophyOutlined />, color: "#28c76f" },
-                { title: "O'rtacha foiz", value: statistics.average_percentage ? `${statistics.average_percentage}%` : "0%", icon: <PercentageOutlined />, color: "#ff9f43" },
-                { title: "Eng yuqori ball", value: statistics.highest_score || "0", icon: <RiseOutlined />, color: "#28c76f" },
-                { title: "Eng past ball", value: statistics.lowest_score || "0", icon: <FallOutlined />, color: "#ea5455" },
-                { title: "Tasdiqlangan baholar", value: statistics.approved_marks || 0, icon: <CheckCircleOutlined />, color: "#00cfe8" },
-                { title: "Kutilayotgan baholar", value: statistics.pending_marks || 0, icon: <ClockCircleOutlined />, color: "#ff9f43" },
-                { title: "Jami baholar", value: statistics.total_marks || 0, icon: <StarOutlined />, color: "#7367f0" },
-              ].map((stat, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-xl p-6 transition-all duration-300"
-                  style={{
-                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
-                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                  }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                      style={{ background: `${stat.color}15`, color: stat.color }}
-                    >
-                      {stat.icon}
-                    </div>
-                    <div>
-                      <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">{stat.title}</div>
-                      <div className={`text-xl font-bold mt-1 ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>{stat.value}</div>
-                    </div>
-                  </div>
-                </div>
+            <StatGrid columns={4}>
+              {statItems.map((stat) => (
+                <StatCard key={stat.title} label={stat.title} value={stat.value} icon={stat.icon} color={stat.color} variant="sunken" />
               ))}
-            </div>
+            </StatGrid>
 
             {/* Active / Inactive — Pie chart (by_mark_type tepasida) */}
-            {statistics && (() => {
+            {(() => {
               const statsRecord = statistics as { active_marks?: number; inactive_marks?: number };
               let active = Number(statsRecord.active_marks);
               let inactive = Number(statsRecord.inactive_marks);
@@ -459,86 +471,15 @@ export default function MarksPage() {
                 { name: "Nofaol (inactive)", value: inactive, color: "#8b8b8b" },
               ].filter((d) => d.value > 0);
               if (pieData.length === 0) return null;
-              const tooltipStyle = {
-                borderRadius: "12px",
-                border: "none",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                background: theme === "dark" ? "rgb(30, 38, 60)" : "#ffffff",
-              };
               return (
-                <div
-                  className="rounded-xl p-6 transition-all duration-300"
-                  style={{
-                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
-                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                  }}
-                >
-                  <div className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">
-                    Faol / Nofaol baholar
-                  </div>
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="relative w-full max-w-[280px]" style={{ height: 240 }}>
-                      <ResponsiveContainer width="100%" height={240}>
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={55}
-                            outerRadius={85}
-                            paddingAngle={2}
-                            dataKey="value"
-                            nameKey="name"
-                            label={({ name, percent }) =>
-                              `${String(name ?? "").split(" ")[0] || "—"} ${((percent ?? 0) * 100).toFixed(0)}%`
-                            }
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={index} fill={entry.color} stroke="none" />
-                            ))}
-                          </Pie>
-                          <RechartsTooltip
-                            contentStyle={tooltipStyle}
-                            formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Son"]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="text-center">
-                          <div
-                            className="text-2xl font-bold leading-tight"
-                            style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}
-                          >
-                            {pieData.reduce((s, d) => s + d.value, 0).toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-400 font-medium mt-0.5">Jami</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-3 flex-1">
-                      {pieData.map((item) => (
-                        <div
-                          key={item.name}
-                          className="flex items-center justify-between rounded-lg px-4 py-3"
-                          style={{
-                            background: theme === "dark" ? "rgba(255,255,255,0.04)" : "#ffffff",
-                            border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid #e5e7eb",
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 rounded-full shrink-0" style={{ background: item.color }} />
-                            <span className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
-                              {item.name}
-                            </span>
-                          </div>
-                          <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-[#484650]"}`}>
-                            {item.value.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <AdminCard variant="sunken" title="Faol / Nofaol baholar">
+                  <DonutChart
+                    data={pieData}
+                    legend="side"
+                    showSliceLabels
+                    sliceLabel={(name, percent) => `${name.split(" ")[0] || "—"} ${(percent * 100).toFixed(0)}%`}
+                  />
+                </AdminCard>
               );
             })()}
 
@@ -549,96 +490,29 @@ export default function MarksPage() {
                 fullName: name,
                 value: Number(value) || 0,
               })).filter((d) => d.value > 0);
-              const tooltipStyle = {
-                borderRadius: "12px",
-                border: "none",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                background: theme === "dark" ? "rgb(30, 38, 60)" : "#ffffff",
-              };
               return (
-                <div
-                  className="rounded-xl p-6 transition-all duration-300"
-                  style={{
-                    background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f9fa",
-                    border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-                  }}
+                <AdminCard
+                  variant="sunken"
+                  icon={<BarChartOutlined />}
+                  title="Baholar turi bo'yicha"
+                  subtitle="Alohida diagramma — har bir tur bo'yicha son"
                 >
-                  <div className="flex items-center gap-4 mb-6">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                      style={{ background: "#7367f015", color: "#7367f0" }}
-                    >
-                      <BarChartOutlined />
-                    </div>
-                    <div>
-                      <div className="text-gray-400 text-sm font-medium uppercase tracking-wider">Baholar turi bo&apos;yicha</div>
-                      <div className={`text-xs mt-1 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
-                        Alohida diagramma — har bir tur bo&apos;yicha son
-                      </div>
-                    </div>
-                  </div>
-                  <ResponsiveContainer width="100%" height={Math.min(400, 100 + byMarkTypeChartData.length * 40)}>
-                    <BarChart
-                      data={byMarkTypeChartData}
-                      layout="vertical"
-                      margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        horizontal={false}
-                        stroke={theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
-                      />
-                      <XAxis type="number" tick={{ fill: "#8b8b8b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        width={120}
-                        tick={{ fill: "#8b8b8b", fontSize: 11 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <RechartsTooltip
-                        contentStyle={tooltipStyle}
-                        formatter={(v) => [(typeof v === 'number' ? v : 0).toLocaleString(), "Baholar soni"]}
-                        labelFormatter={(_, payload) =>
-                          (payload?.[0]?.payload as { fullName?: string })?.fullName ?? ""
-                        }
-                      />
-                      <Bar dataKey="value" fill="#7367f0" radius={[0, 6, 6, 0]} barSize={20} name="Son">
-                        <LabelList
-                          dataKey="value"
-                          position="right"
-                          formatter={(v: unknown) => (v != null && v !== "" ? String(v) : "")}
-                          style={{
-                            fill: theme === "dark" ? "#e5e7eb" : "#484650",
-                            fontSize: 12,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                  <HorizontalBarChart data={byMarkTypeChartData} color="#7367f0" valueLabel="Baholar soni" maxHeight={400} />
+                </AdminCard>
               );
             })()}
           </div>
         )}
-      </Modal>
+      </ResponsiveModal>
 
-      <div
-        className="rounded-xl overflow-hidden transition-all duration-300"
-        style={{
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        <Table
+      <AdminCard padding="none" className="overflow-hidden">
+        <ResponsiveTable<ApplicantMark>
           columns={columns}
           dataSource={marksData?.results || []}
           loading={isLoading}
           rowKey="id"
           className="custom-admin-table"
+          renderCard={(record) => renderMarkCard(record)}
           pagination={{
             current: page,
             pageSize: pageSize,
@@ -649,7 +523,7 @@ export default function MarksPage() {
             },
             showSizeChanger: false,
             showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} dan ${total} ta`,
-            className: "px-6 py-4",
+            className: "px-4 sm:px-6 py-4",
           }}
         />
         <style jsx global>{`
@@ -676,11 +550,13 @@ export default function MarksPage() {
           .custom-admin-table .ant-pagination-item-active a {
             color: #fff !important;
           }
-          
+
           .premium-modal .ant-modal-content {
             background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
             color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
             border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "none"} !important;
+          }
+          .premium-modal:not(.admin-sheet-modal) .ant-modal-content {
             border-radius: 16px !important;
           }
           .premium-modal .ant-modal-header {
@@ -703,11 +579,43 @@ export default function MarksPage() {
             background: ${theme === "dark" ? "rgb(50, 58, 80)" : "#ffffff"} !important;
             color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
           }
+          .marks-action-btn.ant-btn {
+            width: 40px;
+            height: 40px;
+            border: 0;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+          }
+          @media (max-width: 639px) {
+            .marks-action-btn.ant-btn {
+              width: 44px;
+              height: 44px;
+            }
+          }
+          .marks-action-btn--edit.ant-btn {
+            background: rgba(115, 103, 240, 0.1);
+            color: #7367f0;
+          }
+          .marks-action-btn--edit.ant-btn:hover {
+            background: #7367f0 !important;
+            color: #fff !important;
+          }
+          .marks-action-btn--delete.ant-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+          }
+          .marks-action-btn--delete.ant-btn:hover {
+            background: #ef4444 !important;
+            color: #fff !important;
+          }
         `}</style>
-      </div>
+      </AdminCard>
 
       {/* Create/Edit Modal */}
-      <Modal
+      <ResponsiveModal
         title={editingRecord ? "Bahoni tahrirlash" : "Yangi baho qo'shish"}
         open={isModalOpen}
         onCancel={() => {
@@ -799,7 +707,7 @@ export default function MarksPage() {
             </Form.Item>
           )}
         </Form>
-      </Modal>
+      </ResponsiveModal>
     </div>
   );
 }

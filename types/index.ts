@@ -383,9 +383,12 @@ export type VerificationStatus =
 /** Head pose the user must show in one face frame. */
 export type FacePose = "front" | "left" | "right";
 
+/** Why a TSMU ID session is opened; the backend defaults to "registration". */
+export type TsmuPurpose = "registration" | "password_reset";
+
+/** Lookup result — no personal data, only an opaque session id and the pose challenge. */
 export interface TsmuLookupResponse {
   verification_id: string;
-  masked_name: string;
   expires_at: string;
   /** Server-chosen order of the 3 face frames (liveness challenge). */
   challenge: FacePose[];
@@ -393,9 +396,9 @@ export interface TsmuLookupResponse {
 
 export type FaceFailReason = "NO_FACE" | "MULTIPLE_FACES" | "LOW_SIMILARITY" | "LIVENESS_FAILED" | "POSE_MISMATCH";
 
+/** Face check result — pass/fail only; the similarity score is never exposed. */
 export interface FaceVerifyResponse {
   passed: boolean;
-  similarity_pct: number;
   attempts_left: number;
   reason: FaceFailReason | null;
   /** New pose order for the next attempt; null once the face passed or no attempt is left. */
@@ -405,6 +408,10 @@ export interface FaceVerifyResponse {
 export interface TsmuPhoneResponse {
   sent: boolean;
   expires_in: number;
+}
+
+export interface TsmuPasswordResetResponse {
+  reset: boolean;
 }
 
 export interface TsmuCompleteResponse {

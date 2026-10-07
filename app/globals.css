@@ -239,6 +239,31 @@ body {
   transform: scaleX(-1);
 }
 
+/* Camera frame: portrait on phones, landscape from sm; never taller than the room the
+   viewport leaves next to the header, instruction and step pills, so it fits on screen. */
+.face-stage {
+  aspect-ratio: 3 / 4;
+  width: min(100%, max(220px, calc((100dvh - 300px) * 0.75)));
+}
+
+@media (min-width: 640px) {
+  .face-stage {
+    aspect-ratio: 4 / 3;
+    width: min(100%, max(360px, calc((100dvh - 320px) * 1.3333)));
+  }
+}
+
+/* iOS Safari zooms into inputs under 16px — keep form fields at 16px on phones. */
+@media (max-width: 639px) {
+  .applicant-app input.ant-input:not(.ant-otp-input),
+  .applicant-app .ant-input-affix-wrapper input,
+  .applicant-app textarea.ant-input,
+  .applicant-app .ant-select-selection-search-input,
+  .applicant-app .ant-picker input {
+    font-size: 16px;
+  }
+}
+
 @keyframes ring-pulse {
   0% {
     opacity: 0.7;

@@ -1,199 +1,110 @@
 "use client";
 
-import { Layout, Menu } from "antd";
-import {
-  DashboardOutlined,
-  FileTextOutlined,
-  TeamOutlined,
-  BookOutlined,
-
-  FileWordOutlined,
-  StarOutlined
-} from "@ant-design/icons";
+import { Drawer, Layout, Menu, type MenuProps } from "antd";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useThemeStore } from "@/lib/stores/themeStore";
-
+import { adminNavItems, getActiveNavKey } from "./navItems";
+import { useAdminBreakpoint } from "./ui/useAdminBreakpoint";
+import "./ui/admin-ui.css";
 
 const { Sider } = Layout;
 
-const menuItems = [
-  {
-    key: "/admin-panel",
-    icon: <DashboardOutlined />,
-    label: "Dashboard",
-  },
-  {
-    key: "/admin-panel/applications",
-    icon: <FileTextOutlined />,
-    label: "Arizalar",
-  },
-  {
-    key: "/admin-panel/submissions",
-    icon: <FileTextOutlined />,
-    label: "Qabul Hujjatlari",
-  },
+const menuItems: MenuProps["items"] = adminNavItems.map(({ key, icon, label }) => ({ key, icon, label }));
 
-  {
-    key: "/admin-panel/examiners",
-    icon: <TeamOutlined />,
-    label: "Imtihonchilar",
-  },
-  {
-    key: "/admin-panel/specialities",
-    icon: <BookOutlined />,
-    label: "Mutaxassisliklar",
-  },
-  {
-    key: "/admin-panel/guvohnoma",
-    icon: <FileWordOutlined />,
-    label: "Guvohnoma",
-  },
- { key: "/admin-panel/marks",
-  icon: <StarOutlined />,
-  label: "Baholar",
-},
-  // {
-  //   key: "/admin-panel/application-specialities",
-  //   icon: <LinkOutlined />,
-  //   label: "Ariza-Mutaxassislik",
-  // },
-  // {
+/** Width of the full sidebar (desktop) and of the icon rail (tablet). Keep in sync with layout gutters. */
+export const SIDEBAR_WIDTH = 260;
+export const SIDEBAR_RAIL_WIDTH = 72;
 
-  // {
-  //   key: "/admin-panel/payments",
-  //   icon: <DollarOutlined />,
-  //   label: "To'lovlar",
-  // },
-  // {
-  //   key: "/admin-panel/documents",
-  //   icon: <FilePdfOutlined />,
-  //   label: "Hujjatlar",
-  // },
-  // {
-  //   key: "/admin-panel/reports",
-  //   icon: <BarChartOutlined />,
-  //   label: "Hisobotlar",
-  // },
-];
+interface SidebarProps {
+  /** Off-canvas drawer state (phones and tablets). */
+  drawerOpen: boolean;
+  onDrawerClose: () => void;
+}
 
-export default function Sidebar() {
+function Brand({ compact }: { compact: boolean }) {
+  return (
+    <div className={`admin-sidebar__brand ${compact ? "admin-sidebar__brand--compact" : ""}`}>
+      <Image src="/logo.png" alt="Logo" width={38} height={38} priority />
+      {!compact && <span className="admin-sidebar__brand-text">Admin Panel</span>}
+    </div>
+  );
+}
+
+/**
+ * Admin navigation.
+ * - desktop (>= 1024px): fixed full sidebar
+ * - tablet (640-1023px): fixed icon rail; labels show as tooltips, the top-bar
+ *   hamburger opens the full drawer
+ * - phone (< 640px): no rail; navigation lives in the off-canvas drawer
+ */
+export default function Sidebar({ drawerOpen, onDrawerClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme } = useThemeStore();
-
+  const { isMobile, isDesktop } = useAdminBreakpoint();
+  const activeKey = getActiveNavKey(pathname);
+  const selectedKeys = activeKey ? [activeKey] : [];
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key !== "swagger") {
       router.push(key);
     }
+    onDrawerClose();
   };
 
-
-
-
   return (
-    <Sider
-      width={260}
-      style={{
-        overflow: "auto",
-        height: "100vh",
-        position: "fixed",
-        left: 0,
-        top: 0,
-        bottom: 0,
-        background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-        borderRight: "none",
-        boxShadow: "none",
-        transition: "all 0.3s ease",
-      }}
-    >
-      {/* Logo Section */}
-      <div
-        style={{
-          padding: "20px 24px 0",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <div style={{ position: "relative", width: 38, height: 38 }}>
-          <Image src="/logo.png" alt="Logo" width={38} height={38} />
-        </div>
-
-        <span
+    <>
+      {!isMobile && (
+        <Sider
+          width={SIDEBAR_WIDTH}
+          collapsedWidth={SIDEBAR_RAIL_WIDTH}
+          collapsed={!isDesktop}
+          trigger={null}
+          className="admin-sidebar"
           style={{
-            fontSize: "18px",
-            fontWeight: 700,
-            color: "#7367f0"
+            overflow: "auto",
+            height: "100dvh",
+            position: "fixed",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            zIndex: 100,
+            background: "var(--admin-surface)",
+            borderRight: "1px solid var(--admin-border)",
           }}
         >
-          Admin Panel
-        </span>
-      </div>
+          <Brand compact={!isDesktop} />
+          <nav aria-label="Asosiy menyu">
+            <Menu
+              mode="inline"
+              selectedKeys={selectedKeys}
+              items={menuItems}
+              onClick={handleMenuClick}
+              className="admin-menu"
+            />
+          </nav>
+        </Sider>
+      )}
 
-      {/* Menu */}
-      <Menu
-        mode="inline"
-        selectedKeys={[pathname]}
-        items={menuItems}
-        onClick={handleMenuClick}
-        style={{
-          borderRight: 0,
-          background: "transparent",
-          padding: "8px 12px",
-        }}
-        className="custom-menu-admin-new"
-      />
-
-      <style jsx global>{`
-        .custom-menu-admin-new {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .custom-menu-admin-new .ant-menu-item {
-          margin: 1px 0 !important;
-          border-radius: 4px !important;
-          height: 42px !important;
-          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
-          padding: 10px 15px !important;
-          transition: all 0.2s ease !important;
-          font-weight: 500 !important;
-          font-size: 15px !important;
-          display: flex !important;
-          align-items: center !important;
-        }
-        .custom-menu-admin-new .ant-menu-item-selected {
-          background: linear-gradient(118deg,#7367f0,rgba(115,103,240,.7) )!important;
-          color: white !important;
-          box-shadow: 0 0 10px 1px rgba(115,103,240,.7) !important;
-        }
-        .custom-menu-admin-new .ant-menu-item-selected .anticon {
-          color: #ffffff !important;
-        }
-        .custom-menu-admin-new .ant-menu-item:hover:not(.ant-menu-item-selected) {
-          background: rgba(129, 140, 248, 0.08) !important;
-          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
-        }
-        .custom-menu-admin-new .ant-menu-item .anticon {
-          color: ${theme === "dark" ? "#ffffff" : "#1f2937"} !important;
-          font-size: 20px !important;
-        }
-        .custom-menu-admin-new .ant-menu-item:hover .anticon {
-          color: ${theme === "dark" ? "#ffffff" : "#667eea"} !important;
-        }
-        /* Custom scrollbar */
-        .ant-layout-sider-children::-webkit-scrollbar {
-          width: 6px;
-        }
-        .ant-layout-sider-children::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .ant-layout-sider-children::-webkit-scrollbar-thumb {
-          background: ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"};
-          border-radius: 3px;
-        }
-      `}</style>
-    </Sider>
+      <Drawer
+        open={drawerOpen && !isDesktop}
+        onClose={onDrawerClose}
+        placement="left"
+        width={Math.min(SIDEBAR_WIDTH + 20, 320)}
+        closable={false}
+        rootClassName="admin-sidebar-drawer"
+        styles={{ body: { padding: 0, background: "var(--admin-surface)" } }}
+      >
+        <Brand compact={false} />
+        <nav aria-label="Asosiy menyu">
+          <Menu
+            mode="inline"
+            selectedKeys={selectedKeys}
+            items={menuItems}
+            onClick={handleMenuClick}
+            className="admin-menu"
+          />
+        </nav>
+      </Drawer>
+    </>
   );
 }

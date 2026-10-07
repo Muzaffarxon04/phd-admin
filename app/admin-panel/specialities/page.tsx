@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useThemeStore } from "@/lib/stores/themeStore";
 import {
   Table,
   Button,
@@ -10,9 +9,9 @@ import {
   Form,
   message,
   Popconfirm,
-  Typography,
-  Card,
   Tag,
+  Pagination,
+  Skeleton,
   Divider,
   Space,
   List,
@@ -22,7 +21,7 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  // SearchOutlined,
+  SearchOutlined,
   EditOutlined,
   DeleteOutlined,
   BookOutlined,
@@ -38,8 +37,19 @@ import {
 import { formatDateTime } from "@/lib/utils";
 import { useGet, usePost, useDelete } from "@/lib/hooks";
 import type { Speciality, SpecialityStatistics } from "@/types";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  AdminTableStyles,
+  ColumnTitle,
+  IconAction,
+  ModalActions,
+  PageHeader,
+  useAdminSurface,
+} from "@/components/admin/applications/ui";
 
-const { Title } = Typography;
+/** List rows carry aggregate counters that are not part of the shared Speciality type. */
+const countOf = (record: Speciality, key: "applications_count" | "examiners_count") =>
+  (record as unknown as Record<string, number | undefined>)[key] ?? 0;
 
 interface SpecialitiesListResponse {
   next: string | null;
@@ -57,7 +67,7 @@ interface SpecialitiesListResponse {
 }
 
 export default function SpecialitiesPage() {
-  const { theme } = useThemeStore();
+  const surface = useAdminSurface();
   const [searchTerm, setSearchTerm] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -179,165 +189,142 @@ export default function SpecialitiesPage() {
     }
   };
 
+  const getDisplayName = (record: Speciality) => {
+    const parentName = (record as unknown as { parent?: { name?: string } }).parent?.name || undefined;
+    return parentName ? `${record.name} -> (${parentName})` : record.name;
+  };
+
+  const openStats = (record: Speciality) => {
+    setStatsSpecialityId(record.id);
+    setIsStatsModalOpen(true);
+  };
+
+  const countBadge = (count: number, tone: "green" | "blue") => (
+    <span
+      className={`whitespace-nowrap rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${
+        count > 0
+          ? tone === "green"
+            ? "border-green-500/20 bg-green-500/10 text-green-500"
+            : "border-blue-500/20 bg-blue-500/10 text-blue-500"
+          : "border-gray-500/10 bg-gray-500/5 text-gray-400"
+      }`}
+    >
+      {count} ta
+    </span>
+  );
+
+  const activeBadge = (active: boolean) => (
+    <span
+      className={`whitespace-nowrap rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+        active ? "border-green-500/20 bg-green-500/10 text-green-500" : "border-red-500/20 bg-red-500/10 text-red-500"
+      }`}
+    >
+      {active ? "Faol" : "Nofaol"}
+    </span>
+  );
+
+  const renderActions = (record: Speciality, mobile = false) => (
+    <div className={mobile ? "grid grid-cols-3 gap-2" : "flex items-center justify-center gap-2 py-2"}>
+      <IconAction tone="primary" icon={<EditOutlined />} label="Tahrirlash" showLabel={mobile} onClick={() => handleEdit(record)} />
+      <IconAction tone="info" icon={<LineChartOutlined />} label="Statistika" showLabel={mobile} onClick={() => openStats(record)} />
+      <Popconfirm
+        title="O&apos;chirish"
+        description="Haqiqatan ham o&apos;chirmoqchimisiz?"
+        onConfirm={() => handleDelete(record.id)}
+        okText="Ha"
+        cancelText="Yo&apos;q"
+        overlayClassName="premium-popconfirm"
+      >
+        <span className={mobile ? "block" : "inline-flex"}>
+          <IconAction tone="danger" icon={<DeleteOutlined />} label="O'chirish" showLabel={mobile} />
+        </span>
+      </Popconfirm>
+    </div>
+  );
+
   const columns = [
     {
-      title: (
-        <div className="flex items-center gap-2 py-3 px-4">
-          <BookOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Mutaxassislik nomi</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<BookOutlined />}>Mutaxassislik nomi</ColumnTitle>,
       dataIndex: "name",
       key: "name",
-      render: (name: string, record: Speciality) => {
-        const parentName =
-          (record as unknown as { parent?: { name?: string } }).parent?.name || undefined;
-        const displayName = parentName ? `${name} -> (${parentName})` : name;
-        return (
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-sm" style={{ color: theme === "dark" ? "#e2e8f0" : "#484650" }}>
-              {displayName}
-            </span>
-            {record.is_foreign && (
-              <Tag color="blue">Chet tili</Tag>
-            )}
-          </div>
-        );
-      },
+      render: (_name: string, record: Speciality) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold" style={{ color: surface.text }}>
+            {getDisplayName(record)}
+          </span>
+          {record.is_foreign && <Tag color="blue">Chet tili</Tag>}
+        </div>
+      ),
       width: 300,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CodeOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Kodi</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<CodeOutlined />}>Kodi</ColumnTitle>,
       dataIndex: "code",
       key: "code",
       render: (code: string) => (
-        <span className="px-2 py-1 rounded-lg bg-[#7367f0]/10 text-[#7367f0] text-xs font-bold border border-[#7367f0]/20">
+        <span className="whitespace-nowrap rounded-lg border border-[#7367f0]/20 bg-[#7367f0]/10 px-2 py-1 text-xs font-bold text-[#7367f0]">
           {code}
         </span>
       ),
       width: 150,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <FileTextOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Arizalar</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<FileTextOutlined />}>Arizalar</ColumnTitle>,
       dataIndex: "applications_count",
       key: "applications_count",
-      render: (count: number) => (
-        <div className="py-2">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${count > 0 ? "text-green-500 bg-green-500/10 border-green-500/20" : "text-gray-400 bg-gray-500/5 border-gray-500/10"
-            }`}>
-            {count} ta
-          </span>
-        </div>
-      ),
+      render: (count: number) => <div className="py-2">{countBadge(count, "green")}</div>,
       width: 120,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <TeamOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Imtihonchilar</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<TeamOutlined />}>Imtihonchilar</ColumnTitle>,
       dataIndex: "examiners_count",
       key: "examiners_count",
-      render: (count: number) => (
-        <div className="py-2">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${count > 0 ? "text-blue-500 bg-blue-500/10 border-blue-500/20" : "text-gray-400 bg-gray-500/5 border-gray-500/10"
-            }`}>
-            {count} ta
-          </span>
-        </div>
-      ),
+      render: (count: number) => <div className="py-2">{countBadge(count, "blue")}</div>,
       width: 150,
     },
     {
-      title: (
-        <div className="flex items-center gap-2 py-3">
-          <CheckCircleOutlined className="text-[#7367f0]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Holati</span>
-        </div>
-      ),
+      title: <ColumnTitle icon={<CheckCircleOutlined />}>Holati</ColumnTitle>,
       dataIndex: "is_active",
       key: "is_active",
-      render: (isActive: boolean) => (
-        <div className="py-2">
-          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isActive ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
-            }`}>
-            {isActive ? "Faol" : "Nofaol"}
-          </span>
-        </div>
-      ),
+      render: (active: boolean) => <div className="py-2">{activeBadge(active)}</div>,
       width: 120,
     },
     {
-      title: (
-        <div className="flex items-center justify-center py-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Amallar</span>
-        </div>
-      ),
+      title: <ColumnTitle center>Amallar</ColumnTitle>,
       key: "actions",
-      width: 150,
-      render: (_: unknown, record: Speciality) => (
-        <div className="flex items-center justify-center gap-2 py-2">
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#7367f0]/10 text-[#7367f0] border-0 hover:bg-[#7367f0] hover:text-white transition-all duration-300 shadow-sm"
-            icon={<EditOutlined style={{ fontSize: "18px" }} />}
-            onClick={() => handleEdit(record)}
-          />
-          <Button
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 border-0 hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-sm"
-            icon={<LineChartOutlined style={{ fontSize: "18px" }} />}
-            onClick={() => {
-              setStatsSpecialityId(record.id);
-              setIsStatsModalOpen(true);
-            }}
-          />
-          <Popconfirm
-            title="O&apos;chirish"
-            description="Haqiqatan ham o&apos;chirmoqchimisiz?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Ha"
-            cancelText="Yo&apos;q"
-            overlayClassName="premium-popconfirm"
-          >
-            <Button
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 text-red-500 border-0 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-sm"
-              icon={<DeleteOutlined style={{ fontSize: "18px" }} />}
-            />
-          </Popconfirm>
-        </div>
-      ),
+      width: 170,
+      render: (_: unknown, record: Speciality) => renderActions(record),
     },
   ];
 
+  const onPageChange = (page: number, size?: number) => {
+    setCurrentPage(page);
+    setPageSize(size ?? 20);
+  };
+
+  const statTile = (label: React.ReactNode, value: React.ReactNode, color: string, bg: string, big = false) => (
+    <div className="rounded-lg p-3 text-center" style={{ background: bg, border: `1px solid ${surface.subtleBorder}` }}>
+      <div className="mb-1 text-xs text-gray-400">{label}</div>
+      <div className={`${big ? "text-xl" : "text-lg"} font-bold`} style={{ color }}>
+        {value}
+      </div>
+    </div>
+  );
+
+  const tintBg = (rgb: string, light: string) => (surface.isDark ? `rgba(${rgb}, 0.05)` : light);
 
   return (
-    <div className="space-y-6" style={{ color: theme === "dark" ? "#ffffff" : "#484650" }}>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <Title level={4} className="!mb-1" style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}>
-            Mutaxassisliklar Boshqaruvi
-          </Title>
-          <div className="text-gray-400 text-sm font-medium">PhD dasturlari uchun mutaxassisliklar ro&apos;yxati va ularni boshqarish</div>
-        </div>
-
-        <div className="flex items-center gap-3">
+    <div className="space-y-6" style={{ color: surface.text }}>
+      <PageHeader
+        title="Mutaxassisliklar Boshqaruvi"
+        subtitle="PhD dasturlari uchun mutaxassisliklar ro'yxati va ularni boshqarish"
+        actions={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
-            className="h-[42px] px-6 rounded-xl border-0 shadow-lg font-bold flex items-center gap-2"
+            block
+            className="h-11! rounded-xl! border-0 px-6 font-bold shadow-lg md:w-auto!"
             style={{
               background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
               boxShadow: "0 8px 25px -8px #7367f0",
@@ -345,37 +332,38 @@ export default function SpecialitiesPage() {
           >
             Yangi mutaxassislik
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div
-        className="rounded-xl overflow-hidden transition-all duration-300"
+        className="overflow-hidden rounded-xl transition-all duration-300"
         style={{
-          background: theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff",
-          border: theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)",
-          boxShadow: theme === "dark" ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+          background: surface.cardBg,
+          border: `1px solid ${surface.cardBorder}`,
+          boxShadow: surface.isDark ? "none" : "0 4px 12px rgba(0, 0, 0, 0.05)",
         }}
       >
-        <div className="p-6 border-b" style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" }}>
-          <div className="flex items-center gap-4">
-            <div className="relative max-w-md flex-1">
-              <Input
-                placeholder="Mutaxassislik nomini qidiring..."
-                className="pl-9 pr-4 py-2 w-full rounded-xl transition-all duration-300"
-                style={{
-                  background: theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8",
-                  border: "none",
-                  color: theme === "dark" ? "#ffffff" : "#484650",
-                }}
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-medium" style={{ color: theme === "dark" ? "#94a3b8" : "#64748b" }}>
+        {/* Filters */}
+        <div className="border-b p-4 sm:p-6" style={{ borderColor: surface.divider }}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <Input
+              allowClear
+              prefix={<SearchOutlined className="text-gray-400" />}
+              placeholder="Mutaxassislik nomini qidiring..."
+              className="h-11 w-full rounded-xl! sm:max-w-md"
+              style={{
+                background: surface.isDark ? "rgb(30, 38, 60)" : "#f8f8f8",
+                border: "none",
+                color: surface.isDark ? "#ffffff" : "#484650",
+              }}
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            <label className="flex min-h-[44px] shrink-0 cursor-pointer items-center justify-between gap-3 sm:justify-start">
+              <span className="text-sm font-medium" style={{ color: surface.muted }}>
                 {isActive ? "Faollar" : "Nofaollar"}
               </span>
               <Switch
@@ -386,92 +374,119 @@ export default function SpecialitiesPage() {
                 }}
                 style={{ background: isActive ? "#7367f0" : undefined }}
               />
-            </div>
+            </label>
           </div>
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={specialities}
-          loading={isLoading}
-          rowKey="id"
-          className="custom-admin-table"
-          scroll={{ x: "max-content" }}
-          pagination={{
-            current: currentPage,
-            pageSize,
-            total: totalElements,
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
-            showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
-            className: "px-6 py-4",
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size ?? 20);
-            },
-          }}
-        />
-        <style jsx global>{`
-          .custom-admin-table .ant-table {
-            background: transparent !important;
-            color: ${theme === "dark" ? "#e2e8f0" : "#484650"} !important;
-          }
-          .custom-admin-table .ant-table-thead > tr > th {
-            background: ${theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)"} !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
-            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
-            font-weight: 700 !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr > td {
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.03)" : "1px solid rgba(0, 0, 0, 0.03)"} !important;
-          }
-          .custom-admin-table .ant-table-tbody > tr:hover > td {
-            background: ${theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "rgba(115, 103, 240, 0.02)"} !important;
-          }
-          .custom-admin-table .ant-pagination-item-active {
-            border-color: #7367f0 !important;
-            background: #7367f0 !important;
-          }
-          .custom-admin-table .ant-pagination-item-active a {
-            color: #fff !important;
-          }
+        {/* Phones: card list */}
+        <div className="sm:hidden">
+          {isLoading ? (
+            <div className="p-4">
+              <Skeleton active paragraph={{ rows: 6 }} />
+            </div>
+          ) : specialities.length === 0 ? (
+            <div className="p-4">
+              <EmptyState />
+            </div>
+          ) : (
+            <ul className="m-0 list-none divide-y p-0" style={{ borderColor: surface.divider }}>
+              {specialities.map((record) => (
+                <li key={record.id} className="p-4" style={{ borderColor: surface.divider }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="mb-1 inline-block rounded-lg border border-[#7367f0]/20 bg-[#7367f0]/10 px-2 py-0.5 text-xs font-bold text-[#7367f0]">
+                        {record.code}
+                      </span>
+                      <div className="break-words text-base font-bold leading-snug" style={{ color: surface.heading }}>
+                        {getDisplayName(record)}
+                      </div>
+                    </div>
+                    {activeBadge(record.is_active)}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: surface.muted }}>
+                    <span className="inline-flex items-center gap-1">
+                      <FileTextOutlined /> Arizalar: {countBadge(countOf(record, "applications_count"), "green")}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <TeamOutlined /> Imtihonchilar: {countBadge(countOf(record, "examiners_count"), "blue")}
+                    </span>
+                    {record.is_foreign && <Tag color="blue">Chet tili</Tag>}
+                  </div>
+                  <div className="mt-3">{renderActions(record, true)}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {totalElements > 0 && (
+            <div className="flex flex-col items-center gap-2 border-t px-4 py-4" style={{ borderColor: surface.divider }}>
+              <Pagination
+                className="admin-mobile-pagination"
+                simple
+                current={currentPage}
+                pageSize={pageSize}
+                total={totalElements}
+                onChange={onPageChange}
+              />
+              <span className="text-xs" style={{ color: surface.muted }}>
+                {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalElements)} dan {totalElements} ta
+              </span>
+            </div>
+          )}
+        </div>
 
+        {/* Tablet & desktop: table */}
+        <div className="hidden sm:block">
+          <Table
+            columns={columns}
+            dataSource={specialities}
+            loading={isLoading}
+            rowKey="id"
+            className="custom-admin-table"
+            scroll={{ x: "max-content" }}
+            pagination={{
+              current: currentPage,
+              pageSize,
+              total: totalElements,
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50"],
+              showTotal: (total, range) => `${range[0]}-${range[1]} dan ${total} ta`,
+              className: "px-4 py-4 sm:px-6",
+              onChange: onPageChange,
+            }}
+          />
+        </div>
+        <AdminTableStyles />
+        <style jsx global>{`
           .premium-modal .ant-modal-content {
-            background: ${theme === "dark" ? "rgb(40, 48, 70)" : "#ffffff"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "none"} !important;
+            background: ${surface.isDark ? "rgb(40, 48, 70)" : "#ffffff"} !important;
+            color: ${surface.isDark ? "#ffffff" : "#000000"} !important;
+            border: ${surface.isDark ? "1px solid rgb(59, 66, 83)" : "none"} !important;
             border-radius: 16px !important;
           }
           .premium-modal .ant-modal-header {
             background: transparent !important;
-            border-bottom: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
+            border-bottom: ${surface.isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)"} !important;
           }
           .premium-modal .ant-modal-title {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            color: ${surface.isDark ? "#ffffff" : "#000000"} !important;
           }
           .premium-modal .ant-modal-close {
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
+            color: ${surface.isDark ? "#ffffff" : "#000000"} !important;
           }
           .premium-modal .ant-form-item-label > label {
-            color: ${theme === "dark" ? "#94a3b8" : "#64748b"} !important;
+            color: ${surface.isDark ? "#94a3b8" : "#64748b"} !important;
           }
           .premium-modal .ant-input,
-          .premium-modal .ant-input-textarea,
           .premium-modal .ant-select-selector {
-            background: ${theme === "dark" ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
-            border: ${theme === "dark" ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#484650"} !important;
+            background: ${surface.isDark ? "rgb(30, 38, 60)" : "#f8f8f8"} !important;
+            border: ${surface.isDark ? "1px solid rgb(59, 66, 83)" : "1px solid rgb(235, 233, 241)"} !important;
+            color: ${surface.isDark ? "#ffffff" : "#484650"} !important;
             border-radius: 12px !important;
-            height: 40px !important;
             padding: 6px 11px !important;
           }
-          .premium-popconfirm .ant-popover-inner {
-            background: ${theme === "dark" ? "rgb(50, 58, 80)" : "#ffffff"} !important;
-            color: ${theme === "dark" ? "#ffffff" : "#000000"} !important;
-            border: ${theme === "dark" ? "1px solid rgba(255, 255, 255, 0.1)" : "none"} !important;
-          }
-          .premium-popconfirm .ant-popover-message, .premium-popconfirm .ant-popover-description {
-            color: ${theme === "dark" ? "#e2e8f0" : "inherit"} !important;
+          .premium-modal input.ant-input,
+          .premium-modal .ant-select-selector {
+            height: 40px !important;
           }
         `}</style>
       </div>
@@ -486,45 +501,24 @@ export default function SpecialitiesPage() {
         }}
         footer={null}
         width={600}
+        centered
         className="premium-modal"
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{ is_active: true, is_foreign: false }}
-        >
-          <Form.Item
-            name="code"
-            label="Kod"
-            rules={[
-              { required: true, message: "Kodni kiriting" },
-            ]}
-          >
-            <Input placeholder="Masalan: 03.00.01" />
-          </Form.Item>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ is_active: true, is_foreign: false }}>
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+            <Form.Item name="code" label="Kod" rules={[{ required: true, message: "Kodni kiriting" }]}>
+              <Input placeholder="Masalan: 03.00.01" />
+            </Form.Item>
 
-          <Form.Item
-            name="name"
-            label="Nomi"
-            rules={[{ required: true, message: "Nomni kiriting" }]}
-          >
-            <Input placeholder="Biokimyo" />
-          </Form.Item>
+            <Form.Item name="name" label="Nomi" rules={[{ required: true, message: "Nomni kiriting" }]}>
+              <Input placeholder="Biokimyo" />
+            </Form.Item>
+          </div>
 
-          <Form.Item
-            name="parent"
-            label="Asosiy mutaxassislik"
-          >
-            <Select
-              placeholder="Asosiy mutaxassislikni tanlang"
-              allowClear
-              showSearch
-              optionFilterProp="children"
-            >
+          <Form.Item name="parent" label="Asosiy mutaxassislik">
+            <Select placeholder="Asosiy mutaxassislikni tanlang" allowClear showSearch optionFilterProp="children">
               {allSpecialities.map((s: Speciality) => {
-                const parentName =
-                  (s as unknown as { parent?: { name?: string } }).parent?.name || undefined;
+                const parentName = (s as unknown as { parent?: { name?: string } }).parent?.name || undefined;
                 return (
                   <Select.Option key={s.id} value={s.id}>
                     {s.code} - {s.name}
@@ -537,17 +531,14 @@ export default function SpecialitiesPage() {
           </Form.Item>
 
           <Form.Item name="description" label="Tavsif">
-            <Input.TextArea
-              placeholder="Mutaxassislik haqida qisqacha ma'lumot"
-              rows={3}
-            />
+            <Input.TextArea placeholder="Mutaxassislik haqida qisqacha ma'lumot" rows={3} />
           </Form.Item>
 
           <Form.Item name="is_foreign" label="Chet tili" valuePropName="checked">
             <Switch checkedChildren="Ha" unCheckedChildren="Yo'q" />
           </Form.Item>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <ModalActions>
             <Button
               className="rounded-xl"
               onClick={() => {
@@ -561,16 +552,16 @@ export default function SpecialitiesPage() {
             <Button
               type="primary"
               htmlType="submit"
-              className="rounded-xl flex items-center gap-2"
+              className="rounded-xl"
               loading={createSpeciality.isPending || updateSpeciality.isPending}
               style={{
                 background: "linear-gradient(118deg, #7367f0, rgba(115, 103, 240, 0.7))",
-                border: "none"
+                border: "none",
               }}
             >
               {editingSpeciality ? "Yangilash" : "Yaratish"}
             </Button>
-          </div>
+          </ModalActions>
         </Form>
       </Modal>
 
@@ -584,9 +575,10 @@ export default function SpecialitiesPage() {
         }}
         footer={null}
         width={800}
+        style={{ top: 24 }}
         className="premium-modal"
       >
-        <div className="py-4 overflow-y-auto max-h-[650px]">
+        <div className="max-h-[75vh] overflow-y-auto py-2 sm:py-4">
           {isStatsLoading ? (
             <div className="flex justify-center py-8">
               <ClockCircleOutlined spin style={{ fontSize: 24, color: "#7367f0" }} />
@@ -594,85 +586,78 @@ export default function SpecialitiesPage() {
           ) : specialityStats?.data ? (
             <div className="space-y-6">
               {/* Speciality Info */}
-              <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                <div className="text-gray-400 text-xs mb-1">Mutaxassislik</div>
-                <div className="font-medium text-sm">{specialityStats.data.speciality.code} - {specialityStats.data.speciality.name}</div>
-              </Card>
+              <div
+                className="rounded-lg p-3 text-center"
+                style={{ background: tintBg("115, 103, 240", "#f8f9ff"), border: `1px solid ${surface.subtleBorder}` }}
+              >
+                <div className="mb-1 text-xs text-gray-400">Mutaxassislik</div>
+                <div className="break-words text-sm font-medium">
+                  {specialityStats.data.speciality.code} - {specialityStats.data.speciality.name}
+                </div>
+              </div>
 
               {/* Period Info */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-            {!!specialityStats.data.period.start_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                  <div className="text-gray-400 text-xs mb-1">Boshlanish sanasi</div>
-                  <div className="text-sm font-medium">
-                    {specialityStats.data.period.start_date ? formatDateTime(specialityStats.data.period.start_date) : "-"}
-                  </div>
-                </Card>}
-               {!!specialityStats.data.period.end_date  &&    <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                    <div className="text-gray-400 text-xs mb-1">Tugash sanasi</div>
-                    <div className="text-sm font-medium">
-                      {specialityStats.data.period.end_date ? formatDateTime(specialityStats.data.period.end_date) : "-"}
-                  </div>
-                </Card>}
-              </div>
+              {(!!specialityStats.data.period.start_date || !!specialityStats.data.period.end_date) && (
+                <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
+                  {!!specialityStats.data.period.start_date &&
+                    statTile(
+                      "Boshlanish sanasi",
+                      <span className="text-sm">{formatDateTime(specialityStats.data.period.start_date)}</span>,
+                      surface.text,
+                      tintBg("115, 103, 240", "#f8f9ff"),
+                    )}
+                  {!!specialityStats.data.period.end_date &&
+                    statTile(
+                      "Tugash sanasi",
+                      <span className="text-sm">{formatDateTime(specialityStats.data.period.end_date)}</span>,
+                      surface.text,
+                      tintBg("115, 103, 240", "#f8f9ff"),
+                    )}
+                </div>
+              )}
 
               {/* Submissions Statistics */}
               <div>
-                <div className="text-sm font-medium mb-3 text-center">Topshiriqlar</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                    <div className="text-gray-400 text-xs mb-1">Jami</div>
-                    <div className="text-xl font-bold text-[#7367f0]">{specialityStats.data.submissions.total}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
-                    <div className="text-gray-400 text-xs mb-1">Qoralama</div>
-                    <div className="text-lg font-bold text-[#ff9f43]">{specialityStats.data.submissions.draft}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                    <div className="text-gray-400 text-xs mb-1">Yuborilgan</div>
-                    <div className="text-lg font-bold text-[#7367f0]">{specialityStats.data.submissions.submitted}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
-                    <div className="text-gray-400 text-xs mb-1">{"Ko'rib"} chiqilmoqda</div>
-                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.submissions.under_review}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
-                    <div className="text-gray-400 text-xs mb-1">Tasdiqlangan</div>
-                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.submissions.approved}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(234, 84, 85, 0.05)" : "#fff8f8" }}>
-                    <div className="text-gray-400 text-xs mb-1">Rad etilgan</div>
-                    <div className="text-lg font-bold text-[#ea5455]">{specialityStats.data.submissions.rejected}</div>
-                  </Card>
+                <div className="mb-3 text-center text-sm font-medium">Topshiriqlar</div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {statTile("Jami", specialityStats.data.submissions.total, "#7367f0", tintBg("115, 103, 240", "#f8f9ff"), true)}
+                  {statTile("Qoralama", specialityStats.data.submissions.draft, "#ff9f43", tintBg("255, 159, 67", "#fffbf6"))}
+                  {statTile("Yuborilgan", specialityStats.data.submissions.submitted, "#7367f0", tintBg("115, 103, 240", "#f8f9ff"))}
+                  {statTile(
+                    <>{"Ko'rib"} chiqilmoqda</>,
+                    specialityStats.data.submissions.under_review,
+                    "#28c76f",
+                    tintBg("40, 199, 111", "#f6fff9"),
+                  )}
+                  {statTile("Tasdiqlangan", specialityStats.data.submissions.approved, "#28c76f", tintBg("40, 199, 111", "#f6fff9"))}
+                  {statTile("Rad etilgan", specialityStats.data.submissions.rejected, "#ea5455", tintBg("234, 84, 85", "#fff8f8"))}
                 </div>
               </div>
 
               {/* Reviews Statistics */}
               <div>
-                <div className="text-sm font-medium mb-3 text-center">{"Ko'rib chiqishlar"}</div>
-                <div className="grid grid-cols-4 gap-4">
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.05)" : "#f8f9ff" }}>
-                    <div className="text-gray-400 text-xs mb-1">Jami</div>
-                    <div className="text-lg font-bold text-[#7367f0]">{specialityStats.data.reviews.total}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(255, 159, 67, 0.05)" : "#fffbf6" }}>
-                    <div className="text-gray-400 text-xs mb-1">Kutilmoqda</div>
-                    <div className="text-lg font-bold text-[#ff9f43]">{specialityStats.data.reviews.pending}</div>
-                  </Card>
-                  <Card size="small" className="text-center" style={{ background: theme === "dark" ? "rgba(40, 199, 111, 0.05)" : "#f6fff9" }}>
-                    <div className="text-gray-400 text-xs mb-1">Tugagan</div>
-                    <div className="text-lg font-bold text-[#28c76f]">{specialityStats.data.reviews.completed}</div>
-                  </Card>
+                <div className="mb-3 text-center text-sm font-medium">{"Ko'rib chiqishlar"}</div>
+                <div className="grid grid-cols-3 gap-3">
+                  {statTile("Jami", specialityStats.data.reviews.total, "#7367f0", tintBg("115, 103, 240", "#f8f9ff"))}
+                  {statTile("Kutilmoqda", specialityStats.data.reviews.pending, "#ff9f43", tintBg("255, 159, 67", "#fffbf6"))}
+                  {statTile("Tugagan", specialityStats.data.reviews.completed, "#28c76f", tintBg("40, 199, 111", "#f6fff9"))}
                 </div>
 
                 {/* Average Score */}
-                <div className="rounded-xl p-4 text-center mt-4" style={{ background: theme === "dark" ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff", border: "1px solid rgba(115, 103, 240, 0.2)" }}>
-                  <div className="text-gray-400 text-xs mb-1">{"O'rtacha ball"}</div>
+                <div
+                  className="mt-4 rounded-xl p-4 text-center"
+                  style={{
+                    background: surface.isDark ? "rgba(115, 103, 240, 0.1)" : "#f4f3ff",
+                    border: "1px solid rgba(115, 103, 240, 0.2)",
+                  }}
+                >
+                  <div className="mb-1 text-xs text-gray-400">{"O'rtacha ball"}</div>
                   <div className="text-2xl font-bold text-[#7367f0]">
-                    {specialityStats.data.reviews.average_score ? (
-                      typeof specialityStats.data.reviews.average_score === "number"
+                    {specialityStats.data.reviews.average_score
+                      ? typeof specialityStats.data.reviews.average_score === "number"
                         ? specialityStats.data.reviews.average_score.toFixed(2)
                         : specialityStats.data.reviews.average_score
-                    ) : "-"}
+                      : "-"}
                   </div>
                 </div>
               </div>
@@ -692,11 +677,15 @@ export default function SpecialitiesPage() {
                       <List.Item>
                         <List.Item.Meta
                           avatar={<Avatar icon={<UserOutlined />} />}
-                          title={examiner.name}
+                          title={<span className="break-words">{examiner.name}</span>}
                           description={
                             <Space direction="vertical" size="small">
-                              <div><strong>Unvon:</strong> {examiner.title}</div>
-                              <div><strong>Kafedra:</strong> {examiner.department}</div>
+                              <div>
+                                <strong>Unvon:</strong> {examiner.title}
+                              </div>
+                              <div>
+                                <strong>Kafedra:</strong> {examiner.department}
+                              </div>
                               <div className="text-xs text-gray-500">
                                 <CalendarOutlined /> Tayinlangan: {formatDateTime(examiner.assigned_at)}
                               </div>
@@ -724,10 +713,20 @@ export default function SpecialitiesPage() {
                       <List.Item>
                         <List.Item.Meta
                           avatar={<Avatar icon={<FileTextOutlined />} />}
-                          title={app.title}
+                          title={<span className="break-words">{app.title}</span>}
                           description={
                             <Space>
-                              <Tag color={app.status === "PUBLISHED" ? "green" : app.status === "DRAFT" ? "orange" : app.status === "CLOSED" ? "red" : "default"}>
+                              <Tag
+                                color={
+                                  app.status === "PUBLISHED"
+                                    ? "green"
+                                    : app.status === "DRAFT"
+                                      ? "orange"
+                                      : app.status === "CLOSED"
+                                        ? "red"
+                                        : "default"
+                                }
+                              >
                                 {app.status}
                               </Tag>
                             </Space>
@@ -740,9 +739,7 @@ export default function SpecialitiesPage() {
               )}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
-              Statistika ma&apos;lumotlari topilmadi
-            </div>
+            <div className="py-8 text-center text-gray-400">Statistika ma&apos;lumotlari topilmadi</div>
           )}
         </div>
       </Modal>
