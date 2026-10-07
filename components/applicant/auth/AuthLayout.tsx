@@ -55,7 +55,8 @@ function BrandPanel() {
 
       <div className="relative max-w-md">
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.14em] text-indigo-300">PhD · DSc qabul tizimi</p>
-        <h2 className="text-[34px] font-semibold leading-[1.15] tracking-tight text-white">
+        {/* !text-white: `.applicant-app h2` sets the theme text colour, which is dark on this dark panel */}
+        <h2 className="text-[34px] font-semibold leading-[1.15] tracking-tight !text-white">
           Doktoranturaga hujjat topshirish — bir joyda.
         </h2>
         <ul className="mt-8 flex flex-col gap-3.5">
