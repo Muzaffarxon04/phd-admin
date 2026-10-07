@@ -80,11 +80,25 @@ export function initials(user: Partial<User> | null | undefined): string {
   return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-/** Only allow same-origin relative redirects (prevents open redirects via ?next=). */
+/**
+ * Only allow same-origin relative redirects (prevents open redirects via ?next=).
+ *
+ * Browsers strip ASCII tab/newline and treat "\" as "/" before parsing, so a naive
+ * prefix check lets "/\t/evil.com" become "//evil.com". We reject any whitespace,
+ * backslash or percent-encoded control character outright, then let the WHATWG URL
+ * parser decide whether the result is still same-origin.
+ */
 export function safeNext(next: string | null | undefined, fallback = "/dashboard"): string {
-  if (!next) return fallback;
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
-  return next;
+  if (!next || !next.startsWith("/")) return fallback;
+  if (/[\s\\]/.test(next) || /%[01][0-9a-f]/i.test(next)) return fallback;
+  try {
+    const base = "http://same-origin.invalid";
+    const url = new URL(next, base);
+    if (url.origin !== base || !url.pathname.startsWith("/")) return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
 }
 
 export const HELP_TELEGRAM_URL = "https://t.me/ScientificDepartment_TMA";

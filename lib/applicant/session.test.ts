@@ -12,6 +12,17 @@ describe("safeNext", () => {
     expect(safeNext("https://evil.com")).toBe("/dashboard");
     expect(safeNext("javascript:alert(1)")).toBe("/dashboard");
   });
+  it("rejects whitespace-smuggled protocol-relative urls (browsers strip tabs/newlines)", () => {
+    expect(safeNext("/\t/evil.com")).toBe("/dashboard");
+    expect(safeNext("/\n/evil.com")).toBe("/dashboard");
+    expect(safeNext("/\r/evil.com")).toBe("/dashboard");
+    expect(safeNext("/ /evil.com")).toBe("/dashboard");
+    expect(safeNext("/\\/evil.com")).toBe("/dashboard");
+    expect(safeNext("/%09/evil.com")).toBe("/dashboard");
+  });
+  it("normalises to path + query + hash only", () => {
+    expect(safeNext("/applications/1?x=1#top")).toBe("/applications/1?x=1#top");
+  });
   it("falls back when empty", () => {
     expect(safeNext(null)).toBe("/dashboard");
     expect(safeNext("", "/x")).toBe("/x");
