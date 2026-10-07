@@ -94,7 +94,9 @@ export function safeNext(next: string | null | undefined, fallback = "/dashboard
   try {
     const base = "http://same-origin.invalid";
     const url = new URL(next, base);
-    if (url.origin !== base || !url.pathname.startsWith("/")) return fallback;
+    // Dot-segment normalisation can turn "/..//evil.com" into the pathname "//evil.com",
+    // which a later router.push would treat as protocol-relative — check the *normalised* path.
+    if (url.origin !== base || !url.pathname.startsWith("/") || url.pathname.startsWith("//")) return fallback;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return fallback;

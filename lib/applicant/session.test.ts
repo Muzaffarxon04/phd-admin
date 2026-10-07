@@ -20,6 +20,11 @@ describe("safeNext", () => {
     expect(safeNext("/\\/evil.com")).toBe("/dashboard");
     expect(safeNext("/%09/evil.com")).toBe("/dashboard");
   });
+  it("rejects dot-segment tricks that normalise into a protocol-relative url", () => {
+    expect(safeNext("/..//evil.com")).toBe("/dashboard");
+    expect(safeNext("/x/..//evil.com")).toBe("/dashboard");
+    expect(safeNext("/./..//evil.com/path?x=1")).toBe("/dashboard");
+  });
   it("normalises to path + query + hash only", () => {
     expect(safeNext("/applications/1?x=1#top")).toBe("/applications/1?x=1#top");
   });
