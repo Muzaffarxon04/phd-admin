@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FaceLandmarker, FaceLandmarkerResult } from "@mediapipe/tasks-vision";
+import type { FacePose } from "@/types";
 
 /* ------------------------------------------------------------------ */
 /* Config                                                              */
@@ -26,8 +27,17 @@ const HOLD_MS = 350;
 const PAUSE_AFTER_CAPTURE_MS = 700;
 const DETECT_INTERVAL_MS = 70;
 
-export type Pose = "front" | "left" | "right";
+export type Pose = FacePose;
+/** Fallback order when the server sent no challenge. */
 export const POSES: Pose[] = ["front", "left", "right"];
+
+/** The server-issued order is used only if it is exactly a permutation of the three poses. */
+export function normalizeOrder(order: readonly string[] | null | undefined): Pose[] {
+  if (!order || order.length !== POSES.length) return POSES;
+  const sorted = [...order].sort();
+  const expected = [...POSES].sort();
+  return sorted.every((p, i) => p === expected[i]) ? (order as Pose[]) : POSES;
+}
 
 export const POSE_INSTRUCTION: Record<Pose, string> = {
   front: "To'g'riga qarang",
@@ -178,31 +188,6 @@ export function grabFrame(video: HTMLVideoElement): Promise<Blob> {
   );
 }
 
-/** Re-encodes a picked/captured image file to a JPEG ≤ 1280px. */
-export async function fileToJpeg(file: File): Promise<Blob> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("Rasmni o'qib bo'lmadi"));
-      el.src = url;
-    });
-    const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(img.naturalWidth * scale);
-    canvas.height = Math.round(img.naturalHeight * scale);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas unavailable");
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/jpeg", JPEG_QUALITY)
-    );
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-
 export function preflightCameraError(): CameraError | null {
   if (typeof window === "undefined") return null;
   if (!window.isSecureContext) return "insecure";
@@ -214,7 +199,11 @@ export function preflightCameraError(): CameraError | null {
 /* Hook                                                                */
 /* ------------------------------------------------------------------ */
 
-export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | null>) {
+/**
+ * Captures one frame per pose, in `order` (the server-issued liveness challenge).
+ * Frames come only from the live camera — there is no file upload path.
+ */
+export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | null>, order: Pose[]) {
   const [status, setStatus] = useState<CaptureStatus>("idle");
   const [cameraError, setCameraError] = useState<CameraError | null>(null);
   const [modelFailed, setModelFailed] = useState(false);
@@ -232,9 +221,14 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
   const lastDetectRef = useRef(0);
   const busyRef = useRef(false);
   const aliveRef = useRef(true);
+  const orderRef = useRef<Pose[]>(order);
 
-  const poseIndex = Math.min(frames.length, POSES.length - 1);
-  const currentPose: Pose = POSES[poseIndex];
+  useEffect(() => {
+    orderRef.current = order;
+  }, [order]);
+
+  const poseIndex = Math.min(frames.length, order.length - 1);
+  const currentPose: Pose = order[poseIndex];
 
   const stopLoop = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -265,7 +259,7 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
         const frame: CapturedFrame = { pose, blob, url: URL.createObjectURL(blob) };
         framesRef.current = [...framesRef.current, frame];
         setFrames(framesRef.current);
-        if (framesRef.current.length >= POSES.length) {
+        if (framesRef.current.length >= orderRef.current.length) {
           stopCamera();
           setStatus("done");
         }
@@ -296,7 +290,7 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
     }
 
     const count = result.faceLandmarks?.length ?? 0;
-    const pose = POSES[framesRef.current.length];
+    const pose = orderRef.current[framesRef.current.length];
     if (!pose) return;
 
     const resetHold = (msg: string | null) => {
@@ -412,16 +406,8 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
     [clearFrames, loop, stopLoop, videoRef]
   );
 
-  /** Switch the running camera into manual shutter mode. */
-  const switchToManual = useCallback(() => {
-    stopLoop();
-    setHint(null);
-    setHoldProgress(0);
-    setStatus(streamRef.current ? "manual" : "idle");
-  }, [stopLoop]);
-
   const captureManual = useCallback(() => {
-    const pose = POSES[framesRef.current.length];
+    const pose = orderRef.current[framesRef.current.length];
     if (pose) void pushFrame(pose);
   }, [pushFrame]);
 
@@ -433,22 +419,6 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
     setHoldProgress(0);
     setStatus("idle");
   }, [clearFrames, stopCamera]);
-
-  /** Frames provided from file inputs (no-camera fallback). */
-  const setExternalFrames = useCallback(
-    (blobs: Blob[]) => {
-      clearFrames();
-      const list = blobs.slice(0, POSES.length).map((blob, i) => ({
-        pose: POSES[i],
-        blob,
-        url: URL.createObjectURL(blob),
-      }));
-      framesRef.current = list;
-      setFrames(list);
-      if (list.length >= POSES.length) setStatus("done");
-    },
-    [clearFrames]
-  );
 
   useEffect(() => {
     aliveRef.current = true;
@@ -473,10 +443,8 @@ export function useHeadPoseCapture(videoRef: React.RefObject<HTMLVideoElement | 
     yaw,
     holdProgress,
     start,
-    switchToManual,
     captureManual,
     reset,
     stopCamera,
-    setExternalFrames,
   };
 }

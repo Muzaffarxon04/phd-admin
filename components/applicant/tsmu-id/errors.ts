@@ -19,6 +19,7 @@ export const MSG = {
   noFace: "Kadrda faqat siz bo'lishingiz kerak, yorug' joyda turing",
   lowSimilarity: (n: number) => `Yuz mos kelmadi (qolgan urinishlar: ${n})`,
   liveness: "Boshingizni ko'rsatilgandek buring",
+  poseMismatch: "Boshingizni ko'rsatilgan tartibda buring — har urinishda tartib yangilanadi",
   exhausted: "Urinishlar tugadi, 30 daqiqadan keyin qaytadan boshlang",
   phoneTaken: "Bu raqam boshqa akkauntga bog'langan",
   expired: "Sessiya tugadi",
@@ -80,6 +81,8 @@ export function faceReasonMessage(reason: FaceFailReason | null, attemptsLeft: n
       return MSG.noFace;
     case "LIVENESS_FAILED":
       return MSG.liveness;
+    case "POSE_MISMATCH":
+      return MSG.poseMismatch;
     case "LOW_SIMILARITY":
     default:
       return MSG.lowSimilarity(attemptsLeft);

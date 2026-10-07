@@ -17,20 +17,22 @@ import {
 } from "@ant-design/icons";
 import { tsmuIdApi } from "@/lib/api/tsmuId";
 import { cn } from "@/lib/utils";
-import type { FaceVerifyResponse } from "@/types";
+import type { FacePose, FaceVerifyResponse } from "@/types";
 import { faceReasonMessage, MSG, tsmuError } from "./errors";
 import {
   type CameraError,
   type CapturedFrame,
-  fileToJpeg,
+  normalizeOrder,
+  type Pose,
   POSE_INSTRUCTION,
-  POSES,
   useHeadPoseCapture,
 } from "./useHeadPoseCapture";
 
 interface StepFaceProps {
   verificationId: string;
   maskedName?: string;
+  /** Server-issued pose order for the first attempt (liveness challenge). */
+  challenge?: FacePose[] | null;
   authenticated?: boolean;
   onPassed: (result: FaceVerifyResponse) => void;
   /** Session is no longer usable — go back to step 1 with a message. */
@@ -110,13 +112,15 @@ function YawGauge({ yaw }: { yaw: number | null }) {
   );
 }
 
-function FrameSlots({ frames, className }: { frames: CapturedFrame[]; className?: string }) {
+function FrameSlots({ frames, order, className }: { frames: CapturedFrame[]; order: Pose[]; className?: string }) {
   return (
     <div className={cn("grid grid-cols-3 gap-2", className)}>
-      {POSES.map((pose, i) => {
+      {order.map((orderPose, i) => {
         const f = frames[i];
+        // captured frames keep the pose they were taken in, even after the server issued a new order
+        const pose = f?.pose ?? orderPose;
         return (
-          <div key={pose} className="min-w-0">
+          <div key={i} className="min-w-0">
             <div
               className={cn(
                 "relative aspect-square overflow-hidden rounded-lg border",
@@ -144,52 +148,11 @@ function FrameSlots({ frames, className }: { frames: CapturedFrame[]; className?
   );
 }
 
-/** No-camera fallback: take/pick 3 photos with the native camera app. */
-function FilePicker({ onDone }: { onDone: (blobs: Blob[]) => void }) {
-  const [blobs, setBlobs] = useState<Blob[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const next = POSES[blobs.length];
-
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <p className="text-sm font-medium text-text">Telefon kamerasi orqali suratga olish</p>
-      <p className="mt-1 text-[13px] leading-5 text-muted">
-        3 ta selfi oling: avval to&apos;g&apos;riga qarab, so&apos;ng boshingizni chapga, keyin o&apos;ngga burib.
-      </p>
-      {next && (
-        <label className="mt-4 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 text-sm font-medium text-text transition-colors hover:border-border-strong">
-          <CameraOutlined />
-          {blobs.length + 1}/3: {POSE_INSTRUCTION[next]}
-          <input
-            type="file"
-            accept="image/*"
-            capture="user"
-            className="sr-only"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (!file) return;
-              try {
-                const jpeg = await fileToJpeg(file);
-                const list = [...blobs, jpeg];
-                setBlobs(list);
-                setError(null);
-                if (list.length === POSES.length) onDone(list);
-              } catch {
-                setError("Rasmni o'qib bo'lmadi, qayta urinib ko'ring");
-              }
-            }}
-          />
-        </label>
-      )}
-      {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
-    </div>
-  );
-}
-
-export function StepFace({ verificationId, maskedName, authenticated, onPassed, onRestart }: StepFaceProps) {
+export function StepFace({ verificationId, maskedName, challenge, authenticated, onPassed, onRestart }: StepFaceProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const cap = useHeadPoseCapture(videoRef);
+  // Pose order for the current attempt; the server issues a new one after every failed attempt.
+  const [order, setOrder] = useState<Pose[]>(() => normalizeOrder(challenge));
+  const cap = useHeadPoseCapture(videoRef, order);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<FaceVerifyResponse | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -209,6 +172,7 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
         { authenticated }
       );
       setResult(res);
+      if (res.challenge) setOrder(normalizeOrder(res.challenge));
       if (!res.passed && res.attempts_left <= 0) setExhausted(true);
     } catch (err) {
       const info = tsmuError(err, { authenticated });
@@ -227,7 +191,7 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
 
   // Upload exactly once per completed set of frames.
   useEffect(() => {
-    if (status !== "done" || frames.length < POSES.length || uploadedFor.current === frames) return;
+    if (status !== "done" || frames.length < order.length || uploadedFor.current === frames) return;
     uploadedFor.current = frames;
     const id = setTimeout(() => void upload(frames), 0);
     return () => clearTimeout(id);
@@ -243,7 +207,8 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
   };
 
   const instruction = POSE_INSTRUCTION[currentPose];
-  const stepNo = Math.min(frames.length + 1, POSES.length);
+  const stepNo = Math.min(frames.length + 1, order.length);
+  const orderText = order.map((p) => POSE_INSTRUCTION[p].toLowerCase()).join(", so'ng ");
 
   /* ---------------- result ---------------- */
   if (result && !uploading) {
@@ -277,7 +242,7 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
             </p>
           )}
         </div>
-        <FrameSlots frames={frames} className="mt-4" />
+        <FrameSlots frames={frames} order={order} className="mt-4" />
         {exhausted ? (
           <Button block size="large" className="!mt-6" onClick={() => onRestart(MSG.exhausted)}>
             Boshidan boshlash
@@ -295,7 +260,7 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
   if (status === "done") {
     return (
       <div className="animate-enter">
-        <FrameSlots frames={frames} />
+        <FrameSlots frames={frames} order={order} />
         {uploading ? (
           <div className="mt-6 flex items-center justify-center gap-3 rounded-xl border border-border bg-surface px-4 py-6 text-sm text-muted">
             <Spin size="small" /> Yuz solishtirilmoqda…
@@ -388,9 +353,6 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
               Qayta urinish
             </Button>
           )}
-          <div className="mt-4">
-            <FilePicker onDone={(blobs) => cap.setExternalFrames(blobs)} />
-          </div>
         </div>
       )}
 
@@ -411,7 +373,7 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
             {(status === "capturing" || status === "manual") && (
               <>
                 <span className="tabular rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-medium text-white/80">
-                  {stepNo} / {POSES.length}
+                  {stepNo} / {order.length}
                 </span>
                 <p className="text-xl font-semibold text-white drop-shadow sm:text-2xl">{instruction}</p>
                 {status === "capturing" && cap.hint && <p className="text-sm text-white/85">{cap.hint}</p>}
@@ -459,22 +421,12 @@ export function StepFace({ verificationId, maskedName, authenticated, onPassed, 
             {cap.modelFailed
               ? "Avtomatik aniqlash ishlamadi. "
               : ""}
-            Ko&apos;rsatmaga amal qiling va har safar tugmani bosing: to&apos;g&apos;riga qarab, so&apos;ng chapga va
-            o&apos;ngga burilib.
+            Ko&apos;rsatmaga amal qiling va har safar tugmani bosing: {orderText}.
           </p>
         )}
 
-        <FrameSlots frames={frames} className="mt-4" />
+        <FrameSlots frames={frames} order={order} className="mt-4" />
 
-        {status === "capturing" && (
-          <button
-            type="button"
-            onClick={cap.switchToManual}
-            className="mx-auto mt-4 block text-[13px] font-medium text-muted hover:text-text"
-          >
-            Avtomatik ishlamayaptimi? Qo&apos;lda suratga olish
-          </button>
-        )}
       </div>
     </div>
   );

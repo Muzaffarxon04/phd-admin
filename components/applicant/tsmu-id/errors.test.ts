@@ -45,6 +45,7 @@ describe("faceReasonMessage", () => {
     expect(faceReasonMessage("NO_FACE", 2)).toBe(MSG.noFace);
     expect(faceReasonMessage("MULTIPLE_FACES", 2)).toBe(MSG.noFace);
     expect(faceReasonMessage("LIVENESS_FAILED", 1)).toBe(MSG.liveness);
+    expect(faceReasonMessage("POSE_MISMATCH", 1)).toBe(MSG.poseMismatch);
     expect(faceReasonMessage("LOW_SIMILARITY", 1)).toBe(MSG.lowSimilarity(1));
     expect(faceReasonMessage("LOW_SIMILARITY", 0)).toBe(MSG.exhausted);
   });

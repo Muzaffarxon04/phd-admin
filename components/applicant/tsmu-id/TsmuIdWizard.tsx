@@ -118,6 +118,7 @@ export function TsmuIdWizard({ mode, next = "/dashboard", children }: TsmuIdWiza
           key={round}
           verificationId={session.verification_id}
           maskedName={session.masked_name}
+          challenge={session.challenge}
           authenticated={authenticated}
           onRestart={restart}
           onPassed={() => {

@@ -380,19 +380,26 @@ export type VerificationStatus =
   | "FAILED"
   | "EXPIRED";
 
+/** Head pose the user must show in one face frame. */
+export type FacePose = "front" | "left" | "right";
+
 export interface TsmuLookupResponse {
   verification_id: string;
   masked_name: string;
   expires_at: string;
+  /** Server-chosen order of the 3 face frames (liveness challenge). */
+  challenge: FacePose[];
 }
 
-export type FaceFailReason = "NO_FACE" | "MULTIPLE_FACES" | "LOW_SIMILARITY" | "LIVENESS_FAILED";
+export type FaceFailReason = "NO_FACE" | "MULTIPLE_FACES" | "LOW_SIMILARITY" | "LIVENESS_FAILED" | "POSE_MISMATCH";
 
 export interface FaceVerifyResponse {
   passed: boolean;
   similarity_pct: number;
   attempts_left: number;
   reason: FaceFailReason | null;
+  /** New pose order for the next attempt; null once the face passed or no attempt is left. */
+  challenge: FacePose[] | null;
 }
 
 export interface TsmuPhoneResponse {
